@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ALIEN INVASION RPG</title>
+  <style>
+
+  :root {
+    --bg:#ffffff; --fg:#000000; --muted:#666666; --panel:#f2f2f2; --border:#cfcfcf;
+    --btn:#1a1a1a; --btn-text:#ffffff; --btn-disabled:#9e9e9e; --btn-disabled-text:#e6e6e6;
+    --accent:#222; --hp-danger:#a10000; --overlay-bg:rgba(0,0,0,0.8); --toggle-bg:#ddd; --toggle-handle:#fff;
+    --hit-color:#00aa00; --miss-color:#cc0000; --hp-bar-bg:#333; --hp-bar-player:#4CAF50; --hp-bar-enemy:#f44336;
+    --special:#b8860b; /* goldenrod for light theme */
+  }
+  [data-theme="dark"]{
+    --bg:#1a1a1a; --fg:#ffffff; --muted:#aaaaaa; --panel:#2d2d2d; --border:#444444;
+    --btn:#ffffff; --btn-text:#000000; --btn-disabled:#555555; --btn-disabled-text:#888888;
+    --accent:#dddddd; --hp-danger:#ff4444; --overlay-bg:rgba(0,0,0,0.9); --toggle-bg:#555; --toggle-handle:#fff;
+    --hit-color:#44ff44; --miss-color:#ff4444; --hp-bar-bg:#444; --hp-bar-player:#66BB6A; --hp-bar-enemy:#ef5350;
+    --special:#ffd54f; /* goldenrod for dark theme */
+  }
+
+  /* Base */
+  html, body { height:100%; overflow:hidden; } /* only #story scrolls */
+  body{ margin:0; padding:0; background:var(--bg); color:var(--fg);
+        font-family:"Courier New",monospace; transition:background .3s,color .3s; }
+
+  /* App container (uses --vh set by tiny JS) */
+  .wrap{
+    height:100dvh;
+    height:calc(var(--vh, 1vh) * 100);
+    max-width:860px; margin:0 auto; padding:0 16px;
+    display:flex; flex-direction:column;
+    position:relative;
+  }
+
+  .frame{ border:1px solid var(--border); background:var(--panel);
+          transition:border-color .3s, background .3s; min-height:0; }
+
+  /* Start */
+  #startScreen{ padding:18px; display:flex; flex-direction:column; }
+  #startScreen .start-cta{ text-align:center; }
+  #startScreen .start-cta button{ display:inline-block; }
+
+  .title{ font-size:28px; border-bottom:1px solid var(--border); margin-bottom:12px; transition:border-color .3s; }
+  .desc{ margin-bottom:16px; }
+  .desc > img{ display:block; width:100%; max-width:100%; height:auto; }
+
+  /* Theme toggle */
+  .theme-toggle{
+    position:fixed; top:10px; right:20px; display:flex; align-items:center; gap:10px;
+    z-index:1000; background:var(--panel); padding:5px 8px; border-radius:20px; border:1px solid var(--border);
+    transition:all .3s;
+  }
+  .toggle-switch{ position:relative; width:50px; height:24px; background:var(--toggle-bg); border-radius:12px; cursor:pointer; transition:background .3s; }
+  .toggle-handle{ position:absolute; top:2px; left:2px; width:20px; height:20px; background:var(--toggle-handle); border-radius:50%; transition:transform .3s; box-shadow:0 2px 4px rgba(0,0,0,.2); }
+  [data-theme="dark"] .toggle-handle{ transform:translateX(26px); }
+  .toggle-label{ font-size:12px; color:var(--muted); }
+
+  /* Buttons */
+  button{ background:var(--btn); color:var(--btn-text); border:1px solid var(--fg);
+          padding:10px 14px; font-family:inherit; font-size:14px; cursor:pointer; transition:all .3s; }
+  button:disabled{ background:var(--btn-disabled); color:var(--btn-disabled-text); border-color:var(--btn-disabled); cursor:not-allowed; }
+
+  /* Game UI vertical layout */
+  #gameUI{ display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
+
+  #statsBar{ display:none; border-bottom:1px solid var(--border); background:var(--panel); padding:10px; font-size:14px; transition:all .3s; flex:0 0 auto; }
+  #combatStats{ display:none; padding:12px; background:var(--panel); border-bottom:1px solid var(--border); flex:0 0 auto; }
+
+  /* Only the story scrolls */
+  #story{
+    flex:1 1 auto; min-height:0; overflow-y:auto;
+    padding:12px; background:var(--panel); border-bottom:1px solid var(--border); white-space:pre-wrap;
+    transition:all .3s;
+  }
+
+  /* Action area pinned to bottom */
+  #buttons{
+    flex:0 0 auto; display:flex; flex-wrap:wrap; gap:8px;
+    padding:12px; background:var(--panel); border-top:1px solid var(--border);
+    transition:background .3s;
+  }
+  @supports(padding:max(0px)){
+    #buttons{ padding-bottom:max(12px, env(safe-area-inset-bottom)); }
+  }
+
+  /* States & text styles */
+  .hidden{ display:none!important; }
+  .divider{ height:1px; background:var(--border); margin:10px 0; transition:background .3s; }
+  .system{ font-weight:bold; }
+  .news{ font-style:italic; }
+  .hit{ color:var(--hit-color); font-weight:bold; }
+  .miss{ color:var(--miss-color); font-weight:bold; }
+  .special{ color:var(--special); font-weight:bold; }
+
+  /* Button lock while typing/turn */
+  #buttons.locked{ pointer-events:none; opacity:.6; filter:grayscale(.2); }
+  #buttons.locked button{ opacity:.8; }
+
+  /* Overlay */
+  #overlay{ position:fixed; inset:0; background:var(--overlay-bg); display:none; align-items:center; justify-content:center; transition:background .3s; }
+  #overlay .panel{ background:var(--panel); color:var(--fg); border:1px solid var(--border); padding:16px; width:90%; max-width:520px; transition:all .3s; }
+  #overlay h2{ margin:0 0 8px 0; font-size:20px; }
+  #overlay .stats{ margin-top:8px; }
+  #overlay .stats div{ margin:4px 0; }
+  #overlay .actions{ margin-top:12px; }
+
+  .soak-flash{ box-shadow:0 0 8px rgba(76,175,80,.9) inset; transition:box-shadow .15s; }
+
+  /* Settings popover */
+  .settings-btn{ margin-left:8px; cursor:pointer; border:1px solid var(--border); border-radius:20px; background:var(--panel); padding:4px 8px; }
+  #settingsPanel{ position:fixed; top:52px; right:20px; width:260px; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; z-index:1002; display:none; }
+  #settingsPanel.open{ display:block; }
+  #settingsPanel h3{ margin:0 0 8px 0; font-size:14px; }
+  #settingsPanel .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:8px 0; }
+  #settingsPanel input[type="range"]{ width:140px; }
+
+  /* Health meters + floating damage */
+  .health-meter{ margin:8px 0; position:relative; }
+  .health-label{ font-weight:bold; margin-bottom:4px; }
+  .health-bar{ width:100%; height:20px; background:var(--hp-bar-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; position:relative; }
+  .health-fill{ height:100%; transition:width .3s ease; border-radius:9px; }
+  .player-health .health-fill{ background:var(--hp-bar-player); }
+  .enemy-health .health-fill{ background:var(--hp-bar-enemy); }
+  .health-text{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:12px; font-weight:bold; color:#fff; text-shadow:1px 1px 1px rgba(0,0,0,.8); }
+
+  .damage-float{
+    position:absolute; left:50%; top:-6px; transform:translateX(-50%);
+    font-weight:900; pointer-events:none; opacity:0;
+    animation:dmg-pop 90ms ease-out, dmg-rise 700ms ease-out forwards;
+    text-shadow:0 2px 2px rgba(0,0,0,.4);
+  }
+  .damage-float.dmg{ color:var(--hp-bar-enemy); }
+  .damage-float.heal{ color:var(--hp-bar-player); }
+  .damage-float.miss{ color:var(--muted); }
+
+  @keyframes dmg-pop{ from{ transform:translateX(-50%) scale(.7); opacity:0; } to{ transform:translateX(-50%) scale(1); opacity:1; } }
+  @keyframes dmg-rise{ from{ transform:translateX(-50%) translateY(0); opacity:1; } to{ transform:translateX(-50%) translateY(-18px); opacity:0; } }
+
+  /* Level-up FX */
+  #levelUpToast{
+    position:absolute; left:50%; top:68px; transform:translateX(-50%);
+    background:linear-gradient(135deg,#ffd54f,#ff7043); color:#111; border:2px solid #000; border-radius:12px; padding:10px 16px;
+    font-weight:900; letter-spacing:1px; text-align:center; z-index:1001; box-shadow:0 6px 20px rgba(0,0,0,.35);
+    animation:lu-pop 280ms ease-out;
+  }
+  #levelUpToast.hidden{ display:none; }
+  #levelUpToast small{ display:block; font-weight:700; margin-top:4px; }
+  @keyframes lu-pop{ from{ transform:translateX(-50%) scale(.7); opacity:0; } to{ transform:translateX(-50%) scale(1); opacity:1; } }
+
+  .shake{ animation:lu-shake 400ms ease-in-out; }
+  @keyframes lu-shake{
+    0%{transform:translateX(0)} 25%{transform:translateX(-6px)} 50%{transform:translateX(6px)}
+    75%{transform:translateX(-3px)} 100%{transform:translateX(0)}
+  }
+
+  /* Confetti */
+  .confetti{
+    position:absolute; width:8px; height:12px; opacity:.9; z-index:1000;
+    transform:translate3d(0,0,0) rotate(0deg);
+    animation:conf-fall linear forwards;
+  }
+  @keyframes conf-fall{ to{ transform:translate3d(var(--dx), 450px, 0) rotate(720deg); opacity:.95; } }
+</style>
+
+<script>
+  (function setVH(){
+    function apply() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('resize', apply);
+    window.addEventListener('orientationchange', apply);
+    apply();
+  })();
+  </script>
+</head>
+<body>
+
+  
+    
+<script>
+// ===== GAME CONFIGURATION =====
+const CONFIG = {
+  title: "ALIEN INVASION RPG",
+  description: "1989. In Cleveland, small alien creatures land and chaos spreads block by block. You're just a regular person trying to survive: fight aliens, chat with survivors, duck into shops and bars, and catch TVs in window displays blasting invasion news and commercials.",
+  startingHP: 50, startingMoney: 0, aliensRequiredFirstLevel: 3, maxLevel: 10, hpGainPerLevel: 10, 
+  enemyName: "alien",   // <— change to "zombie" etc.
+
+
+  abilities: {
+    tackle: { name: 'Tackle', hit: 0.99, minDamage: 1, maxDamage: 4, verb: 'tackle', unlockLevel: 1, cooldown: 0 },
+    punch: { name: 'Punch', hit: 0.50, minDamage: 6, maxDamage: 10, verb: 'punch', unlockLevel: 1, cooldown: 0 },
+    kick: { name: 'Kick', hit: 0.25, minDamage: 12, maxDamage: 16, verb: 'kick', unlockLevel: 1, cooldown: 0 },
+    superKick: { name: 'Super Kick', hit: 0.85, minDamage: 24, maxDamage: 32, verb: 'SUPER KICK', unlockLevel: 3, cooldown: 1, damageMultiplier: 2 },
+    superPunch: { name: 'Super Punch', hit: 0.85, minDamage: 12, maxDamage: 20, verb: 'SUPER PUNCH', unlockLevel: 5, cooldown: 1, damageMultiplier: 2 },
+    spinningKick: { name: 'Spinning Kick', hit: 0.35, minDamage: 18, maxDamage: 25, verb: 'spinning kick', unlockLevel: 7, cooldown: 0 },
+    throwEnemy: { name: 'Throw Enemy', hit: 0.60, minDamage: 8, maxDamage: 14, verb: 'throw the enemy', unlockLevel: 4, cooldown: 0 }
+  },
+  
+  enemyTypes: ["blue", "green", "grey", "red"],
+  enemyBehaviors: ["lunges toward you", "sneaks up on you from behind", "appears out of nowhere", "leaps from the shadows", "drops from above"],
+  enemyMoves: [
+    { name: "photon zap", hit: 0.70, minDamage: 3, maxDamage: 6 },
+    { name: "energy beam", hit: 0.50, minDamage: 6, maxDamage: 10 },
+    { name: "mind control pulse", hit: 0.25, minDamage: 10, maxDamage: 16 }
+  ],
+  
+  survivorDialogue: ["We have to keep fighting!", "Never Surrender to these alien thugs!", "I hate these little bastards", "They are everywhere, run!"],
+  policeDialogue: ["Save yourself", "Don't be a hero. Go home!", "Seek shelter immediately", "There's nothing to see here"],
+  bartenderTips: ["I heard you get super powers if you defeat enough aliens", "Keep eating or die fighting", "There is nothing wrong with fleeing a fight you can't win.", "How about them Browns?!"],
+  tvNews: ["Aliens are coming from every direction", "There are 4 different aliens species in Cleveland", "Mothership spotted above Lake Erie", "The aliens can harm you with mind control, photon zaps and energy beams."],
+  newspaperHeadlines: ["Bush Deploys Troops to Cleveland", "Aliens Invade Earth", "Mayor Voinovich Is Missing"],
+  
+  emptyEncounters: [
+    "You pass by a boarded-up storefront with broken windows.",
+    "An abandoned car sits on the curb, doors left wide open.",
+    "You walk through a dark alley filled with overturned trash cans.",
+    "A flickering streetlight casts eerie shadows on empty sidewalks.",
+    "You notice an old warehouse with all its windows painted black.",
+    "A deserted playground creaks in the wind, swings moving by themselves.",
+    "You see graffiti on a wall: 'THEY CAME FROM THE STARS'",
+    "An empty police car sits with its radio crackling static.",
+    "You pass a shuttered diner with a 'CLOSED FOREVER' sign.",
+    "A stray dog runs past you into the darkness.",
+    "You hear distant sirens echoing through the empty streets.",
+    "An old newspaper blows past your feet in the wind."
+  ]
+};
+
+
+CONFIG.loyalty = {
+  // global fallback policy; individual businesses can override
+  percentOff: 0,                 // e.g., 10 for 10% off everything (optional)
+  dollarFreeWithPaid: true,      // enable "$1 free with any paid item"
+  freeDollarPerVisit: 1          // how many $1 freebies per visit
+};
+
+
+// Adjustable typing settings
+CONFIG.typewriter = { 
+  speedMs: CONFIG.typewriter?.speedMs ?? 22,
+  pauses: CONFIG.typewriter?.pauses ?? { '.':4, '!':4, '?':4, ',':2 },
+  enablePauses: CONFIG.typewriter?.enablePauses ?? true,
+  disableButtonsDuringTyping: CONFIG.typewriter?.disableButtonsDuringTyping ?? true,
+  allowSkip: CONFIG.typewriter?.allowSkip ?? true // unchanged; no skip button UI
+};
+
+CONFIG.combatPacing = {
+  afterPlayerLineMs: 250,  // pause after your text lines
+  afterEnemyLineMs: 250,   // pause after enemy text lines
+  betweenTurnsMs: 350,     // pause between player and enemy turns
+  healthAnimMs: 350        // must match/beat CSS .health-fill transition (0.3s)
+};
+
+
+const TW_STORE_KEY = 'alienRPGTypewriter';
+function saveTW(){ try{ localStorage.setItem(TW_STORE_KEY, JSON.stringify(CONFIG.typewriter)); }catch(e){} }
+function loadTW(){
+  try{
+    const s = localStorage.getItem(TW_STORE_KEY);
+    if(s){ CONFIG.typewriter = { ...CONFIG.typewriter, ...JSON.parse(s) }; }
+  }catch(e){}
+}
+
+
+const businesses = [
+  {
+    id: 'coffee',
+    name: 'Coffee Shop',
+    loyaltyVisits: 3, // get card on 3rd visit
+    intro: 'A warm light spills from a corner coffee shop on Euclid Ave.',
+    enter: 'You step into the coffee shop. A handwritten menu hangs behind the counter.',
+    items: [
+      { id: 'coffee', name: 'Coffee', price: 2, healing: 8,  message: 'You sip a hot coffee. Caffeine kicks in.' },
+      { id: 'donut',  name: 'Donut',  price: 1, healing: 12, message: 'Fresh donut hits the spot.' }
+    ]
+  },
+  {
+    id: 'pizza',
+    name: 'Pizza Shop',
+    loyaltyVisits: 5, 
+    intro: 'A red-and-white awning smells like fresh slices.',
+    enter: 'You step into the pizza shop. Grease-stained boxes stack to the ceiling.',
+    items: [
+      { id: 'slice', name: 'Pizza Slice', price: 5, healing: 40, message: 'Greasy slice fuels you up.' },
+      { id: 'soda',  name: 'Soda',        price: 1, healing: 14, message: 'You crack open a cold cola.' }
+    ]
+  },
+  {
+    id: 'hotdog',
+    name: 'Hot Dog Cart',
+    loyaltyVisits: 0, 
+    intro: 'A street cart steams on the corner, mustard and onions at the ready.',
+    enter: 'You sidle up to the cart. The vendor nods.',
+    items: [
+      { id: 'dog',  name: 'Hot Dog', price: 2, healing: 16, message: 'Hot dog with stadium mustard.' },
+      { id: 'soda', name: 'Soda',    price: 1, healing: 14, message: 'You crack open a cola.' }
+    ]
+  },
+  {
+    id: 'diner',
+    name: 'Diner',
+    loyaltyVisits: 0, 
+    intro: 'A neon-lit diner hums; the Flats skyline glints in chrome.',
+    enter: 'A waitress slides a laminated menu your way.',
+    items: [
+      { id: 'burger',    name: 'Burger',    price: 4, healing: 30, message: 'A classic diner burger.' },
+      { id: 'pie',       name: 'Pie',       price: 2, healing: 16, message: 'Slice of pie comforts you.' },
+      { id: 'milkshake', name: 'Milkshake', price: 3, healing: 22, message: 'Thick milkshake revives you.' }
+    ]
+  },
+  {
+    id: 'bar',
+    name: 'Bar',
+    loyaltyVisits: 0, 
+    intro: 'A smoky Cleveland bar plays Browns highlights on TV.',
+    enter: "Inside the bar, a chalkboard lists today's specials.",
+    items: [
+      { id: 'peanuts', name: 'Peanuts', price: 1, healing: 8,  message: 'Salted peanuts for a quick bite.' },
+      { id: 'beer',    name: 'Beer',    price: 2, healing: -2, message: 'Your head spins a little.', special: true },
+      { id: 'whiskey', name: 'Whiskey', price: 3, healing: -5, message: 'Seeing double. Not a good idea.', special: true }
+    ]
+  },
+  {
+    id: 'deli',
+    name: 'Deli',
+    loyaltyVisits: 3, 
+    intro: 'The scent of corned beef drifts from a small deli.',
+    enter: 'You push through the deli door; meat slicers whirr.',
+    items: [
+      { id: 'corned', name: 'Corned Beef', price: 5, healing: 40, message: 'Towering corned beef sandwich.' },
+      { id: 'pickle', name: 'Pickle',      price: 1, healing: 6,  message: 'Crisp pickle crunch.' }
+    ]
+  },
+  {
+    id: 'convenience',
+    name: 'Convenience Store',
+    loyaltyVisits: 0, 
+    intro: 'A fluorescent-lit corner store hums; drink coolers buzz.',
+    enter: 'You push open the glass door; a bell dings.',
+    items: [
+      { id: 'lotto', name: 'Lottery Ticket',  price: 1, healing: 1,  message: 'You feel a bit of hope and luck.' },
+      { id: 'chips', name: 'Potato Chips',    price: 2, healing: 12, message: 'Salty crunch wakes you up.' },
+      { id: 'jerky', name: 'Beef Jerky',      price: 3, healing: 20, message: 'Lean protein helps you rally.' }
+    ]
+  },
+  {
+  id: 'chinese',
+  name: 'Chinese Restaurant',
+  loyaltyVisits: 0, 
+  intro: 'Red lanterns glow in the window; wok steam drifts onto the sidewalk.',
+  enter: 'A server hands you a paper menu and a pot of tea.',
+  items: [
+    { id: 'eggroll',     name: 'Egg Roll',               price: 2, healing: 16, message: 'Crispy and hot—fuel for the fight.' },
+    { id: 'hottea',      name: 'Hot Tea',                price: 1, healing: 8,  message: 'Warm tea calms your nerves.' },
+    { id: 'generaltso',  name: "General Tso's Chicken",  price: 5, healing: 40, message: 'Sweet, spicy, and satisfying.' }
+  ]
+},
+{
+  id: 'thrift',
+  name: 'Thrift Store',
+  loyaltyVisits: 0, 
+  intro: 'A crooked THRIFT sign hangs above bins of old jackets.',
+  enter: 'The cashier shrugs: “Everything’s as-is.”',
+  items: [
+    {
+      id: 'jacket',
+      name: 'Leather Jacket',
+      price: 6,
+      healing: 0,
+      message: 'You pull on a heavy leather jacket. (-2 dmg for 10 hits)',
+      armor: { name: 'Leather Jacket', dr: 2, durabilityHits: 10 }
+    }
+  ]
+},
+
+
+];
+
+// VERBIAGE ONLY — map level → downtown Cleveland street flavor
+const STREETS = [
+  {
+    level: 1,
+    id: 'ontario',
+    name: 'Ontario St — Public Square',
+    enter: 'Public Square is gridlocked. Newspaper boxes overturned, buses idling, Terminal Tower looming.',
+    ambient: [
+      'A Plain Dealer front page skitters past your boots.',
+      'Someone shouts from a kiosk, “Over here!” then ducks back down.',
+      'Wind whips dust around the statues; sirens bounce off the buildings.'
+    ],
+    cleared: 'Ontario opens up. People peek out from behind kiosks and cheer as you push north.'
+  },
+  {
+    level: 2,
+    id: 'superior',
+    name: 'Superior Ave',
+    enter: 'Superior\'s canyon of glass and stone funnels the wind straight at you.',
+    ambient: [
+      'Paper cups tumble along the curb like tumbleweeds.',
+      'Office lights flicker, one window at a time.',
+      'A bus is parked sideways, doors hanging open.'
+    ],
+    cleared: 'Superior is clear. A shopkeeper gives you a grateful nod and locks the gate behind you.'
+  },
+  {
+    level: 3,
+    id: 'euclid',
+    name: 'Euclid Ave',
+    enter: 'Marquees sputter and glow; posters read “SHOWS SUSPENDED UNTIL FURTHER NOTICE.”',
+    ambient: [
+      'A broken spotlight sweeps the street in a lazy arc.',
+      'Footsteps echo from a lobby, then vanish.',
+      'A velvet rope lies trampled in the gutter.'
+    ],
+    cleared: 'Applause ripples from the darkened theaters. Euclid is yours again.'
+  },
+  {
+    level: 4,
+    id: 'e9th',
+    name: 'East 9th Street',
+    enter: 'Towering banks and mirrored facades reflect your every move.',
+    ambient: [
+      'A set of revolving doors spins slowly on its own.',
+      'The wind howls like a siren between the buildings.',
+      'A briefcase lies open, papers stuck to a grate.'
+    ],
+    cleared: 'Traffic cones tip over in the breeze—East 9th is secure.'
+  },
+  {
+    level: 5,
+    id: 'lakeside',
+    name: 'Lakeside Ave',
+    enter: 'Civic steps, flagpoles, and empty benches. The lake air tastes like metal.',
+    ambient: [
+      'A seagull wheels overhead, unbothered by the chaos.',
+      'A police radio hisses with half-words and static.',
+      'Footprints lead across the plaza, then stop.'
+    ],
+    cleared: 'A roar from the plaza—Lakeside stands free. The wind shifts in your favor.'
+  },
+  {
+    level: 6,
+    id: 'w6th',
+    name: 'West 6th',
+    enter: 'Brick, iron, and loading docks. The street smells like oil and rain.',
+    ambient: [
+      'Steam curls from a manhole cover.',
+      'A loading bay door bangs open and shut.',
+      'Glass crunches under your shoes.'
+    ],
+    cleared: 'Dock lights blink alive one by one, like a salute. West 6th is clear.'
+  },
+  {
+    level: 7,
+    id: 'oldriver',
+    name: 'Old River Rd',
+    enter: 'Lift bridges, river stink, and bar signs flickering over dark water.',
+    ambient: [
+      'A freighter horn moans somewhere downriver.',
+      'Neon buzzes, struggling to stay lit.',
+      'Water slaps against the pilings below the boardwalk.'
+    ],
+    cleared: 'Locals wave from a balcony—The Flats breathe again.'
+  },
+  {
+    level: 8,
+    id: 'prospect',
+    name: 'Prospect Ave',
+    enter: 'Long rows of brick fronts and rattling fire escapes shadow the street.',
+    ambient: [
+      'An alley cat darts between trash cans.',
+      'A payphone rings once, then goes dead.',
+      'A streetlight pops and goes dark.'
+    ],
+    cleared: 'Prospect exhales. Doors unlock. Someone whispers, “Thank you.”'
+  },
+  {
+    level: 9,
+    id: 'huron',
+    name: 'Huron Rd',
+    enter: 'Old rail lines hum underfoot; cabs sit crooked on the curb.',
+    ambient: [
+      'A whistle echoes through the concrete canyons.',
+      'A torn schedule flaps on a kiosk.',
+      'You hear boots running on the level above—and then silence.'
+    ],
+    cleared: 'Huron falls quiet. A taxi horn chirps twice, like a victory note.'
+  },
+  {
+    level: 10,
+    id: 'erieside',
+    name: 'Erieside Ave',
+    enter: 'Wind off Lake Erie knifes through your coat. Port cranes stand like giant ribs.',
+    ambient: [
+      'Waves slap the rocks; gulls wheel and cry.',
+      'A cold blue glare washes the pier—something huge hangs in the clouds.',
+      'You taste salt and ozone. The sky feels too close.'
+    ],
+    cleared: 'Harbor secured. The mothership tilts, then retreats over the lake. Cleveland stands.'
+  }
+];
+
+
+// Theme functions
+window.toggleTheme = function() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  try { localStorage.setItem('alienRPGTheme', newTheme); } catch(e) {}
+};
+
+
+
+// Initialize theme
+try {
+  const savedTheme = localStorage.getItem('alienRPGTheme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+} catch(e) { document.documentElement.setAttribute('data-theme', 'light'); }
+loadTW(); // <— add this
+
+
+
+
+// Game variables
+const $ = s => document.querySelector(s);
+const Game = {
+  turnsThisFight: 0, armor: null,
+  loyalty: {},                 // { [bizId]: { visits: number, hasCard: boolean } }
+  visitPaidCounts: {},         // per-visit paid item count per biz
+  visitFreeDollarUsed: {},     // per-visit count of $1 freebies used per biz
+  level: 1, hp: CONFIG.startingHP, maxHP: CONFIG.startingHP, money: CONFIG.startingMoney, streetJustChanged: true,
+  aliensDefeated: 0, aliensThisLevel: 0, requiredThisLevel: CONFIG.aliensRequiredFirstLevel,
+  scene: 'start', enemy: null, purchasedThisVisit: {}, pendingReward: 0,
+  abilitiesUsed: {}, lastEncounters: [], lastBusiness: null
+};
+
+// One-time weapon abilities (only shown when granted)
+const TEMP_WEAPONS = {
+  leadPipe: { name: 'Lead Pipe',   hit: 0.80, minDamage: 18, maxDamage: 26, verb: 'smash with a LEAD PIPE',   cooldown: 1 },
+  baseballBat: { name: 'Baseball Bat', hit: 0.75, minDamage: 16, maxDamage: 30, verb: 'swing a BASEBALL BAT', cooldown: 1 }
+};
+
+// Track a single temporary weapon per fight
+Game.tempWeapon = null;               // 'leadPipe' | 'baseballBat' | null
+Game.tempWeaponUsed = false;
+
+
+// Helpers for naming
+function enemyNoun() { return CONFIG.enemyName || 'alien'; }
+function cap(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function enemyLabel() {
+  // e.g., "blue alien" or "BOSS BLUE alien"
+  if (!Game.enemy) return enemyNoun();
+  return `${Game.enemy.name} ${enemyNoun()}`;
+}
+function enemyPossessive() {
+  const n = enemyNoun();
+  return n.endsWith('s') ? `${n}'` : `${n}'s`;
+}
+
+
+
+// "Losing" rule: below or tied with enemy AND at/under 40% of max HP
+function isLosing() {
+  if (!Game.enemy) return false;
+  return Game.hp <= Game.enemy.hp && Game.hp <= (0.40 * Game.maxHP);
+}
+
+// 25% chance to throw a weapon once per fight if you're losing
+function maybeThrowWeapon() {
+  if (Game.scene !== 'combat') return;
+  if (Game.tempWeapon || Game.tempWeaponUsed) return; // already have or used one
+  if (!isLosing()) return;
+
+  if (Math.random() < 0.25) {
+    Game.tempWeapon = Math.random() < 0.5 ? 'leadPipe' : 'baseballBat';
+    const w = TEMP_WEAPONS[Game.tempWeapon];
+    appendStory('A bystander hurls a ' + w.name + ' to you! (one-time use)', 'system');
+    updateCombatButtons();
+  }
+}
+
+function initSettingsUI(){
+  const btn = $('#settingsBtn'), panel = $('#settingsPanel');
+  if(!btn || !panel) return;
+
+  const twInstant = $('#twInstant');
+  const twSpeed = $('#twSpeed');
+  const twSpeedLabel = $('#twSpeedLabel');
+  const twPauses = $('#twPauses');
+  const twLock = $('#twLock');
+
+  function syncUI(){
+    const tw = CONFIG.typewriter;
+    const instant = (tw.speedMs|0) === 0;
+    twInstant.checked = instant;
+    twSpeed.disabled = instant;
+    twSpeed.value = instant ? (twSpeed.value || 22) : Math.min(60, Math.max(5, tw.speedMs|0));
+    twSpeedLabel.textContent = instant ? '(instant)' : `${twSpeed.value} ms/char`;
+    twPauses.checked = !!tw.enablePauses;
+    twLock.checked = !!tw.disableButtonsDuringTyping;
+  }
+  function applyFromUI(){
+    CONFIG.typewriter.speedMs = twInstant.checked ? 0 : (parseInt(twSpeed.value,10) || 22);
+    CONFIG.typewriter.enablePauses = twPauses.checked;
+    CONFIG.typewriter.disableButtonsDuringTyping = twLock.checked;
+    saveTW();
+    syncUI();
+  }
+
+  btn.onclick = () => panel.classList.toggle('open');
+  document.addEventListener('click', (e)=>{
+    if(!panel.contains(e.target) && e.target !== btn) panel.classList.remove('open');
+  });
+
+  twInstant.onchange = applyFromUI;
+  twSpeed.oninput = applyFromUI;
+  twPauses.onchange = applyFromUI;
+  twLock.onchange = applyFromUI;
+
+  syncUI();
+}
+window.addEventListener('DOMContentLoaded', initSettingsUI);
+
+
+
+// Utility functions
+// ===== Typewriter queue + helpers =====
+// add fields
+const StoryType = {
+  queue: [],
+  typing: false,
+  skipHandlerAttached: false,
+  locked: false,
+  holdLock: false   // NEW: prevents auto-unlock until we say so
+};
+
+function beginTurnLock(){
+  StoryType.holdLock = true;
+  lockButtonsUI();         // visual + pointer-events
+  setButtonsDisabled(true); // keyboard safety
+}
+function endTurnLock(){
+  StoryType.holdLock = false;
+  // if the typewriter has no more lines in queue, unlock now
+  if (StoryType.queue.length === 0) {
+    unlockButtonsUI();
+    setButtonsDisabled(false);
+    StoryType.locked = false;
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+
+function setButtonsDisabled(state) {
+  const btns = $('#buttons')?.querySelectorAll('button') || [];
+  btns.forEach(btn => {
+    if (state) {
+      if (btn.dataset.origDisabled === undefined) {
+        btn.dataset.origDisabled = btn.disabled ? '1' : '0';
+      }
+      btn.disabled = true;
+    } else {
+      if (btn.dataset.origDisabled !== undefined) {
+        btn.disabled = btn.dataset.origDisabled === '1';
+        delete btn.dataset.origDisabled;
+      }
+    }
+  });
+}
+
+
+function lockButtonsUI()  { $('#buttons')?.classList.add('locked'); }
+function unlockButtonsUI(){ $('#buttons')?.classList.remove('locked'); }
+
+function getMeterEls(target){ // 'player' | 'enemy'
+  if (target === 'enemy') {
+    return {
+      fill: $('#enemyHealthFill'),
+      text: $('#enemyHealthText'),
+      meter: document.querySelector('.enemy-health')
+    };
+  }
+  return {
+    fill: $('#playerHealthFill'),
+    text: $('#playerHealthText'),
+    meter: document.querySelector('.player-health')
+  };
+}
+
+function showDamageFloat(target, kind, amount=0){
+  const { meter } = getMeterEls(target);
+  if (!meter) return;
+  const d = document.createElement('div');
+  d.className = 'damage-float ' + kind; // 'dmg' | 'heal' | 'miss'
+  d.textContent = kind === 'miss' ? 'MISS' : (kind === 'heal' ? '+'+amount : '-'+amount);
+  meter.appendChild(d);
+  setTimeout(() => d.remove(), 900);
+}
+
+function animateHealthTo(target, current, next){
+  const { fill, text } = getMeterEls(target);
+  if (!fill || !text) return Promise.resolve();
+  const max = (target === 'enemy') ? (Game.enemy?.maxHP || 1) : Game.maxHP;
+  const pct = Math.max(0, (next / max) * 100);
+  fill.style.width = pct + '%';
+  text.textContent = Math.max(0, Math.floor(next)) + '/' + max;
+  return new Promise(r => setTimeout(r, CONFIG.combatPacing.healthAnimMs));
+}
+
+
+function attachSkipOnce(finishFn) {
+  if (!CONFIG.typewriter.allowSkip || StoryType.skipHandlerAttached) return;
+  const story = $('#story');
+  const onClick = () => { cleanup(); finishFn(); };
+  const onKey = (e) => {
+    if (e.key === ' ' || e.key === 'Enter') { cleanup(); finishFn(); }
+  };
+  function cleanup() {
+    story.removeEventListener('click', onClick);
+    document.removeEventListener('keydown', onKey);
+    StoryType.skipHandlerAttached = false;
+  }
+  story.addEventListener('click', onClick, { once: true });
+  document.addEventListener('keydown', onKey);
+  StoryType.skipHandlerAttached = true;
+}
+async function processStoryQueue() {
+  if (StoryType.typing) return;
+  const next = StoryType.queue.shift();
+
+  if (!next) {
+  if (CONFIG.typewriter?.disableButtonsDuringTyping && StoryType.locked && !StoryType.holdLock) {
+    StoryType.locked = false;
+    unlockButtonsUI(); 
+    setButtonsDisabled(false);
+  }
+  return;
+}
+
+  StoryType.typing = true;
+  const { text, cls } = next;
+
+  const story = $('#story');
+  const line = document.createElement('div');
+  line.className = cls || 'context';
+  line.textContent = '';
+  story.appendChild(line);
+  story.scrollTop = story.scrollHeight;
+
+  const cfg = CONFIG.typewriter || {};
+  const base = Math.max(0, cfg.speedMs ?? 0);
+
+  // lock once per session
+  if (cfg.disableButtonsDuringTyping && !StoryType.locked) {
+    StoryType.locked = true;
+    lockButtonsUI();
+    setButtonsDisabled(true);
+  }
+
+  let i = 0, cancelled = false;
+  attachSkipOnce(() => { cancelled = true; });
+
+  // instant path
+  if (base === 0) {
+    line.textContent = text;
+  } else {
+    while (i < text.length && !cancelled) {
+      line.textContent += text[i];
+      let mult = 1;
+      if (cfg.enablePauses && cfg.pauses && cfg.pauses[text[i]]) mult = cfg.pauses[text[i]];
+      await sleep(base * mult);
+      i++;
+      story.scrollTop = story.scrollHeight;
+    }
+    if (cancelled) line.textContent = text;
+  }
+
+  StoryType.typing = false;
+
+  // if no more items queued, end the session and unlock
+  // 2) after finishing a line, when queue length is 0
+  if (CONFIG.typewriter?.disableButtonsDuringTyping && StoryType.queue.length === 0 && StoryType.locked && !StoryType.holdLock) {
+    StoryType.locked = false;
+    unlockButtonsUI(); 
+    setButtonsDisabled(false);
+  }
+
+  if (typeof next.resolve === 'function') next.resolve();
+  
+  // continue with next item (keeps lock if queue not empty)
+  processStoryQueue();
+}
+
+
+
+// Drop-in replacement for the original
+function appendStory(t, cls = 'context') {
+  StoryType.queue.push({ text: t, cls });
+  processStoryQueue();
+}
+
+function appendStoryAsync(t, cls='context'){
+  return new Promise(resolve => {
+    StoryType.queue.push({ text: t, cls, resolve });
+    processStoryQueue();
+  });
+}
+
+function appendSpecial(t){ appendStory(t, 'special'); }
+
+
+function ensureLoyalty(bizId) {
+  if (!Game.loyalty[bizId]) Game.loyalty[bizId] = { visits: 0, hasCard: false };
+}
+function resetVisitState(bizId) {
+  Game.visitPaidCounts[bizId] = 0;
+  Game.visitFreeDollarUsed[bizId] = 0;
+}
+function activePolicyFor(bizId) {
+  const b = getBusiness(bizId);
+  return (b && b.loyaltyPolicy) ? { ...CONFIG.loyalty, ...b.loyaltyPolicy } : CONFIG.loyalty;
+}
+function awardIfEligible(bizId) {
+  const b = getBusiness(bizId);
+  const thr = (b && b.loyaltyVisits) || 0;
+  if (thr > 0 && !Game.loyalty[bizId].hasCard && Game.loyalty[bizId].visits >= thr) {
+    Game.loyalty[bizId].hasCard = true;
+    appendStory(`[LOYALTY] You earned a ${b.name} loyalty card!`, 'special');
+  }
+}
+function computeFinalPrice(bizId, item) {
+  let price = item.price ?? 0;
+  const card = Game.loyalty[bizId]?.hasCard;
+  if (!card) return price;
+
+  const policy = activePolicyFor(bizId);
+
+  // optional percentage off everything
+  if (policy.percentOff && price > 0) {
+    const discount = Math.round(price * policy.percentOff / 100);
+    price = Math.max(0, price - discount);
+  }
+
+  // "$1 item free if you buy something else" (once per visit by default)
+  if (policy.dollarFreeWithPaid &&
+      price === 1 &&
+      Game.visitPaidCounts[bizId] > 0 &&
+      (Game.visitFreeDollarUsed[bizId] < (policy.freeDollarPerVisit || 1))) {
+    price = 0;
+  }
+  return price;
+}
+function loyaltyBanner(bizId) {
+  const b = getBusiness(bizId);
+  if (!b) return;
+  const thr = b.loyaltyVisits || 0;
+  if (thr === 0) return; // program off
+
+  const st = Game.loyalty[bizId] || { visits: 0, hasCard: false };
+  if (st.hasCard) {
+    const pol = activePolicyFor(bizId);
+    const perk = [];
+    if (pol.percentOff) perk.push(`${pol.percentOff}% off`);
+    if (pol.dollarFreeWithPaid) perk.push(`one $1 item FREE w/ any paid item (per visit)`);
+    appendStory(`[LOYALTY] Card active • Perks: ${perk.join(' + ')}`, 'system');
+  } else {
+    const shown = Math.min(st.visits, thr);
+    appendStory(`[LOYALTY] Visits: ${shown}/${thr} — earn a card by visiting ${b.name} ${thr} time(s).`, 'system');
+  }
+}
+
+
+function divider() { let d = document.createElement('div'); d.className = 'divider'; $('#story').appendChild(d); }
+function clearButtons() { $('#buttons').innerHTML = ''; }
+function addButton(lbl, fn, dis = false) {
+  const btnWrap = $('#buttons');
+  const isLocked = btnWrap?.classList.contains('locked');
+
+  const b = document.createElement('button');
+  b.textContent = lbl;
+
+  // Respect business rules now, respect lock visually now
+  // but remember the ORIGINAL (business) disabled state for unlock restore
+  b.disabled = dis || isLocked;
+  b.dataset.origDisabled = dis ? '1' : '0';   // <-- key line (preserve business rule)
+
+  // Safety: ignore clicks while locked or disabled
+  b.onclick = (e) => {
+    if ($('#buttons')?.classList.contains('locked')) return;
+    if (b.disabled) return;
+    fn(e);
+  };
+
+  btnWrap.appendChild(b);
+}
+
+
+function updateStats() {
+  $('#statLevel').textContent = Game.level;
+  let hpNow = Math.max(0, Math.floor(Game.hp));
+  $('#statHP').textContent = hpNow;
+  $('#statHP').style.color = hpNow < 10 ? '#ff4444' : '';
+  $('#statMaxHP').textContent = Game.maxHP;
+  $('#statMoney').textContent = Game.money;
+  $('#statDefeated').textContent = Game.aliensDefeated;
+
+  const a = Game.armor && Game.armor.durabilityHits > 0
+  ? `${Game.armor.name} (${Game.armor.durabilityHits})`
+  : 'None';
+  
+  $('#statArmor').textContent = a;
+
+  const st = getStreet(Game.level);
+  if (st) $('#statStreet').textContent = st.name;
+}
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function showGameUI() { $('#startScreen').classList.add('hidden'); $('#gameUI').classList.remove('hidden'); $('#statsBar').style.display = 'block'; }
+
+
+function getNextStreetName() {
+  const idx = Game.level; // next level index in STREETS (levels are 1-based)
+  if (idx < STREETS.length) return STREETS[idx].name;
+  return 'across the city';
+}
+
+function nextStreetNewsLine() {
+  const s = getNextStreetName();
+  const lines = [
+    `Authorities urge civilians to avoid ${s}.`,
+    `Scanner chatter: multiple sightings on ${s}.`,
+    `Barricades going up along ${s}.`,
+    `Witnesses report mind-control pulses near ${s}.`,
+    `Power flickers and sirens sweeping ${s}.`,
+    `Drones spotted tracking movement over ${s}.`,
+    `Evacuations underway on ${s}.`
+  ];
+  return lines[rand(0, lines.length - 1)];
+}
+
+
+function getStreet(level) {
+  const i = Math.min(Math.max(level,1), STREETS.length) - 1;
+  return STREETS[i];
+}
+
+function showStreetHeader() {
+  const st = getStreet(Game.level);
+  appendStory(`[STREET] ${st.name}`, 'system');
+}
+function showStreetEnter() {
+  const st = getStreet(Game.level);
+  appendStory(st.enter, 'system');
+}
+function maybeAmbient() {
+  const st = getStreet(Game.level);
+  if (!st?.ambient?.length) return;
+  if (Math.random() < 0.33) {
+    appendStory(st.ambient[rand(0, st.ambient.length - 1)], 'system');
+  }
+}
+
+
+function getUnlockedAt(level) {
+  return Object.values(CONFIG.abilities)
+    .filter(a => a.unlockLevel === level)
+    .map(a => a.name);
+}
+
+function showLevelUp(level, hpGain, unlockedList = []) {
+  const toast = $('#levelUpToast');
+  toast.innerHTML = `LEVEL UP! → <b>LV ${level}</b>
+    <small>Max HP +${hpGain}${unlockedList.length ? ' • New: ' + unlockedList.join(', ') : ''}</small>`;
+  toast.classList.remove('hidden');
+
+  // Shake the game panel
+  $('#gameUI').classList.add('shake');
+  setTimeout(() => $('#gameUI').classList.remove('shake'), 420);
+
+  // Fire confetti
+  spawnConfetti(60);
+
+  // Hide toast after a moment
+  setTimeout(() => { toast.classList.add('hidden'); }, 2200);
+}
+
+function spawnConfetti(n = 40) {
+  const wrap = document.querySelector('.wrap');
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    const x = Math.random() * 260 - 130;      // horizontal spread
+    const startX = (wrap.clientWidth/2) + x;   // center-ish
+    c.style.left = startX + 'px';
+    c.style.top = '60px';
+    // random drift
+    const dx = (Math.random() * 200 - 100) + 'px';
+    c.style.setProperty('--dx', dx);
+    // random color set
+    c.style.background = ['#ffd54f','#ff7043','#4CAF50','#42a5f5','#ab47bc'][Math.floor(Math.random()*5)];
+    c.style.animationDuration = (800 + Math.random()*700) + 'ms';
+    wrap.appendChild(c);
+    setTimeout(() => c.remove(), 1600);
+  }
+}
+
+
+// Health meter functions
+function updateHealthMeters() {
+  if (Game.scene === 'combat' && Game.enemy) {
+    $('#combatStats').style.display = 'block';
+    
+    // Update player health
+    const playerPercent = Math.max(0, (Game.hp / Game.maxHP) * 100);
+    $('#playerHealthFill').style.width = playerPercent + '%';
+    $('#playerHealthText').textContent = Math.max(0, Math.floor(Game.hp)) + '/' + Game.maxHP;
+    
+    // Update enemy health
+    const enemyPercent = Math.max(0, (Game.enemy.hp / Game.enemy.maxHP) * 100);
+    $('#enemyHealthFill').style.width = enemyPercent + '%';
+    $('#enemyHealthText').textContent = Math.max(0, Math.floor(Game.enemy.hp)) + '/' + Game.enemy.maxHP;
+  } else {
+    $('#combatStats').style.display = 'none';
+  }
+}
+
+// Main game function
+window.newGame = function() {
+ 
+  console.log('New Game started!');
+  Object.assign(Game, {
+    
+    streetJustChanged: true, level: 1, hp: CONFIG.startingHP, maxHP: CONFIG.startingHP, money: CONFIG.startingMoney,
+    aliensDefeated: 0, aliensThisLevel: 0, requiredThisLevel: CONFIG.aliensRequiredFirstLevel, turnsThisFight: 0, armor: null,
+    scene: 'intro', enemy: null, purchasedThisVisit: {}, pendingReward: 0,
+    abilitiesUsed: {}, lastEncounters: [], lastBusiness: null,
+    loyalty: {},                 // { [bizId]: { visits: number, hasCard: boolean } }
+    visitPaidCounts: {},         // per-visit paid item count per biz
+    visitFreeDollarUsed: {},     // per-visit count of $1 freebies used per biz
+
+  });
+
+  $('#story').innerHTML = '';
+
+    // 1) Show the game blurb as the first line the player sees
+    appendStory(CONFIG.description, 'system');   // or use a custom class like 'intro'
+
+
+
+  $('#overlay').style.display = 'none';
+  showGameUI();
+  appendStory('TVs in window displays show breaking news: ALIEN INVASION IN CLEVELAND, 1989.', 'system');
+
+  divider();
+  clearButtons();
+  addButton('Start Adventure', () => {
+    Game.scene = 'explore';
+    updateStats();
+    encounter();
+  });
+  updateStats();
+};
+
+// Encounter system
+function encounter() {
+  updateStats(); clearButtons(); $('#story').innerHTML = ''; Game.purchasedThisVisit = {};
+  updateHealthMeters(); // Hide combat meters when not in combat
+  
+   // NEW: street banner + enter/ambient
+   //showStreetHeader();
+  if (Game.streetJustChanged) {
+    appendStory(`[STREET] ${getStreet(Game.level).name}`, 'system');
+    showStreetEnter();
+    Game.streetJustChanged = false;
+  } else {
+    maybeAmbient();
+  }
+
+  console.log('Current encounter, last 2 were:', Game.lastEncounters);
+  
+  const encounterTypes = [
+    { type: 'empty', weight: 35 }, { type: 'combat', weight: 25 }, { type: 'business', weight: 15 },
+    { type: 'tv', weight: 10 }, { type: 'news', weight: 8 }, { type: 'npc', weight: 4 }, { type: 'police', weight: 3 }
+  ];
+  
+  const availableEncounters = encounterTypes.filter(enc => !Game.lastEncounters.includes(enc.type));
+  const finalEncounters = availableEncounters.length > 0 ? availableEncounters : 
+    encounterTypes.filter(enc => enc.type !== Game.lastEncounters[Game.lastEncounters.length - 1]);
+  
+  const totalWeight = finalEncounters.reduce((sum, enc) => sum + enc.weight, 0);
+  let randomWeight = rand(1, totalWeight), selectedEncounter = null;
+  
+  for (const encounter of finalEncounters) {
+    randomWeight -= encounter.weight;
+    if (randomWeight <= 0) { selectedEncounter = encounter.type; break; }
+  }
+  
+  Game.lastEncounters.push(selectedEncounter);
+  if (Game.lastEncounters.length > 2) Game.lastEncounters.shift();
+  
+  switch (selectedEncounter) {
+    case 'combat': startCombat(); break;
+    case 'business': announceRandomBusiness(); break;
+    case 'empty': startEmpty(); break;
+    case 'tv': startMisc(); break;
+    case 'news': startNews(); break;
+    case 'npc': startNPC(); break;
+    case 'police': startPolice(); break;
+    default: startEmpty();
+  }
+}
+
+// Combat system
+function makeEnemy(isBoss = false) {
+  let L = Game.level, hp = rand(10 + L * 5, 20 + L * 8);
+  if (isBoss) hp = Math.floor(hp * 2.2);
+  let enemyType = CONFIG.enemyTypes[rand(0, CONFIG.enemyTypes.length - 1)];
+  return {
+    name: isBoss ? ('BOSS ' + enemyType.toUpperCase()) : enemyType,
+    hp, maxHP: hp,
+    attackMin: (isBoss ? 6 : 4) + L,
+    attackMax: (isBoss ? 10 : 7) + L * 2,
+    isBoss
+  };
+}
+
+
+function startCombat() {
+  Game.scene = 'combat';
+  const isBoss = ((Game.aliensDefeated + 1) % 5 === 0);
+  Game.enemy = makeEnemy(isBoss);
+  Game.abilitiesUsed = {};
+  Game.tempWeapon = null;
+  Game.tempWeaponUsed = false;
+  Game.turnsThisFight = 0;                  // <-- add this
+
+  const behavior = CONFIG.enemyBehaviors[rand(0, CONFIG.enemyBehaviors.length - 1)];
+  appendStory('A ' + enemyLabel() + ' ' + behavior + '!', 'system');
+  updateHealthMeters();
+  updateCombatButtons();
+}
+
+
+
+function updateCombatButtons() {
+  clearButtons();
+
+  // Normal abilities
+  Object.keys(CONFIG.abilities).forEach(abilityKey => {
+    const ability = CONFIG.abilities[abilityKey];
+    if (Game.level >= ability.unlockLevel) {
+      const isOnCooldown = Game.abilitiesUsed[abilityKey] && ability.cooldown > 0;
+      addButton(ability.name + (isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
+    }
+  });
+
+  // Temporary weapon (one-time)
+  if (Game.tempWeapon && !Game.tempWeaponUsed) {
+    const tw = TEMP_WEAPONS[Game.tempWeapon];
+    addButton(tw.name + ' (One-Time)', () => playerAttack(Game.tempWeapon));
+  }
+
+  addButton('Flee', () => {
+  const wasBroke = Game.money <= 0;
+
+  if (wasBroke) {
+    const tip = rand(2, 4);
+    appendStory('You back away from the fight.', 'system');
+    appendStory(`A couple locals steady you: "Thanks for trying—heal up, we still need you."`, 'system');
+    appendStory(`They press $${tip} into your hand.`, 'system');
+    Game.money += tip;
+    updateStats();
+  } else {
+    appendStory('You run from the ' + enemyNoun() + '.', 'system');
+  }
+
+    // exit combat
+    Game.enemy = null;
+    Game.scene = 'explore';
+    Game.tempWeapon = null;
+    Game.tempWeaponUsed = false;
+    updateHealthMeters();
+    clearButtons();
+    addButton('Explore', () => encounter());
+  });
+}
+
+async function playerAttack(abilityKey) {
+  if (Game.scene !== 'combat' || !Game.enemy) return;
+
+  beginTurnLock();                      // lock through the whole turn
+  const L = Game.level;
+  Game.turnsThisFight = (Game.turnsThisFight || 0) + 1;
+
+  // resolve ability
+  let ability, isTemp = false;
+  if (TEMP_WEAPONS[abilityKey]) { ability = TEMP_WEAPONS[abilityKey]; isTemp = true; }
+  else { ability = CONFIG.abilities[abilityKey]; }
+  if (!ability) { endTurnLock(); return; }
+
+  // cooldown guard
+  if (!isTemp && (Game.abilitiesUsed[abilityKey] && ability.cooldown > 0)) { endTurnLock(); return; }
+
+  const minDmg = (ability.minDamage + L);
+  const maxDmg = (ability.maxDamage + L);
+  const hit = Math.random() < ability.hit;
+
+  await appendStoryAsync(`You ${ability.verb.toUpperCase()}...`, 'system');
+  await new Promise(r => setTimeout(r, CONFIG.combatPacing.afterPlayerLineMs));
+
+  if (hit) {
+    const d = rand(minDmg, maxDmg);
+    await appendStoryAsync(`It hits for ${d} damage!`, 'hit');
+    showDamageFloat('enemy', 'dmg', d);
+
+    const prev = Game.enemy.hp;
+    Game.enemy.hp = Math.max(0, Game.enemy.hp - d);
+    await animateHealthTo('enemy', prev, Game.enemy.hp);
+
+    // end of fight?
+    if (Game.enemy.hp <= 0) {
+      await appendStoryAsync(cap(enemyNoun()) + ' defeated!', 'system');
+
+      // handle cooldown/one-time AFTER result text
+      if (isTemp) { Game.tempWeaponUsed = true; Game.tempWeapon = null; }
+      else if (ability.cooldown > 0) { Game.abilitiesUsed[abilityKey] = true; }
+
+      // wrap up, unlock for reward
+      winCombat();
+      endTurnLock();
+      return;
+    }
+  } else {
+    await appendStoryAsync(`...but you miss!`, 'miss');
+    showDamageFloat('enemy', 'miss');
+  }
+
+  // handle cooldown/one-time AFTER player's text is done
+  if (isTemp) { Game.tempWeaponUsed = true; Game.tempWeapon = null; }
+  else if (ability.cooldown > 0) { Game.abilitiesUsed[abilityKey] = true; }
+
+  // Enemy's turn
+  await new Promise(r => setTimeout(r, CONFIG.combatPacing.betweenTurnsMs));
+  await enemyTurnSequence();
+
+  maybeThrowWeapon()
+  // End of round → re-enable buttons if still in combat
+  if (Game.scene === 'combat' && Game.enemy && Game.hp > 0) {
+    updateStats();
+    updateCombatButtons();
+  }
+  endTurnLock();
+}
+
+async function enemyTurnSequence() {
+  if (!Game.enemy) return;
+  const L = Game.level;
+  const mv = CONFIG.enemyMoves[rand(0, CONFIG.enemyMoves.length - 1)];
+
+  await appendStoryAsync(`The ${enemyLabel()} uses ${mv.name.toUpperCase()}...`, 'system');
+
+  if (Math.random() < mv.hit) {
+    let base = rand(mv.minDamage + L, mv.maxDamage + L * 2);
+
+    // Armor soak
+    let soaked = 0;
+    if (Game.armor && Game.armor.durabilityHits > 0) {
+      soaked = Math.min(Game.armor.dr || 0, base);
+      base = Math.max(0, base - (Game.armor.dr || 0));
+      Game.armor.durabilityHits--;
+    }
+
+    await appendStoryAsync(`It hits for ${base} damage!`, 'hit');
+    $('#gameUI').classList.add('shake');
+      setTimeout(() => $('#gameUI').classList.remove('shake'), 420);
+
+    showDamageFloat('player', base > 0 ? 'dmg' : 'miss', base || 0);
+
+    const prev = Game.hp;
+    Game.hp = Math.max(0, Game.hp - base);
+
+    await animateHealthTo('player', prev, Game.hp);
+
+    if (soaked > 0) {
+      const armorName = (Game.armor && Game.armor.name) ? Game.armor.name : 'Armor';
+      await appendStoryAsync(`(${armorName} absorbs ${soaked})`, 'system');
+    }
+
+    if (Game.armor && Game.armor.durabilityHits === 0) {
+      const armorName = (Game.armor && Game.armor.name) ? Game.armor.name : 'Your armor';
+      await appendStoryAsync(`${armorName} is shredded.`, 'system');
+    }
+
+    if (Game.hp <= 0) { gameOver(); return; }
+  } else {
+    await appendStoryAsync(`...but it misses!`, 'miss');
+    showDamageFloat('player', 'miss');
+  }
+
+  await new Promise(r => setTimeout(r, CONFIG.combatPacing.afterEnemyLineMs));
+}
+
+
+function winCombat() {
+  Game.tempWeapon = null;
+  Game.tempWeaponUsed = false;
+
+  const turns = Math.max(1, Game.turnsThisFight || 0);
+  const bonus = Game.enemy?.isBoss ? 2 : 0;
+  const reward = Math.min(10, turns + bonus);
+  Game.pendingReward = reward;
+
+  clearButtons();
+  appendStory(`Townspeople cheer and toss cash! $${reward}`, 'system'); // (fixed stray ')')
+  addButton('Collect $' + reward, collectReward);
+}
+
+
+function collectReward() {
+  $('#story').innerHTML = '';
+  appendStory('You scoop up the cash the crowd threw: $' + Game.pendingReward + '.', 'system');
+  Game.money += Game.pendingReward; Game.pendingReward = 0;
+  Game.aliensDefeated++; Game.aliensThisLevel++; checkLevelUp(); checkVictory();
+  Game.enemy = null; Game.scene = 'explore'; 
+  updateHealthMeters();
+  updateStats(); clearButtons();
+  addButton('Explore', () => encounter());
+}
+
+function checkLevelUp() {
+  while (Game.aliensThisLevel >= Game.requiredThisLevel) {
+    const prevStreet = getStreet(Game.level);
+
+    Game.aliensThisLevel -= Game.requiredThisLevel;
+    Game.level++;
+    Game.requiredThisLevel *= 2;
+
+    Game.maxHP += CONFIG.hpGainPerLevel;
+    Game.hp = Game.maxHP;
+
+    if (prevStreet) appendStory(`[STREET CLEARED] ${prevStreet.cleared}`, 'news');
+
+    const nextStreet = getStreet(Game.level);
+    if (nextStreet) {
+      appendStory(`[ADVANCE] Next: ${nextStreet.name}`, 'news');
+      Game.streetJustChanged = true;
+    }
+
+    const unlocked = getUnlockedAt(Game.level);      // <-- bring this back
+    appendStory(`[LEVEL UP] You reached level ${Game.level}! Max HP +${CONFIG.hpGainPerLevel}.`, 'news');
+    if (unlocked.length) appendStory(`New ability unlocked: ${unlocked.join(', ')}.`, 'news');
+    showLevelUp(Game.level, CONFIG.hpGainPerLevel, unlocked);  // <-- confetti + toast
+  }
+}
+
+
+function checkVictory() {
+  if (Game.level >= CONFIG.maxLevel) gameVictory();
+}
+
+function gameVictory() {
+  appendStory("VICTORY! You have defeated all " + enemyNoun() + " forces in Cleveland!", 'system');
+  appendStory("The mothership retreats above Lake Erie. The city is safe!", 'system');
+  clearButtons(); $('#gameOverTitle').textContent = 'VICTORY!';
+  $('#ovLevel').textContent = Game.level; $('#ovDefeated').textContent = Game.aliensDefeated;
+  $('#ovMoney').textContent = Game.money; $('#overlay').style.display = 'flex';
+}
+
+function heal(amount, msg) {
+  const before = Game.hp;
+  const newHP = Math.min(Game.maxHP, Math.max(0, Game.hp + amount));
+  const gained = newHP - before;
+  Game.hp = newHP;
+
+  if (amount < 0) {
+    appendStory((msg || 'Ouch.') + ' (' + amount + ' HP, now ' + Game.hp + '/' + Game.maxHP + ')', 'system');
+  } else {
+    if (gained > 0) {
+      appendStory((msg || 'You recover.') + ' (+' + gained + ' HP, now ' + Game.hp + '/' + Game.maxHP + ')', 'system');
+    } else {
+      // Full health (or no change): show simple message only
+      appendStory(msg || 'You are already at full health.', 'system');
+    }
+  }
+
+  updateHealthMeters();
+}
+
+
+// Put near your other utils
+function hasArmorActive() {
+  return !!(Game.armor && (Game.armor.durabilityHits ?? 0) > 0);
+}
+
+// Business system
+function getBusiness(id) { return businesses.find(b => b.id === id); }
+
+function announceRandomBusiness() { 
+  const pool = businesses
+    .filter(b => b.id !== Game.lastBusiness)
+    .filter(b => !(hasArmorActive() && b.id === 'thrift'));  // <— block thrift if any armor
+  const b = pool[rand(0, pool.length - 1)];
+  Game.lastBusiness = b.id; 
+  announceBusiness(b.id); 
+}
+
+
+function announceBusiness(id) {
+  const b = getBusiness(id); Game.scene = 'business';
+  appendStory('[' + b.name.toUpperCase() + '] ' + b.intro, 'system'); clearButtons();
+  addButton('Visit ' + b.name, () => startBusiness(id));
+  addButton('Keep Exploring', () => { $('#story').innerHTML = ''; encounter(); });
+}
+
+function startBusiness(id) {
+  const b = getBusiness(id);
+  Game.currentBiz = id;
+  $('#story').innerHTML = '';
+  appendStory(b.enter, 'system');
+
+  // loyalty visit tracking
+  ensureLoyalty(id);
+  Game.loyalty[id].visits += 1;    // count a visit on entry
+  awardIfEligible(id);
+  resetVisitState(id);
+  loyaltyBanner(id);
+
+  renderBusinessMenu(id);
+}
+
+function renderBusinessMenu(id) {
+  const b = getBusiness(id); clearButtons();
+  if (!Game.purchasedThisVisit[id]) Game.purchasedThisVisit[id] = new Set();
+
+  b.items.forEach(it => {
+    const purchased = Game.purchasedThisVisit[id].has(it.id);
+    const finalPrice = computeFinalPrice(id, it);
+    const label =
+      finalPrice === 0
+        ? `${it.name} ($${it.price} → FREE)`
+        : (finalPrice !== it.price
+            ? `${it.name} ($${it.price} → $${finalPrice})`
+            : `${it.name} ($${it.price})`);
+
+    const afford = Game.money >= finalPrice;
+    addButton(label, () => buyBusinessItem(id, it), !afford || purchased);
+  });
+  addButton('Leave', () => { $('#story').innerHTML = ''; encounter(); });
+}
+
+function buyBusinessItem(id, it) {
+  if (!Game.purchasedThisVisit[id]) Game.purchasedThisVisit[id] = new Set();
+  if (Game.purchasedThisVisit[id].has(it.id)) return;
+
+  const basePrice = it.price ?? 0;
+  const finalPrice = computeFinalPrice(id, it);
+  if (Game.money < finalPrice) return;
+
+  Game.money -= finalPrice;
+
+  // track paid vs free for loyalty logic
+  if (finalPrice > 0) {
+    Game.visitPaidCounts[id] = (Game.visitPaidCounts[id] || 0) + 1;
+  } else if (basePrice === 1 && Game.loyalty[id]?.hasCard) {
+    const pol = activePolicyFor(id);
+    if (pol.dollarFreeWithPaid) {
+      Game.visitFreeDollarUsed[id] = (Game.visitFreeDollarUsed[id] || 0) + 1;
+    }
+  }
+
+  // Armor items remain the same
+  if (it.armor) {
+    Game.armor = { ...it.armor };
+    appendStory(it.message || ('You equip ' + it.name + '.'), 'system');
+  } else {
+    heal(it.healing, it.message);
+  }
+
+  if (it.special) {
+    const tip = CONFIG.bartenderTips[rand(0, CONFIG.bartenderTips.length - 1)];
+    appendStory('Bartender says: "' + tip + '"', 'system');
+  }
+
+  Game.purchasedThisVisit[id].add(it.id);
+  updateStats();
+  renderBusinessMenu(id);
+}
+
+function startEmpty() {
+  Game.scene = 'empty';
+  clearButtons();
+
+  // Show a flavor line first
+  const emptyText = CONFIG.emptyEncounters[rand(0, CONFIG.emptyEncounters.length - 1)];
+  appendStory('[EMPTY STREETS] ' + emptyText, 'system');
+
+  clearButtons();
+  addButton('Keep Walking', () => encounter());
+  addButton('Look Around', () => {
+    clearButtons();
+
+    // 15% rat bite, 15% rations (full heal), 15% kevlar vest, else a lookText
+    const roll = Math.random(); // 0..1
+
+    if (roll < 0.15) {
+      appendStory('[EMPTY STREETS] Something scurries from a dumpster…', 'system');
+      heal(-2, 'A rat bites your ankle!');
+    } else if (roll < 0.30) {
+      appendStory('[CARE PACKAGE] You find a military box of field rations.', 'special');
+      const need = Math.max(0, Game.maxHP - Game.hp);
+      if (need > 0) {
+        heal(need, 'You eat the rations and feel fully restored.');
+      } else {
+        appendStory('You are already at full health.', 'system');
+      }
+    } else if (roll < 0.45) {
+      appendStory('[CARE PACKAGE] Under a tarp: a Kevlar Vest.', 'special');
+      if (Game.armor && Game.armor.name === 'Kevlar Vest') {
+        Game.armor.durabilityHits = 25;
+        appendStory('You discard your damaged vest for this Kevlar Vest (-3 dmg for 25 hits).', 'system');
+      } else {
+        Game.armor = { name: 'Kevlar Vest', dr: 3, durabilityHits: 25 };
+        appendStory('You equip the Kevlar Vest (-3 dmg for 25 hits).', 'system');
+      }
+      updateStats();
+    } else {
+      const lookTexts = [
+        'You search but find nothing of interest.', 'The area seems completely abandoned.',
+        'You hear only the distant sound of sirens.', 'A cold wind blows through the empty street.',
+        'You notice broken glass scattered on the ground.', 'The silence is almost deafening.',
+        'You see evidence of a hasty evacuation.', 'Trash and debris litter the sidewalks.',
+        'A few lights flicker in distant windows.', 'The city feels like a ghost town.'
+      ];
+      const lookText = lookTexts[rand(0, lookTexts.length - 1)];
+      appendStory('[EMPTY STREETS] ' + lookText, 'system');
+    }
+
+    clearButtons();
+    addButton('Continue', () => encounter());
+  });
+}
+
+
+function startMisc() {
+  Game.scene = 'npc'; appendStory('[TV] you see a television in a shop window', 'system'); clearButtons();
+  addButton('Watch', () => {
+    const newsLine = nextStreetNewsLine(); // <-- use NEXT street teaser
+    appendStory('BREAKING NEWS: ' + newsLine, 'news'); clearButtons();
+    addButton('Explore', () => encounter());
+  });
+  addButton('Ignore', () => encounter());
+}
+
+function startNews() {
+  Game.scene = 'npc'; appendStory('[NEWS STAND] you see todays paper.', 'system'); clearButtons();
+  addButton('Read', () => {
+    const headline = CONFIG.newspaperHeadlines[rand(0, CONFIG.newspaperHeadlines.length - 1)];
+    const healAmount = rand(1, 5);
+    appendStory('[CLEVELAND PRESS]: ' + headline, 'news');
+    heal(healAmount, 'Reading the news helps you relax and recover.');
+    clearButtons();
+    addButton('Explore', () => encounter());
+  });
+  addButton('Ignore', () => encounter());
+}
+
+function startNPC() {
+  Game.scene = 'npc'; appendStory('[SURVIVOR] a local bystander hiding in the shadows.', 'system'); clearButtons();
+  addButton('Talk', () => {
+    const dialogue = CONFIG.survivorDialogue[rand(0, CONFIG.survivorDialogue.length - 1)];
+    appendStory('They say: "' + dialogue + '"', 'system'); clearButtons();
+    addButton('Explore', () => encounter());
+  });
+  addButton('Ignore', () => encounter());
+}
+
+function startPolice() {
+  Game.scene = 'npc'; appendStory('[POLICE OFFICER] A cop watches the streets cautiously.', 'system'); clearButtons();
+  addButton('Talk', () => {
+    const dialogue = CONFIG.policeDialogue[rand(0, CONFIG.policeDialogue.length - 1)];
+    appendStory('Officer says: "' + dialogue + '"', 'system'); clearButtons();
+    addButton('Explore', () => encounter());
+  });
+  addButton('Ignore', () => encounter());
+}
+
+function gameOver() {
+  appendStory('You fall as Cleveland fades...', 'system'); clearButtons();
+  $('#gameOverTitle').textContent = 'GAME OVER'; $('#ovLevel').textContent = Game.level;
+  $('#ovDefeated').textContent = Game.aliensDefeated; $('#ovMoney').textContent = Game.money;
+  $('#overlay').style.display = 'flex';
+}
+
+console.log('Game loaded successfully!');
+</script>
+
+<div class="wrap">
+  <div class="theme-toggle">
+    <!-- Add next to your moon/sun toggle -->
+<button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
+
+<!-- Settings panel -->
+<div id="settingsPanel">
+  <h3>Text Settings</h3>
+  <div class="row">
+    <label for="twInstant">Instant text</label>
+    <input type="checkbox" id="twInstant">
+  </div>
+  <div class="row">
+    <label>Speed <small id="twSpeedLabel"></small></label>
+    <input type="range" id="twSpeed" min="5" max="60" step="1">
+  </div>
+  <div class="row">
+    <label for="twPauses">Punctuation pauses</label>
+    <input type="checkbox" id="twPauses">
+  </div>
+  <div class="row">
+    <label for="twLock">Lock buttons while typing</label>
+    <input type="checkbox" id="twLock">
+  </div>
+</div>
+
+    <span class="toggle-label">🌙</span>
+
+    <div class="toggle-switch" onclick="toggleTheme()">
+      <div class="toggle-handle"></div>
+    </div>
+    <span class="toggle-label">☀️</span>
+  </div>
+  <div id="levelUpToast" class="hidden"></div>
+  <div id="startScreen" class="frame">
+    <div class="title">ALIEN INVASION RPG</div>
+    <div class="desc">       
+      <div style="margin-top:16px;">
+        <button onclick="newGame()" style="display:block;width:100%;box-sizing:border-box;padding:14px 16px;font-size:16px;border-radius:10px;margin-top:12px;margin-bottom:12px; background-color: #444; color: #cfcfcf; ">
+          START
+        </button>
+      </div>
+      <img src="images/splash.png" />
+    </div>
+  </div>
+  <div id="gameUI" class="frame hidden">
+    <div id="statsBar">
+      <span><b>Level:</b> <span id="statLevel">1</span></span>
+      <span><b>Armor:</b> <span id="statArmor">None</span></span>
+      <span><b>HP:</b> <span id="statHP">50</span>/<span id="statMaxHP">50</span></span>
+      <span><b>Money:</b> $<span id="statMoney">0</span></span>
+      <span><b>Aliens Defeated:</b> <span id="statDefeated">0</span></span>
+      <span><b>Street:</b> <span id="statStreet">—</span></span>
+      
+    </div>
+    <div id="story"></div>
+    <div id="combatStats">
+      <div class="health-meter player-health">
+        <div class="health-label">PLAYER</div>
+        <div class="health-bar">
+          <div class="health-fill" id="playerHealthFill"></div>
+          <div class="health-text" id="playerHealthText">50/50</div>
+        </div>
+      </div>
+      <div class="health-meter enemy-health">
+        <div class="health-label">ENEMY</div>
+        <div class="health-bar">
+          <div class="health-fill" id="enemyHealthFill"></div>
+          <div class="health-text" id="enemyHealthText">0/0</div>
+        </div>
+      </div>
+    </div>
+    <div id="buttons"></div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="panel">
+    <h2 id="gameOverTitle">GAME OVER</h2>
+    <div class="stats">
+      <div><b>Level:</b> <span id="ovLevel">-</span></div>
+      <div><b>Aliens Defeated:</b> <span id="ovDefeated">-</span></div>
+      <div><b>Money:</b> $<span id="ovMoney">-</span></div>
+    </div>
+    <div class="actions">
+      <button onclick="location.reload()">New Game</button>
+    </div>
+    
+  </div>
+</div>
+
+</body>
+</html>
