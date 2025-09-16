@@ -4,7 +4,7 @@ A single-file HTML text adventure game set in 1989 Cleveland during an alien inv
 
 ## Play the Game
 
-[Play Online](https://yourusername.github.io/alien-invasion-cleveland-rpg/)
+[Play Online](https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/)
 
 Or download `index.html` and open it in any modern web browser.
 
