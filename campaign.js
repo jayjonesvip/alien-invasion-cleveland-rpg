@@ -106,6 +106,7 @@ async function guardTurn() {
 }
 function recoverAtShelter() {
   const loss=Math.ceil(Game.money*.25);
+  if(Game.weaponUses<=0)Game.tempWeapon=null;
   Game.money-=loss;Game.hp=Game.maxHP;Game.scene='explore';Game.enemy=null;Game.pendingReward=0;Game.guarding=false;
   Game.buffs=null;$('#overlay').style.display='none';showDirectory();
   appendStory('Neighbors brought you to shelter. Lost $'+loss+'. Your training and district progress are intact.','system');saveGame();

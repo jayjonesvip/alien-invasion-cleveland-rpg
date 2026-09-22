@@ -29,6 +29,8 @@ Game.enemy=null;continueGame();assert.equal(Game.enemy.hp,enemyHP);assert.equal(
 Game.enemy.hp=0;winCombat();saveGame();const bounty=Game.pendingReward;continueGame();assert.equal(Game.pendingReward,bounty);
 collectReward();saveGame();continueGame();assert.equal(Game.pendingReward,0);assert.notEqual(Game.scene,'combat');
 Game.money=40;Game.hp=0;gameOver();assert.equal(el('#recoverBtn').hidden,false);recoverAtShelter();assert.equal(Game.money,30);assert.equal(Game.hp,Game.maxHP);assert.ok(Game.learned.includes('superKick'));
+// Exhausting a weapon on a losing turn cannot restore it at the next battle.
+Game.tempWeapon='leadPipe';Game.weaponUses=0;Game.tempWeaponUsed=true;Game.hp=0;gameOver();recoverAtShelter();startCombat();assert.equal(Game.tempWeapon,null);
 // Checkpoints remain at the start of an in-flight turn.
 startCombat();saveGame();const before=localStorage.getItem(SAVE_KEY);beginTurnLock();Game.hp-=1;saveGame();assert.equal(localStorage.getItem(SAVE_KEY),before);endTurnLock();assert.notEqual(localStorage.getItem(SAVE_KEY),before);
 // Guard, defense, species behavior, and a purchased counter actually affect combat.
