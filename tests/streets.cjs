@@ -1,7 +1,7 @@
 const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`
 newGame();Game.scene='explore';showDirectory();
-const lockedPatrol=el('#buttons').children.find(b=>b.textContent==='Patrol / Fight (Level 2)');
+const lockedPatrol=el('#buttons').children.find(b=>b.textContent==='Hunt an Alien (Level 2)');
 assert.equal(lockedPatrol.disabled,true);lockedPatrol.onclick({});assert.equal(Game.scene,'directory');
 // Exploration must still provide a complete path through the first street.
 const initialRandom=Math.random;Math.random=()=>.4;
@@ -10,18 +10,18 @@ for(let tries=0;tries<30&&Game.level===1;tries++){
  if(Game.scene==='combat'){
   assert.equal(Game.enemy.isBoss,Game.aliensThisLevel===2);
   Game.enemy.hp=0;winCombat();collectReward();
-  if(Game.level===1)assert.equal(el('#buttons').children.find(b=>b.textContent==='Patrol / Fight (Level 2)').disabled,true);
+  if(Game.level===1)assert.equal(el('#buttons').children.find(b=>b.textContent==='Hunt an Alien (Level 2)').disabled,true);
  }
 }
 Math.random=initialRandom;assert.equal(Game.level,2);assert.equal(Game.aliensDefeated,3);
-travelToStreet(2);assert.equal(el('#buttons').children.find(b=>b.textContent==='Patrol / Fight').disabled,false);
+travelToStreet(2);assert.equal(el('#buttons').children.find(b=>b.textContent==='Hunt an Alien').disabled,false);
 newGame();Game.scene='explore';showDirectory();
 assert.equal(streetNumber(),1);travelToStreet(2);assert.equal(streetNumber(),1,'Uncleared exit remains locked');
 startBusiness('pizza');assert.equal(Game.scene,'directory','Remote shop is inaccessible');
 // A boss unlocks the road without moving the player.
 for(let i=0;i<3;i++){startCombat();Game.enemy.hp=0;winCombat();collectReward();}
 assert.equal(Game.level,2);assert.equal(streetNumber(),1);assert.equal(streetCleared(),true);
-assert.ok(!el('#buttons').children.some(b=>b.textContent==='Patrol / Fight'));
+assert.ok(!el('#buttons').children.some(b=>b.textContent==='Hunt an Alien'));
 startCombat();assert.equal(Game.enemy,null,'Cleared streets cannot start battles');
 const cash=Game.money, wins=Game.aliensDefeated;
 travelToStreet(2);assert.equal(streetNumber(),2);assert.equal(availableShopIds().join(','),'pizza,thrift,drugstore');

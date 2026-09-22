@@ -90,10 +90,10 @@ function showDirectory(arrival='') {
   if(here===10)appendStory('Erieside: defeat the two guards, then the Mothership Commander. No shops on the harbor.','special');
   if(!cleared){
     const locked=Game.level<2;
-    const button=addButton(locked?'Patrol / Fight (Level 2)':Game.aliensThisLevel===2?'Challenge District Boss':'Patrol / Fight',()=>{if(Game.level<2)return;$('#story').innerHTML='';startCombat();},locked);
+    const button=addButton(locked?'Hunt an Alien (Level 2)':Game.aliensThisLevel===2?'Challenge District Boss':'Hunt an Alien',()=>{if(Game.level<2)return;if(Game.aliensThisLevel===2){$('#story').innerHTML='';startCombat();}else return huntAlien();},locked);
     if(locked){
       button.title='Unlocks at level 2. Explore to find aliens and the first street boss.';
-      appendStory('Patrol unlocks at level 2. Use Explore / Encounters to find aliens; your third victory clears the street.','special');
+      appendStory('Hunt an Alien unlocks at level 2. Use Explore / Encounters to find aliens; your third victory clears the street.','special');
     }
   }
   addButton(cleared?'Explore Cleared Street':'Explore / Encounters',()=>encounter());
@@ -106,6 +106,20 @@ function showDirectory(arrival='') {
   }
   saveGame();
 }
+async function huntAlien() {
+  if(Game.level<2||streetCleared()||Game.scene!=='directory'||StoryType.holdLock||StoryType.typing)return;
+  beginTurnLock();Game.scene='hunting';clearButtons();
+  const meter=$('#huntMeter'), progress=$('#huntProgress');
+  progress.value=0;$('#huntStatus').textContent='Searching '+getStreet(streetNumber()).name+'…';meter.hidden=false;
+  $('#story').innerHTML='';appendStory('You follow distant footsteps and scan the shadows for an alien.','system');
+  try {
+    for(let step=1;step<=10;step++){
+      await sleep(250);progress.value=step*10;
+      if(step===5)$('#huntStatus').textContent='Movement spotted. Closing in…';
+    }
+    startCombat();
+  } finally {meter.hidden=true;endTurnLock();}
+}
 function addDirectoryReturn() {
   const roaming=['explore','empty','npc'].includes(Game.scene);
   if(roaming || (Game.scene==='business'&&!Game.businessEntered)) {
@@ -116,7 +130,7 @@ function addDirectoryReturn() {
 function updateCampaignHUD() {
   const directory=$('#directoryBtn');
   directory.disabled=['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
-  directory.title=Game.scene==='combat'?'Finish the fight and collect your bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
+  directory.title=Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight and collect your bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
   $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/3 WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';

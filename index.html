@@ -715,7 +715,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.1" />
-  <link rel="stylesheet" href="retro-skin.css?v=2.4" />
+  <link rel="stylesheet" href="retro-skin.css?v=2.5" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -2403,6 +2403,7 @@ decayBuffsEndOfRound();
         <div id="sceneLocation" class="scene-location"></div>
       </section>
       <div class="campaign-strip"><span id="campaignProgress"></span><span id="saveStatus">AUTOSAVE READY</span></div>
+      <section id="huntMeter" class="hunt-meter" aria-label="Alien search" hidden><label id="huntStatus" for="huntProgress" aria-live="polite">Searching the street...</label><progress id="huntProgress" max="100" value="0">Searching</progress></section>
       <div id="story"></div>
       <div id="combatStats">
         <div id="combatIntent"></div>
@@ -2477,7 +2478,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=2.2"></script>
+<script src="campaign.js?v=2.4"></script>
 </body>
 
 </html>
