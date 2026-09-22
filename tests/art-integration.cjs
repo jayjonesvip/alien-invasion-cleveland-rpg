@@ -34,6 +34,8 @@ for(const street of STREETS){Game.level=street.level;updateSceneArt();assert.ok(
 for(const color of CONFIG.enemyTypes){
   Game.enemy={name:color,color,hp:30,maxHP:30,isBoss:false};Game.scene='combat';updateHealthMeters();
   assert.equal(el('#enemyArt').dataset.asset,'alien-'+color);assert.equal(el('#enemyActor').hidden,false);
+  Game.enemy.isBoss=true;updateSceneArt();
+  assert.equal(el('#enemyArt').dataset.asset,'boss-'+color);
 }
 Game.enemy.isBoss=true;updateSceneArt();assert.equal(el('#sceneArt').classList.contains('is-boss'),true);
 updateCombatButtons();
@@ -48,6 +50,36 @@ assert.equal(el('#overlay').style.display,'flex');
 Game.scene='combat';Game.enemy={name:'blue',color:'blue',hp:10,maxHP:10};
 gameOver();assert.equal(Game.scene,'gameover');assert.equal(el('#endingArt').dataset.asset,'ending-defeat');assert.equal(el('#enemyActor').hidden,true);
 newGame();assert.equal(Game.level,1);assert.equal(el('#overlay').style.display,'none');assert.equal(el('#enemyActor').hidden,true);
+const originalRandom=Math.random;
+Math.random=()=>0;
+for(const business of businesses){
+  announceBusiness(business.id);
+  assert.equal(el('#streetArt').dataset.asset,'street-ontario','Approaching retains the street');
+  startBusiness(business.id);
+  assert.equal(el('#streetArt').dataset.asset,SceneArt.businesses[business.id][0]);
+  assert.equal(el('#sceneLocation').textContent,business.name);
+  assert.equal(el('#enemyActor').hidden,true);
+  Game.money=100;buyBusinessItem(business.id,business.items[0]);
+  assert.equal(el('#streetArt').dataset.asset,SceneArt.businesses[business.id][0],'Purchases retain the shop');
+  el('#buttons').children.find(b=>b.textContent==='Leave').onclick({});
+  assert.equal(Game.businessEntered,false);
+  assert.equal(el('#streetArt').dataset.asset,'street-ontario','Leaving restores the street');
+}
+for(const [start,key,action] of [[startMisc,'tv','Watch'],[startNews,'newspaper','Read'],[startNPC,'survivor','Talk'],[startPolice,'police','Talk']]){
+  start();assert.equal(el('#streetArt').dataset.asset,SceneArt.encounters[key][0]);
+  el('#buttons').children.find(b=>b.textContent===action).onclick({});
+  assert.equal(el('#streetArt').dataset.asset,SceneArt.encounters[key][0],'Dialogue retains illustration');
+  encounter();assert.equal(Game.artEncounter,null);
+  assert.equal(el('#streetArt').dataset.asset,'street-ontario');
+}
+for(const roll of [0.2,0.35]){
+  startEmpty();Math.random=()=>roll;
+  el('#buttons').children.find(b=>b.textContent==='Look Around').onclick({});
+  assert.equal(el('#streetArt').dataset.asset,'encounter-care-package');
+  Math.random=()=>0;encounter();assert.equal(Game.artEncounter,null);
+}
+newGame();assert.equal(Game.currentBiz,null);assert.equal(Game.businessEntered,false);assert.equal(Game.artEncounter,null);
+Math.random=originalRandom;
 `,context);
 const paths=new Set();
 for(const element of elements.values()){
@@ -55,7 +87,12 @@ for(const element of elements.values()){
   if(element.srcset) for(const src of element.srcset.split(',')) paths.add(src.trim().split(' ')[0]);
 }
 const assets=fs.readdirSync(path.join(root,'images/art'));
-assert.equal(assets.filter(x=>!x.includes('-small')).length,16);
-assert.equal(assets.filter(x=>x.includes('-small')).length,12);
+assert.equal(assets.filter(x=>!x.includes('-small')).length,42);
+assert.equal(assets.filter(x=>x.includes('-small')).length,34);
+const catalog=vm.runInContext('({...SceneArt.streets,...SceneArt.businesses,...SceneArt.encounters})',context);
+for(const [asset] of Object.values(catalog)){
+  paths.add('images/art/'+asset+'.webp');paths.add('images/art/'+asset+'-small.webp');
+}
+for(const color of ['blue','green','grey','red'])for(const type of ['alien','boss'])paths.add('images/art/'+type+'-'+color+'.webp');
 for(const src of paths)assert.ok(fs.existsSync(path.join(root,src)),src);
-console.log('PASS: 10 street mappings; 4 enemy mappings; boss styling; flee cleanup; level-up art; victory terminal state; defeat art; restart; 28 optimized asset files.');
+console.log('PASS: 10 streets; 4 aliens; 4 bosses; 17 business entry/purchase/exit flows; 5 encounter types; both care-package rewards; flee cleanup; level-up; endings; restart; 76 optimized assets.');

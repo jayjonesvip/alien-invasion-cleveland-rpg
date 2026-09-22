@@ -19,8 +19,9 @@ Or download the repository ZIP, extract it, and open `index.html` in a modern we
 - Dark/light theme toggle
 - Mobile-friendly responsive design
 - Typewriter text effects with customizable settings
-- Ten illustrated street environments, four transparent alien sprites, and two ending illustrations
-- Responsive scene artwork with boss treatments and a separate interactive art gallery
+- 42 illustrations: ten streets, seventeen businesses, four aliens, four distinct bosses, five encounters, and two endings
+- Responsive scene artwork that follows shopping, conversations, supply discoveries, and combat
+- A separate interactive art gallery for previewing every scene and enemy
 
 ## Gameplay
 

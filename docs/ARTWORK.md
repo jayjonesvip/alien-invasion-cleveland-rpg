@@ -1,19 +1,37 @@
-# First artwork release
+# Artwork
 
-This release integrates 16 illustrations: ten Cleveland street environments, four alien sprites, and victory/defeat scenes. It retains the original splash. All new artwork was generated with the built-in OpenAI imagegen tool; [prompts and revisions](art-prompts.json) document the generation process.
+The game now includes 42 illustrations in addition to the original splash:
 
-The 16 full-size WebP exports total 2,948,818 bytes, approximately 2.95 MB. Twelve smaller exports serve narrow viewports. All four alien sprites retain real transparency. Art is requested as scenes change rather than loading the entire collection at startup.
+| Artwork | Count | Appears when |
+| --- | ---: | --- |
+| Cleveland streets | 10 | Exploring, fighting, and reaching the finale |
+| Business interiors and vendors | 17 | Entering each business; remains visible during purchases |
+| Regular alien sprites | 4 | Fighting blue, green, grey, and red aliens |
+| Dedicated boss sprites | 4 | Fighting each color's boss variant |
+| Encounter scenes | 5 | Watching TV, reading a newspaper, meeting a survivor or police officer, and finding a care package |
+| Endings | 2 | Victory and defeat |
 
-`SceneArt.render()` maps the current street and enemy to images. Bosses currently use larger regular sprites with a badge; dedicated boss art, business interiors, and conversation art are planned for a later release. The gallery allows street/enemy combinations to be inspected without playing through the campaign.
+All artwork was generated with the built-in OpenAI imagegen tool. [First-release prompts and revisions](art-prompts.json) document the original 16 images; [second-release prompts and revisions](art-prompts-phase2.json) document the additional 26. The four bosses were generated using their corresponding regular alien as a visual reference.
 
-The environments are illustrated interpretations of the game's 1989 setting, not verified historical reconstructions. A modern museum in the first Lakeside draft was removed in the final revision.
+The 42 full-size WebP exports total 7,615,732 bytes, approximately 7.6 MB. Thirty-four smaller exports serve narrow viewports, and all eight alien and boss sprites retain real transparency. Art is requested as scenes change rather than loading the entire collection at startup. No third-party image service is needed at runtime.
+
+`SceneArt.render()` selects artwork from game state. Approaching a business retains the current street; entering switches to its interior. Leaving, ignoring an encounter, and starting a new game clear the relevant artwork state. Rations and vest discoveries share the care-package illustration. Bosses use their own sprite and a distinct badge. Interior and conversation framing keeps faces visible in the game banner.
+
+The interactive gallery previews every street, business, and encounter, plus regular alien and boss combinations on each street. Gallery thumbnails also show both endings.
+
+The environments are illustrated interpretations of the game's 1989 setting, not verified historical reconstructions. Modern museum architecture identified in the Lakeside and care-package drafts was replaced in their final revisions.
 
 ## Gameplay scope
 
-Game balance is unchanged. Victory still triggers on reaching level 10; Erieside appears as the finale backdrop. This release does not add a playable final chapter. Victory now retains a terminal scene instead of restoring an Explore button beneath the overlay, and defeat also records a terminal scene for artwork cleanup.
+Game balance is unchanged. Victory still triggers on reaching level 10; Erieside appears as the finale backdrop. These artwork releases do not add a playable final chapter. The first release also made victory and defeat retain terminal scenes for correct artwork cleanup.
 
 ## Validation
 
-`node tests/art-integration.cjs` uses a lightweight DOM stub to exercise actual game and artwork scripts. It checks street and enemy mappings, boss styling, fleeing, level-up, victory, defeat, restart, and asset paths. It does not replace browser layout testing.
+Run `node tests/art-integration.cjs` from the repository root. Its lightweight DOM stub executes the actual game and artwork scripts and checks:
 
-The release was also checked in the browser for opening gameplay, one full combat round, fleeing, transparent compositing, desktop, phone portrait, and short landscape layouts. Source images were checked for successful decoding and sprite transparency. No full campaign playthrough was performed.
+- Ten street mappings and all eight regular/boss sprites.
+- Entry, purchase, and exit for all seventeen businesses.
+- All five encounter illustrations, conversation continuity, and both care-package rewards.
+- Fleeing, level-up, victory, defeat, restart, and all 76 optimized asset paths.
+
+Browser checks cover representative shops, purchases and exits, conversations, supplies, transparent boss compositing, and desktop, phone portrait, and short landscape layouts. Source images were checked for successful decoding and sprite transparency. These checks do not constitute a full campaign playthrough.

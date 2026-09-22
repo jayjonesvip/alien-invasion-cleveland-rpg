@@ -714,8 +714,8 @@
       apply();
     })();
   </script>
-  <link rel="stylesheet" href="scene-art.css" />
-  <script src="scene-art.js"></script>
+  <link rel="stylesheet" href="scene-art.css?v=2.1" />
+  <script src="scene-art.js?v=2.1"></script>
 </head>
 
 <body>
@@ -1551,7 +1551,8 @@
 
 
     function updateSceneArt() {
-      SceneArt.render({street: getStreet(Game.level), level: Game.level, enemy: Game.enemy, scene: Game.scene});
+      SceneArt.render({street: getStreet(Game.level), level: Game.level, enemy: Game.enemy, scene: Game.scene,
+        business: Game.businessEntered ? Game.currentBiz : null, encounter: Game.artEncounter});
     }
 
     function updateStats() {
@@ -1693,6 +1694,7 @@
         streetJustChanged: true, level: 1, hp: CONFIG.startingHP, maxHP: CONFIG.startingHP, money: CONFIG.startingMoney,
         aliensDefeated: 0, aliensThisLevel: 0, requiredThisLevel: CONFIG.aliensRequiredFirstLevel, turnsThisFight: 0, armor: null,
         scene: 'intro', enemy: null, purchasedThisVisit: {}, pendingReward: 0,
+        currentBiz: null, businessEntered: false, artEncounter: null,
         abilitiesUsed: {}, lastEncounters: [], lastBusiness: null,
         loyalty: {},                 // { [bizId]: { visits: number, hasCard: boolean } }
         visitPaidCounts: {},         // per-visit paid item count per biz
@@ -1724,6 +1726,9 @@
     function encounter() {
       Game.scene = 'explore';
       Game.enemy = null;
+      Game.currentBiz = null;
+      Game.businessEntered = false;
+      Game.artEncounter = null;
       updateStats(); clearButtons();
       $('#story').innerHTML = '';
       Game.purchasedThisVisit = {};
@@ -2121,6 +2126,9 @@ decayBuffsEndOfRound();
 
     function announceBusiness(id) {
       const b = getBusiness(id); Game.scene = 'business';
+      Game.currentBiz = id;
+      Game.businessEntered = false;
+      Game.artEncounter = null;
       appendStory('[' + b.name.toUpperCase() + '] ' + b.intro, 'system'); clearButtons();
       addButton('Visit ' + b.name, () => startBusiness(id));
       addButton('Keep Exploring', () => { $('#story').innerHTML = ''; encounter(); });
@@ -2129,6 +2137,9 @@ decayBuffsEndOfRound();
     function startBusiness(id) {
       const b = getBusiness(id);
       Game.currentBiz = id;
+      Game.scene = 'business';
+      Game.businessEntered = true;
+      Game.artEncounter = null;
       $('#story').innerHTML = '';
       appendStory(b.enter, 'system');
 
@@ -2234,6 +2245,7 @@ decayBuffsEndOfRound();
 
     function startEmpty() {
       Game.scene = 'empty';
+      Game.artEncounter = null;
       clearButtons();
 
       // Show a flavor line first
@@ -2252,6 +2264,7 @@ decayBuffsEndOfRound();
           appendStory('[EMPTY STREETS] Something scurries from a dumpster…', 'system');
           heal(-2, 'A rat bites your ankle!');
         } else if (roll < 0.30) {
+          Game.artEncounter = 'care-package';
           appendStory('[CARE PACKAGE] You find a military box of field rations.', 'special');
           const need = Math.max(0, Game.maxHP - Game.hp);
           if (need > 0) {
@@ -2260,6 +2273,7 @@ decayBuffsEndOfRound();
             appendStory('You are already at full health.', 'system');
           }
         } else if (roll < 0.45) {
+          Game.artEncounter = 'care-package';
           appendStory('[CARE PACKAGE] Under a tarp: a Kevlar Vest.', 'special');
           if (Game.armor && Game.armor.name === 'Kevlar Vest') {
             Game.armor.durabilityHits = 25;
@@ -2288,6 +2302,7 @@ decayBuffsEndOfRound();
 
 
     function startMisc() {
+      Game.artEncounter = 'tv';
       Game.scene = 'npc'; appendStory('[TV] you see a television in a shop window', 'system'); clearButtons();
       addButton('Watch', () => {
         const newsLine = nextStreetNewsLine(); // <-- use NEXT street teaser
@@ -2298,6 +2313,7 @@ decayBuffsEndOfRound();
     }
 
     function startNews() {
+      Game.artEncounter = 'newspaper';
       Game.scene = 'npc'; appendStory('[NEWS STAND] you see todays paper.', 'system'); clearButtons();
       addButton('Read', () => {
         const headline = CONFIG.newspaperHeadlines[rand(0, CONFIG.newspaperHeadlines.length - 1)];
@@ -2311,6 +2327,7 @@ decayBuffsEndOfRound();
     }
 
     function startNPC() {
+      Game.artEncounter = 'survivor';
       Game.scene = 'npc'; appendStory('[SURVIVOR] a local bystander hiding in the shadows.', 'system'); clearButtons();
       addButton('Talk', () => {
         const dialogue = CONFIG.survivorDialogue[rand(0, CONFIG.survivorDialogue.length - 1)];
@@ -2321,6 +2338,7 @@ decayBuffsEndOfRound();
     }
 
     function startPolice() {
+      Game.artEncounter = 'police';
       Game.scene = 'npc'; appendStory('[POLICE OFFICER] A cop watches the streets cautiously.', 'system'); clearButtons();
       addButton('Talk', () => {
         const dialogue = CONFIG.policeDialogue[rand(0, CONFIG.policeDialogue.length - 1)];

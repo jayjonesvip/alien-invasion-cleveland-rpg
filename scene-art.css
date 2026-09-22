@@ -12,6 +12,7 @@
 }
 .scene-art [hidden], #endingArt[hidden] { display: none !important; }
 .street-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
+.is-interior .street-art, .is-conversation .street-art { object-position: center 25%; }
 .scene-art::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(180deg, #06111ac2, transparent 28%, transparent 60%, #06111aeb); }
 .scene-heading { position: absolute; z-index: 3; top: 15px; left: 18px; right: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 10px; letter-spacing: .13em; line-height: 1.6; text-shadow: 0 1px 3px #000; }
 .scene-status { border: 1px solid #87d2d87a; background: #0a2129c9; color: #c3eff2; padding: 3px 7px; font-size: 9px; }
@@ -42,6 +43,7 @@
 }
 @media (max-height: 550px) {
   .scene-art { flex-basis: 22dvh; height: 22dvh; min-height: 75px; }
+  .scene-art.is-interior, .scene-art.is-conversation { min-height: 100px; }
   .scene-heading { top: 5px; }
   .scene-location { bottom: 7px; font-size: 15px; }
   #statsBar { padding: 5px 8px; }
