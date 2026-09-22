@@ -50,6 +50,7 @@ assert.equal(el('#overlay').style.display,'flex');
 Game.scene='combat';Game.enemy={name:'blue',color:'blue',hp:10,maxHP:10};
 gameOver();assert.equal(Game.scene,'gameover');assert.equal(el('#endingArt').dataset.asset,'ending-defeat');assert.equal(el('#enemyActor').hidden,true);
 newGame();assert.equal(Game.level,1);assert.equal(el('#overlay').style.display,'none');assert.equal(el('#enemyActor').hidden,true);
+assert.equal(el('#combatStats').style.display,'none','Restart clears the combat HUD');
 const originalRandom=Math.random;
 Math.random=()=>0;
 for(const business of businesses){

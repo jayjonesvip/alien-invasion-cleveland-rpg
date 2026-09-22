@@ -715,6 +715,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.1" />
+  <link rel="stylesheet" href="retro-skin.css?v=1" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1139,6 +1140,7 @@
       const currentTheme = document.documentElement.getAttribute('data-theme');
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', newTheme);
+      document.querySelector('#themeToggle')?.setAttribute('aria-pressed', String(newTheme === 'dark'));
       try { localStorage.setItem('alienRPGTheme', newTheme); } catch (e) { }
     };
 
@@ -1146,9 +1148,9 @@
 
     // Initialize theme
     try {
-      const savedTheme = localStorage.getItem('alienRPGTheme') || 'light';
+      const savedTheme = localStorage.getItem('alienRPGTheme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
-    } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+    } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
     loadTW(); // <— add this
 
 
@@ -1249,6 +1251,7 @@
     }
 
     function initSettingsUI() {
+      $('#themeToggle').setAttribute('aria-pressed', String(document.documentElement.getAttribute('data-theme') === 'dark'));
       const btn = $('#settingsBtn'), panel = $('#settingsPanel');
       if (!btn || !panel) return;
 
@@ -1533,6 +1536,7 @@
 
       const b = document.createElement('button');
       b.textContent = lbl;
+      b.dataset.tone = /^(Flee|Leave|Ignore|Keep Exploring)$/.test(lbl) ? 'quiet' : 'action';
 
       // Respect business rules now, respect lock visually now
       // but remember the ORIGINAL (business) disabled state for unlock restore
@@ -1711,6 +1715,7 @@
 
       $('#overlay').style.display = 'none';
       showGameUI();
+      updateHealthMeters();
       appendStory('TVs in window displays show breaking news: ALIEN INVASION IN CLEVELAND, 1989.', 'system');
       divider();
       clearButtons();
@@ -2361,27 +2366,35 @@ decayBuffsEndOfRound();
   </script>
 
   <div class="wrap">
+    <header class="transmission-header">
+      <a class="wordmark" href="index.html" aria-label="Alien Invasion home">AI<span>/</span>89</a>
+      <span class="transmission-city">CLEVELAND, OHIO <span>— SEPTEMBER 1989</span></span>
+      <span class="signal"><i aria-hidden="true"></i> EMERGENCY FREQUENCY</span>
+    </header>
     <div id="levelUpToast" class="hidden"></div>
     <div id="startScreen" class="frame">
-      <div class="title">ALIEN INVASION RPG</div>
-      <div class="desc">
-        <div style="margin-top:16px;">
-          <button class="start-button" onclick="newGame()">START</button>
-        </div>
-        <img src="images/splash.png" alt="ALIEN INVASION RPG splash art showing 1989 Cleveland under attack" />
+      <img class="title-art" src="images/art/street-ontario.webp" alt="Alien lights gather over Cleveland's deserted Public Square." />
+      <div class="title-content">
+        <p class="edition-label"><span></span> AN ORDINARY PERSON. AN IMPOSSIBLE NIGHT.</p>
+        <h1 class="title">ALIEN<br><span>INVASION</span></h1>
+        <p class="title-location">CLEVELAND <b>1989</b></p>
+        <p class="title-description">The city's gone quiet. The sky hasn't.<br>Fight your way through downtown. Find shelter.<br>Make it to the lakefront alive.</p>
+        <button class="start-button" onclick="newGame()">START SURVIVING <span aria-hidden="true">↗</span></button>
+        <div class="title-footer"><span>A TURN-BASED SURVIVAL RPG</span><a href="gallery.html">EXPLORE THE ART ↗</a></div>
       </div>
     </div>
 
     <div id="gameUI" class="frame hidden">
 
       <div id="statsBar">
-        <span><b>Level:</b> <span id="statLevel">1</span></span>
-        <span><b>Armor:</b> <span id="statArmor">None</span></span>
-        <span><b>HP:</b> <span id="statHP">50</span>/<span id="statMaxHP">50</span></span>
-        <span><b>Money:</b> $<span id="statMoney">0</span></span>
-        <span><b>Aliens Defeated:</b> <span id="statDefeated">0</span></span>
-        <span><b>Street:</b> <span id="statStreet">—</span></span>
-
+        <div class="hud-grid">
+          <div class="hud-stat"><b>LEVEL</b><strong id="statLevel">1</strong></div>
+          <div class="hud-stat hud-health"><b>VITALS</b><strong><span id="statHP">50</span><small> / <span id="statMaxHP">50</span></small></strong></div>
+          <div class="hud-stat hud-money"><b>CASH</b><strong>$<span id="statMoney">0</span></strong></div>
+          <div class="hud-stat"><b>DEFEATED</b><strong id="statDefeated">0</strong></div>
+          <div class="hud-stat hud-armor"><b>ARMOR</b><strong id="statArmor">None</strong></div>
+          <div class="hud-stat hud-street"><b>LOCATION</b><strong id="statStreet">—</strong></div>
+        </div>
       </div>
       <section id="sceneArt" class="scene-art" aria-label="Current scene">
         <img id="streetArt" class="street-art" alt="" decoding="async" hidden />
@@ -2396,6 +2409,7 @@ decayBuffsEndOfRound();
       </section>
       <div id="story"></div>
       <div id="combatStats">
+        <div class="combat-meters">
         <div class="health-meter player-health">
           <div class="health-label">PLAYER</div>
           <div class="health-bar">
@@ -2410,9 +2424,10 @@ decayBuffsEndOfRound();
             <div class="health-text" id="enemyHealthText">0/0</div>
           </div>
         </div>
+        </div>
       </div>
       <div class="controls-dock">
-        <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
+        <button id="settingsBtn" class="settings-btn" title="Settings">TEXT SETTINGS</button>
 
         <!-- Panel lives INSIDE the dock so it anchors correctly -->
         <div id="settingsPanel">
@@ -2422,7 +2437,7 @@ decayBuffsEndOfRound();
             <input type="checkbox" id="twInstant">
           </div>
           <div class="row">
-            <label>Speed <small id="twSpeedLabel"></small></label>
+            <label for="twSpeed">Speed <small id="twSpeedLabel"></small></label>
             <input type="range" id="twSpeed" min="5" max="60" step="1">
           </div>
           <div class="row">
@@ -2435,11 +2450,12 @@ decayBuffsEndOfRound();
           </div>
         </div>
 
-        <span class="toggle-label">🌙</span>
-        <div class="toggle-switch" onclick="toggleTheme()">
-          <div class="toggle-handle"></div>
-        </div>
-        <span class="toggle-label">☀️</span>
+        <span class="toggle-label">PAPER</span>
+        <button id="themeToggle" class="toggle-switch" onclick="toggleTheme()" aria-label="Neon theme" aria-pressed="false">
+          <span class="toggle-handle"></span>
+        </button>
+        <span class="toggle-label">NEON</span>
+        <span class="action-prompt">YOUR NEXT MOVE <span aria-hidden="true">↓</span></span>
       </div>
       <div id="buttons"></div>
     </div>
