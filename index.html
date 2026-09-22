@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <script src="analytics.js?v=1.0"></script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   
@@ -1743,6 +1744,7 @@
 
 
       initCampaign();
+      window.trackGameEvent?.('new_game');
       $('#story').innerHTML = '';
 
       // 1) Show the game blurb as the first line the player sees
@@ -1843,6 +1845,8 @@
       // keep any shop-armed temp weapon for “next fight”
       Game.tempWeaponUsed = false;
       Game.turnsThisFight = 0;                  // <-- add this
+      window.trackGameEvent?.('fight_start', {enemy_type:Game.enemy.color,is_boss:isBoss});
+      if(Game.enemy.tutorialTackleReady)window.trackGameEvent?.('tutorial_begin');
 
       const behavior = CONFIG.enemyBehaviors[rand(0, CONFIG.enemyBehaviors.length - 1)];
       appendStory('A ' + enemyLabel() + ' ' + behavior + '!', 'system');
@@ -1876,6 +1880,7 @@
       addButton(Game.learned.includes('counter')?'Guard / Counter':'Guard',guardTurn);
       updateCampaignHUD();
       addButton('Flee', () => {
+        window.trackGameEvent?.('fight_flee', {enemy_type:Game.enemy?.color,turns:Game.turnsThisFight});
         const wasBroke = Game.money <= 0;
 
         if (wasBroke) {
@@ -1936,7 +1941,7 @@
 
       // --- buffs affect hit chance and damage ---
       const tutorialHit=abilityKey==='tackle'&&tutorialTackleReady();
-      if(tutorialHit){Game.enemy.tutorialTackleReady=false;updateCampaignHUD();}
+      if(tutorialHit){Game.enemy.tutorialTackleReady=false;window.trackGameEvent?.('tutorial_complete');updateCampaignHUD();}
       let hitChance = ability.hit;
       if (Game.buffs?.firstHitGuaranteed && !tutorialHit) { hitChance = 1; Game.buffs.firstHitGuaranteed = false; }
       hitChance += (Game.buffs?.hitBonus || 0) + Game.permanent.accuracy;
@@ -2070,6 +2075,10 @@ decayBuffsEndOfRound();
 
 
     function winCombat() {
+      if(Game.enemy && !Game.enemy.defeatTracked){
+        Game.enemy.defeatTracked=true;
+        window.trackGameEvent?.('alien_defeated', {enemy_type:Game.enemy.color,is_boss:!!Game.enemy.isBoss,is_final_boss:!!Game.enemy.isFinalBoss,turns:Game.turnsThisFight});
+      }
       const reward=4+Game.level+(Game.enemy?.isBoss?6:0);
       Game.pendingReward=reward;
       clearButtons();updateHealthMeters();
@@ -2079,16 +2088,18 @@ decayBuffsEndOfRound();
     function collectReward() {
       if(!Game.enemy || Game.enemy.hp>0 || Game.pendingReward<=0)return;
       const final=!!Game.enemy.isFinalBoss;
+      window.trackGameEvent?.('earn_virtual_currency', {virtual_currency_name:'Cleveland cash',value:Game.pendingReward});
       Game.money+=Game.pendingReward;Game.pendingReward=0;
       Game.aliensDefeated++;Game.aliensThisLevel++;
       Game.enemy=null;Game.scene='explore';decayBuffsEndOfFight();
-      if(final) {Game.finalBossDefeated=true;updateStats();updateHealthMeters();gameVictory();saveGame();return;}
+      if(final) {Game.finalBossDefeated=true;window.trackGameEvent?.('campaign_complete', {aliens_defeated:Game.aliensDefeated});updateStats();updateHealthMeters();gameVictory();saveGame();return;}
       checkLevelUp();updateStats();updateHealthMeters();showDirectory();saveGame();
     }
     function checkLevelUp() {
       if(Game.aliensThisLevel<3||Game.level>=10)return;
       Game.aliensThisLevel=0;Game.level++;Game.highestDistrict=Game.level;Game.requiredThisLevel=3;
       Game.maxHP+=CONFIG.hpGainPerLevel;Game.hp=Game.maxHP;Game.streetJustChanged=true;
+      window.trackGameEvent?.('level_up', {level:Game.level});
       showLevelUp(Game.level,CONFIG.hpGainPerLevel,[]);
     }
     function checkVictory() { if(Game.finalBossDefeated)gameVictory(); }
@@ -2267,6 +2278,8 @@ decayBuffsEndOfRound();
 
 
       Game.purchasedThisVisit[id].add(it.id);
+      window.trackGameEvent?.('spend_virtual_currency', {virtual_currency_name:'Cleveland cash',value:finalPrice,item_name:it.name,item_id:it.id,shop_id:id});
+      if(it.skill||it.defense)window.trackGameEvent?.('skill_learned', {skill_id:it.id,shop_id:id});
       updateStats();
       if(Game.hp>0)renderBusinessMenu(id);
       saveGame();
@@ -2377,7 +2390,8 @@ decayBuffsEndOfRound();
       addButton('Ignore', () => encounter());
     }
 
-    function gameOver() {
+    function gameOver(trackDefeat=true) {
+      if(trackDefeat && Game.scene!=='gameover')window.trackGameEvent?.('player_defeated', {enemy_type:Game.scene==='combat'?Game.enemy?.color:'environment',turns:Game.scene==='combat'?Game.turnsThisFight:0});
       Game.scene = 'gameover';
       SceneArt.ending('defeat');
       appendStory('You fall as Cleveland fades...', 'system'); clearButtons();
@@ -2509,7 +2523,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=2.5"></script>
+<script src="campaign.js?v=2.6"></script>
 </body>
 
 </html>

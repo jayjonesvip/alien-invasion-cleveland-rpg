@@ -38,6 +38,7 @@ function travelToStreet(destination) {
   if(!Number.isInteger(destination)||Math.abs(destination-streetNumber())!==1||destination<1||destination>Game.highestDistrict) return;
   if(['start','combat','victory','gameover'].includes(Game.scene)||StoryType.holdLock||StoryType.typing) return;
   const from=getStreet(streetNumber());
+  window.trackGameEvent?.('street_travel', {from_street:streetNumber(),to_street:destination});
   Game.currentStreet=destination;Game.scene='explore';Game.currentBiz=null;Game.businessEntered=false;Game.artEncounter=null;
   Game.lastEncounters=[];Game.lastBusiness=null;Game.streetJustChanged=false;
   showDirectory('You walk from '+from.name+' to '+getStreet(destination).name+'. '+(destination<Game.level?getStreet(destination).cleared:getStreet(destination).enter));
@@ -166,6 +167,7 @@ async function guardTurn() {
   endTurnLock();
 }
 function recoverAtShelter() {
+  window.trackGameEvent?.('shelter_recovery');
   const loss=Math.ceil(Game.money*.25);
   if(Game.weaponUses<=0)Game.tempWeapon=null;
   Game.money-=loss;Game.hp=Game.maxHP;Game.scene='explore';Game.enemy=null;Game.pendingReward=0;Game.guarding=false;
@@ -208,9 +210,10 @@ function continueGame() {
   const state=readSave();if(!state)return;
   for(const key of SAVE_FIELDS)if(Object.hasOwn(state,key))Game[key]=state[key];
   Game.purchasedThisVisit={};for(const [id,value]of Object.entries(state.purchasedThisVisit||{}))if(getBusiness(id))Game.purchasedThisVisit[id]=new Set(Array.isArray(value?.setValues)?value.setValues:[]);
+  window.trackGameEvent?.('game_resume', {saved_scene:Game.scene});
   Game.guarding=false;showGameUI();$('#story').innerHTML='';updateStats();updateHealthMeters();
   if(Game.scene==='victory'){gameVictory();return;}
-  if(Game.hp<=0||Game.scene==='gameover'){gameOver();return;}
+  if(Game.hp<=0||Game.scene==='gameover'){gameOver(false);return;}
   if(Game.scene==='combat') {
     appendStory('Resumed your encounter with '+enemyLabel()+'.','system');
     if(Game.enemy.hp<=0) { clearButtons();addButton('Collect $'+Game.pendingReward,collectReward); }

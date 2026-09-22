@@ -46,7 +46,7 @@ You're an ordinary person caught in an alien invasion of Cleveland. Fight your w
 ## Technical Details
 
 - Pure HTML/CSS/JavaScript
-- No external dependencies
+- No external dependencies required for gameplay; live-site analytics uses Google Analytics
 - Saves the campaign, theme, and text settings to localStorage in the current browser
 - Works offline
 
@@ -63,6 +63,7 @@ node tests/campaign.cjs
 node tests/streets.cjs
 node tests/hunt.cjs
 node tests/tutorial.cjs
+node tests/analytics.cjs
 node tests/balance.cjs
 ```
 
@@ -71,3 +72,5 @@ The campaign suite includes the artwork integration checks. The balance script r
 See [campaign notes](docs/CAMPAIGN.md) for mechanics and checkpoint behavior, and [artwork notes](docs/ARTWORK.md) for asset scope and generation prompts.
 
 Search metadata, canonical links, and the three-page [sitemap](https://lakeeffectinvasion.com/sitemap.xml) use lakeeffectinvasion.com. See [SEO notes](docs/SEO.md) for maintenance and verification.
+
+Google Analytics uses the supplied GA4 property on the live domain. See [analytics notes](docs/ANALYTICS.md) for events, parameter definitions, and reporting setup. Local/offline play does not send analytics.
