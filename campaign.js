@@ -83,12 +83,19 @@ function showDirectory(arrival='') {
   if(arrival)appendStory(arrival,'news');
   appendStory('STREET DIRECTORY / '+getStreet(here).name,'special');
   appendStory('LANDMARK / '+STREET_LANDMARKS[here-1],'system');
-  appendStory(cleared?'STREET CLEARED. Safe to revisit: no battles here. The active fight is on '+getStreet(Game.level).name+'.':'Street progress: '+Game.aliensThisLevel+'/3 victories. '+(Game.aliensThisLevel===2?'The district boss is next.':'Two patrols, then the district boss.'),'system');
+  appendStory(cleared?'STREET CLEARED. Safe to revisit: no battles here. The active fight is on '+getStreet(Game.level).name+'.':'Street progress: '+Game.aliensThisLevel+'/3 victories. '+(Game.aliensThisLevel===2?'The district boss is next.':'Two regular fights, then the district boss.'),'system');
   appendStory('LOCAL STOPS / '+streetOfferings(here),'system');
   appendStory('Build: Punch +'+Game.permanent.punch+' · Kick +'+Game.permanent.kick+' · Defense +'+Game.permanent.defense+' · Accuracy +'+Math.round(Game.permanent.accuracy*100)+'%.','system');
   appendStory('Training: '+(Game.learned.map(k=>CONFIG.abilities[k]?.name||'Counterattack').join(', ')||'None yet. Find basic tapes at the Record Store on Ontario.'),'system');
   if(here===10)appendStory('Erieside: defeat the two guards, then the Mothership Commander. No shops on the harbor.','special');
-  if(!cleared)addButton(Game.aliensThisLevel===2?'Challenge District Boss':'Patrol / Fight',()=>{$('#story').innerHTML='';startCombat();});
+  if(!cleared){
+    const locked=Game.level<2;
+    const button=addButton(locked?'Patrol / Fight (Level 2)':Game.aliensThisLevel===2?'Challenge District Boss':'Patrol / Fight',()=>{if(Game.level<2)return;$('#story').innerHTML='';startCombat();},locked);
+    if(locked){
+      button.title='Unlocks at level 2. Explore to find aliens and the first street boss.';
+      appendStory('Patrol unlocks at level 2. Use Explore / Encounters to find aliens; your third victory clears the street.','special');
+    }
+  }
   addButton(cleared?'Explore Cleared Street':'Explore / Encounters',()=>encounter());
   for(const id of availableShopIds())addButton(getBusiness(id).name,()=>startBusiness(id));
   if(here>1)addButton('Walk back: '+getStreet(here-1).name,()=>travelToStreet(here-1)).classList.add('travel-button');

@@ -1,6 +1,21 @@
 const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`
 newGame();Game.scene='explore';showDirectory();
+const lockedPatrol=el('#buttons').children.find(b=>b.textContent==='Patrol / Fight (Level 2)');
+assert.equal(lockedPatrol.disabled,true);lockedPatrol.onclick({});assert.equal(Game.scene,'directory');
+// Exploration must still provide a complete path through the first street.
+const initialRandom=Math.random;Math.random=()=>.4;
+for(let tries=0;tries<30&&Game.level===1;tries++){
+ encounter();
+ if(Game.scene==='combat'){
+  assert.equal(Game.enemy.isBoss,Game.aliensThisLevel===2);
+  Game.enemy.hp=0;winCombat();collectReward();
+  if(Game.level===1)assert.equal(el('#buttons').children.find(b=>b.textContent==='Patrol / Fight (Level 2)').disabled,true);
+ }
+}
+Math.random=initialRandom;assert.equal(Game.level,2);assert.equal(Game.aliensDefeated,3);
+travelToStreet(2);assert.equal(el('#buttons').children.find(b=>b.textContent==='Patrol / Fight').disabled,false);
+newGame();Game.scene='explore';showDirectory();
 assert.equal(streetNumber(),1);travelToStreet(2);assert.equal(streetNumber(),1,'Uncleared exit remains locked');
 startBusiness('pizza');assert.equal(Game.scene,'directory','Remote shop is inaccessible');
 // A boss unlocks the road without moving the player.
