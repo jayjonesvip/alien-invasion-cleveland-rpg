@@ -1,0 +1,54 @@
+.scene-art {
+  position: relative;
+  isolation: isolate;
+  flex: 0 1 34dvh;
+  height: 34dvh;
+  min-height: 130px;
+  max-height: 330px;
+  overflow: hidden;
+  background: #0c1821;
+  border-bottom: 1px solid #476071;
+  color: #f4f1e9;
+}
+.scene-art [hidden], #endingArt[hidden] { display: none !important; }
+.street-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
+.scene-art::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(180deg, #06111ac2, transparent 28%, transparent 60%, #06111aeb); }
+.scene-heading { position: absolute; z-index: 3; top: 15px; left: 18px; right: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 10px; letter-spacing: .13em; line-height: 1.6; text-shadow: 0 1px 3px #000; }
+.scene-status { border: 1px solid #87d2d87a; background: #0a2129c9; color: #c3eff2; padding: 3px 7px; font-size: 9px; }
+.scene-location { position: absolute; z-index: 3; left: 18px; right: 18px; bottom: 17px; font-size: clamp(16px, 3vw, 23px); font-weight: bold; letter-spacing: -.035em; text-shadow: 0 2px 8px #000; }
+.enemy-actor { position: absolute; z-index: 1; right: 13%; bottom: 8%; width: 40%; height: 84%; }
+.enemy-actor::before { content: ''; position: absolute; bottom: 0; left: 10%; width: 80%; height: 9%; background: #0009; border-radius: 50%; filter: blur(6px); }
+.enemy-art { position: relative; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 4px 8px #031117b3); }
+.is-boss .enemy-actor { height: 96%; width: 46%; right: 10%; bottom: 3%; }
+.is-boss .scene-status { color: #ffd1dc; border-color: #f885a4; background: #430d29dd; }
+.is-boss .enemy-art { filter: drop-shadow(0 0 12px #f3358455); }
+.is-defeated .enemy-art { opacity: .3; filter: grayscale(1); }
+#endingArt { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; margin: 0 0 16px; border-radius: 3px; }
+#overlay { z-index: 1100; }
+#overlay .panel { box-sizing: border-box; max-height: 94dvh; overflow-y: auto; }
+#story { line-height: 1.55; }
+#buttons { max-height: 30dvh; overflow-y: auto; }
+#startScreen { overflow-y: auto; }
+@media (max-width: 600px) {
+  .scene-art { flex-basis: 27dvh; height: 27dvh; min-height: 115px; }
+  .scene-heading { top: 10px; left: 12px; font-size: 8px; gap: 4px; }
+  .scene-status { font-size: 8px; }
+  .scene-location { left: 12px; bottom: 12px; }
+  .enemy-actor { right: 6%; width: 46%; }
+  #statsBar { font-size: 11px; line-height: 1.65; padding: 8px 10px; }
+  #combatStats { padding: 6px 10px; }
+  #buttons { gap: 6px; padding: 8px; }
+  #buttons button { padding: 10px 11px; font-size: 12px; }
+}
+@media (max-height: 550px) {
+  .scene-art { flex-basis: 22dvh; height: 22dvh; min-height: 75px; }
+  .scene-heading { top: 5px; }
+  .scene-location { bottom: 7px; font-size: 15px; }
+  #statsBar { padding: 5px 8px; }
+  #story { min-height: 45px; }
+  #combatStats { padding: 4px 8px; }
+  .controls-dock { padding: 4px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

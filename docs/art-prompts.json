@@ -1,0 +1,90 @@
+{
+  "mode": "Built-in image_gen",
+  "prompts": [
+    {
+      "name": "street-ontario",
+      "prompt": "Use case: historical-scene. Asset type: wide 16:9 background illustration for Alien Invasion Cleveland RPG. Create a single finished illustration, no collage. Scene: Ontario Street at Public Square in Cleveland in 1989 during a small-alien invasion, Terminal Tower unmistakably looming left of center, abandoned late-1980s city buses and overturned newspaper boxes at the sides. Street-level view, wet asphalt foreground kept open for a separate creature sprite. Painted 1980s science-fiction horror VHS cover aesthetic, detailed hand-painted realism, subtle print grain, navy and teal shadows, small magenta otherworldly glows, warm amber windows. Atmospheric twilight, legible silhouettes, strong depth. The urban skyline must evoke 1989: no Key Tower, no modern glass additions or modern cars. No people or creatures in foreground, no text, no logos, no title, no borders, no health bars or UI. Landscape 1536x864 composition.",
+      "revision": null
+    },
+    {
+      "name": "street-superior",
+      "prompt": "Use case: historical-scene. Asset: single wide 16:9 street background for Alien Invasion Cleveland RPG, 1989 Cleveland. Superior Avenue, a deep canyon of early twentieth-century stone and glass office buildings, abandoned 1980s bus sideways at the far intersection, windblown paper cups, wet roadway and flickering office windows. No prominent tower. Painted cinematic 1980s sci-fi horror cover realism, fine film grain, navy/teal shadows, subtle magenta alien glow in cloudy twilight sky, amber windows, damp weathered textures. Eye-level camera, deep perspective, empty unobstructed street foreground for a separately layered enemy. Consistent detailed game environment style. No people, no foreground creatures, no text, logos, UI, health bars, frames or collage. Period 1980s vehicles and architecture, no contemporary cars. Landscape 1536x864 composition.",
+      "revision": null
+    },
+    {
+      "name": "street-euclid",
+      "prompt": "Use case: historical-scene. Asset: single wide 16:9 street background for Alien Invasion Cleveland RPG, 1989 Cleveland. Euclid Avenue theater district, ornate old theater facades with luminous amber and magenta marquee bulbs, dark lobby entrances, a fallen velvet rope and old film posters without readable lettering. Strong theater identity. Painted cinematic 1980s sci-fi horror cover realism, fine film grain, navy/teal shadows, subtle magenta alien glow in cloudy twilight sky, amber windows, damp weathered textures. Eye-level camera, deep perspective, empty unobstructed street foreground for a separately layered enemy. Consistent detailed game environment style. No people, no foreground creatures, no text, logos, UI, health bars, frames or collage. Period 1980s vehicles and architecture, no contemporary cars. Landscape 1536x864 composition.",
+      "revision": null
+    },
+    {
+      "name": "street-east-9th",
+      "prompt": "Use case: historical-scene. Asset: single wide 16:9 street background for Alien Invasion Cleveland RPG, 1989 Cleveland. East 9th Street financial district, monumental stone banks and reflective period office facades, bronze revolving doors, an abandoned open briefcase with papers by a storm grate, blue reflections. No modern landmarks. Painted cinematic 1980s sci-fi horror cover realism, fine film grain, navy/teal shadows, subtle magenta alien glow in cloudy twilight sky, amber windows, damp weathered textures. Eye-level camera, deep perspective, empty unobstructed street foreground for a separately layered enemy. Consistent detailed game environment style. No people, no foreground creatures, no text, logos, UI, health bars, frames or collage. Period 1980s vehicles and architecture, no contemporary cars. Landscape 1536x864 composition.",
+      "revision": null
+    },
+    {
+      "name": "street-lakeside",
+      "prompt": "Use case: historical-scene. Single finished wide 16:9 environment illustration for Alien Invasion Cleveland RPG set in 1989. Scene: Lakeside Avenue civic plaza, broad stone municipal steps at one side, period flagpoles and empty benches, cold lake mist, a dropped police radio by a bench. Low horizontal composition, distant magenta clouds. Cinematic painted 1980s sci-fi horror realism, navy/teal shadows, subtle magenta alien energy, warm amber practical lighting, weathered textures, restrained print grain. Eye-level perspective, rich atmospheric depth, foreground kept empty for a separately composited creature. No people, foreground creatures, text, logos, titles, UI, frames or collage. Period-appropriate architecture and objects. Landscape composition 1536x864.",
+      "revision": null
+    },
+    {
+      "name": "street-west-6th",
+      "prompt": "Use case: historical-scene. Single finished wide 16:9 environment illustration for Alien Invasion Cleveland RPG set in 1989. Scene: West 6th warehouse district, red brick and iron fire escapes, loading docks, partly open industrial bay doors, steam from a manhole, oil and rain on cobbled asphalt, amber dock lamps. Intimate enclosed street, no huge UFO. Cinematic painted 1980s sci-fi horror realism, navy/teal shadows, subtle magenta alien energy, warm amber practical lighting, weathered textures, restrained print grain. Eye-level perspective, rich atmospheric depth, foreground kept empty for a separately composited creature. No people, foreground creatures, text, logos, titles, UI, frames or collage. Period-appropriate architecture and objects. Landscape composition 1536x864.",
+      "revision": null
+    },
+    {
+      "name": "street-old-river",
+      "prompt": "Use case: historical-scene. Single finished wide 16:9 environment illustration for Alien Invasion Cleveland RPG set in 1989. Scene: Old River Road in the Flats, steel lift bridge spanning dark Cuyahoga water, huge freighter silhouette, old brick bars with abstract pink neon, wet riverfront boardwalk and pilings. Wide river view, open foreground walkway. Cinematic painted 1980s sci-fi horror realism, navy/teal shadows, subtle magenta alien energy, warm amber practical lighting, weathered textures, restrained print grain. Eye-level perspective, rich atmospheric depth, foreground kept empty for a separately composited creature. No people, foreground creatures, text, logos, titles, UI, frames or collage. Period-appropriate architecture and objects. Landscape composition 1536x864.",
+      "revision": null
+    },
+    {
+      "name": "street-prospect",
+      "prompt": "Use case: historical-scene. Single finished wide 16:9 environment illustration for Alien Invasion Cleveland RPG, 1989 Cleveland. Scene: Prospect Avenue, rows of modest red-brick storefronts and rattling iron fire escapes, a public payphone at left, trash cans by a narrow alley, one failing streetlamp. More intimate neighborhood street, no towering skyline. Cinematic painted 1980s sci-fi horror realism, navy/teal shadows, subtle magenta alien energy, warm amber lamps, weathered surfaces, restrained print grain, damp twilight. Eye-level perspective, rich depth and open foreground for a separate enemy sprite. No people, foreground creatures, text, logos, title, UI, health bars, frames or collage. Period appropriate objects and vehicles. Landscape 1536x864 composition.",
+      "revision": null
+    },
+    {
+      "name": "street-huron",
+      "prompt": "Use case: historical-scene. Single finished wide 16:9 environment illustration for Alien Invasion Cleveland RPG, 1989 Cleveland. Scene: Huron Road, old rail viaduct and period transit infrastructure, crooked abandoned 1980s yellow taxis, torn paper schedules on a kiosk, steel railway girders looming overhead. Unoccupied road foreground. Cinematic painted 1980s sci-fi horror realism, navy/teal shadows, subtle magenta alien energy, warm amber lamps, weathered surfaces, restrained print grain, damp twilight. Eye-level perspective, rich depth and open foreground for a separate enemy sprite. No people, foreground creatures, text, logos, title, UI, health bars, frames or collage. Period appropriate objects and vehicles. Landscape 1536x864 composition.",
+      "revision": null
+    },
+    {
+      "name": "street-erieside",
+      "prompt": "Use case: historical-scene. Single finished wide 16:9 environment illustration for Alien Invasion Cleveland RPG, 1989 Cleveland. Scene: Erieside Avenue lakefront port, giant skeletal cargo cranes, warehouse silhouettes, rocky shoreline and rough freshwater waves. An enormous ominous alien mothership dominates the cloudy sky with cold blue underside lights and restrained magenta beams. Wide port apron foreground, no people. ONLY industrial port architecture, absolutely no pyramid, glass museum, Rock Hall, stadium, wind turbine, modern skyscraper or other modern landmark. Cinematic painted 1980s sci-fi horror realism, navy/teal shadows, subtle magenta alien energy, warm amber lamps, weathered surfaces, restrained print grain, damp twilight. Eye-level perspective, rich depth and open foreground for a separate enemy sprite. No people, foreground creatures, text, logos, title, UI, health bars, frames or collage. Period appropriate objects and vehicles. Landscape 1536x864 composition.",
+      "revision": null
+    },
+    {
+      "name": "alien-blue",
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent full-body enemy sprite for a gritty illustrated 1980s sci-fi horror game set in Cleveland. A small lean cobalt-blue alien with an angular swept-back head, large pale cyan luminous eyes, long wiry arms, three hooked fingers, sinewy digitigrade legs. Alert stalking posture, slightly bent knees. Detailed painted cinematic realism, textured creature skin, coherent anatomy, readable silhouette, subtle teal edge light from left and amber edge light from right, neutral soft body lighting. Center the ENTIRE creature with feet visible and generous clear padding on all sides, front three-quarter view facing viewer, square 1024x1024 composition. Actual transparent alpha background; isolated cutout, NO background, no floor, no scene, no shadow rectangle, no checkerboard pattern, no text, no health bar, no UI, no collage, no equipment, no humans. A menacing small invader like an eighties practical-effects creature, not a cute mascot, not a giant armored monster.",
+      "revision": null
+    },
+    {
+      "name": "alien-green",
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent full-body enemy sprite for a gritty illustrated 1980s sci-fi horror game set in Cleveland. A small squat moss-green alien with very broad shoulders, a round flattened head, huge dark eyes with amber glints, thick arms and short powerful legs, three hooked claws. Low aggressive crouch. No horns. Detailed painted cinematic realism, textured creature skin, coherent anatomy, readable silhouette, subtle teal edge light from left and amber edge light from right, neutral soft body lighting. Center the ENTIRE creature with feet visible and generous clear padding on all sides, front three-quarter view facing viewer, square 1024x1024 composition. Actual transparent alpha background; isolated cutout, NO background, no floor, no scene, no shadow rectangle, no checkerboard pattern, no text, no health bar, no UI, no collage, no equipment, no humans. A menacing small invader like an eighties practical-effects creature, not a cute mascot, not a giant armored monster.",
+      "revision": null
+    },
+    {
+      "name": "alien-grey",
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent full-body enemy sprite for a gritty illustrated 1980s sci-fi horror game set in Cleveland. A small tall slender ash-grey alien with an oversized elongated cranium, enormous glossy black eyes, thin long fingers and elongated limbs. Eerie upright pose leaning slightly toward viewer. Detailed painted cinematic realism, textured creature skin, coherent anatomy, readable silhouette, subtle teal edge light from left and amber edge light from right, neutral soft body lighting. Center the ENTIRE creature with feet visible and generous clear padding on all sides, front three-quarter view facing viewer, square 1024x1024 composition. Actual transparent alpha background; isolated cutout, NO background, no floor, no scene, no shadow rectangle, no checkerboard pattern, no text, no health bar, no UI, no collage, no equipment, no humans. A menacing small invader like an eighties practical-effects creature, not a cute mascot, not a giant armored monster.",
+      "revision": null
+    },
+    {
+      "name": "alien-red",
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent full-body enemy sprite for a gritty illustrated 1980s sci-fi horror game set in Cleveland. A small compact crimson-red alien with a hunched spine, distinctive short bony back spines, sharp angular cheek plates, glowing amber eyes, bent muscular legs and clawed hands. Coiled ready-to-pounce stance. Detailed painted cinematic realism, textured creature skin, coherent anatomy, readable silhouette, subtle teal edge light from left and amber edge light from right, neutral soft body lighting. Center the ENTIRE creature with feet visible and generous clear padding on all sides, front three-quarter view facing viewer, square 1024x1024 composition. Actual transparent alpha background; isolated cutout, NO background, no floor, no scene, no shadow rectangle, no checkerboard pattern, no text, no health bar, no UI, no collage, no equipment, no humans. A menacing small invader like an eighties practical-effects creature, not a cute mascot, not a giant armored monster.",
+      "revision": null
+    },
+    {
+      "name": "ending-victory",
+      "prompt": "Use case: illustration-story. One wide 16:9 ending illustration for Alien Invasion Cleveland RPG. Cleveland industrial Lake Erie harbor at dawn in 1989, view along a wet port walkway, dock cranes and period warehouses, tired neighbors in 1980s jackets emerging and helping each other in the midground. A huge alien mothership tilts away and retreats into distant luminous clouds over the lake. Hopeful golden sunrise breaking through teal storm clouds, fading magenta engine glow. Cinematic painted eighties sci-fi cover realism, subtle grain and weathered materials, coherent detailed scene. Keep people small relative to environment. No text, title, logo, UI, frames, modern museums, pyramids, modern stadiums or skyscrapers. Landscape 1536x864 composition.",
+      "revision": 1
+    },
+    {
+      "name": "ending-defeat",
+      "prompt": "Use case: illustration-story. One wide 16:9 game-over illustration for Alien Invasion Cleveland RPG, 1989. A dropped wooden baseball bat and battered leather jacket on rain-soaked cracked city pavement in the near foreground, abandoned 1980s sedan at far curb, dark old brick storefronts and Terminal Tower faintly in distant mist. A cold alien searchlight cuts through the rain, ominous magenta glow overhead. No bodies, no gore, no people. Cinematic painted 1980s sci-fi horror cover realism, teal/navy shadows with restrained amber reflections, subtle film grain, detailed material texture. A quiet defeated atmosphere. No lettering, logos, UI, frames or collage. Landscape 1536x864 composition.",
+      "revision": 1
+    },
+    {
+      "name": "street-lakeside",
+      "prompt": "Edit this illustration. Remove the modern glass pyramid museum and its adjoining modern block on the far right horizon entirely. Replace that area with low 1980s industrial port warehouses, distant simple cargo cranes, and misty lake horizon, seamlessly matching the perspective and painted style. Keep the entire rest of the picture unchanged: civic stone steps, lions, flags, benches, dropped radio, wet plaza, skyline, alien clouds, lighting, colors and wide composition. No new lettering or UI.",
+      "revision": 2
+    }
+  ]
+}

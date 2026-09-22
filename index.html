@@ -714,6 +714,8 @@
       apply();
     })();
   </script>
+  <link rel="stylesheet" href="scene-art.css" />
+  <script src="scene-art.js"></script>
 </head>
 
 <body>
@@ -1524,7 +1526,7 @@
 
 
     function divider() { let d = document.createElement('div'); d.className = 'divider'; $('#story').appendChild(d); }
-    function clearButtons() { $('#buttons').innerHTML = ''; }
+    function clearButtons() { $('#buttons').innerHTML = ''; updateSceneArt(); }
     function addButton(lbl, fn, dis = false) {
       const btnWrap = $('#buttons');
       const isLocked = btnWrap?.classList.contains('locked');
@@ -1548,7 +1550,12 @@
     }
 
 
+    function updateSceneArt() {
+      SceneArt.render({street: getStreet(Game.level), level: Game.level, enemy: Game.enemy, scene: Game.scene});
+    }
+
     function updateStats() {
+      updateSceneArt();
       $('#statLevel').textContent = Game.level;
       let hpNow = Math.max(0, Math.floor(Game.hp));
       $('#statHP').textContent = hpNow;
@@ -1659,6 +1666,7 @@
 
     // Health meter functions
     function updateHealthMeters() {
+      updateSceneArt();
       if (Game.scene === 'combat' && Game.enemy) {
         $('#combatStats').style.display = 'block';
 
@@ -1714,6 +1722,8 @@
 
     // Encounter system
     function encounter() {
+      Game.scene = 'explore';
+      Game.enemy = null;
       updateStats(); clearButtons();
       $('#story').innerHTML = '';
       Game.purchasedThisVisit = {};
@@ -1770,6 +1780,7 @@
       let enemyType = CONFIG.enemyTypes[rand(0, CONFIG.enemyTypes.length - 1)];
       return {
         name: isBoss ? ('BOSS ' + enemyType.toUpperCase()) : enemyType,
+        color: enemyType,
         hp, maxHP: hp,
         attackMin: (isBoss ? 6 : 4) + L,
         attackMax: (isBoss ? 10 : 7) + L * 2,
@@ -2018,11 +2029,12 @@ decayBuffsEndOfRound();
       $('#story').innerHTML = '';
       appendStory('You scoop up the cash the crowd threw: $' + Game.pendingReward + '.', 'system');
       Game.money += Game.pendingReward; Game.pendingReward = 0;
-      Game.aliensDefeated++; Game.aliensThisLevel++; checkLevelUp(); checkVictory();
+      Game.aliensDefeated++; Game.aliensThisLevel++; checkLevelUp();
       Game.enemy = null; Game.scene = 'explore';
       decayBuffsEndOfFight();
       updateHealthMeters();
       updateStats(); clearButtons();
+      if (Game.level >= CONFIG.maxLevel) { checkVictory(); return; }
       addButton('Explore', () => encounter());
     }
 
@@ -2058,6 +2070,8 @@ decayBuffsEndOfRound();
     }
 
     function gameVictory() {
+      Game.scene = 'victory';
+      SceneArt.ending('victory');
       appendStory("VICTORY! You have defeated all " + enemyNoun() + " forces in Cleveland!", 'system');
       appendStory("The mothership retreats above Lake Erie. The city is safe!", 'system');
       clearButtons(); $('#gameOverTitle').textContent = 'VICTORY!';
@@ -2317,6 +2331,8 @@ decayBuffsEndOfRound();
     }
 
     function gameOver() {
+      Game.scene = 'gameover';
+      SceneArt.ending('defeat');
       appendStory('You fall as Cleveland fades...', 'system'); clearButtons();
       $('#gameOverTitle').textContent = 'GAME OVER'; $('#ovLevel').textContent = Game.level;
       $('#ovDefeated').textContent = Game.aliensDefeated; $('#ovMoney').textContent = Game.money;
@@ -2349,6 +2365,17 @@ decayBuffsEndOfRound();
         <span><b>Street:</b> <span id="statStreet">—</span></span>
 
       </div>
+      <section id="sceneArt" class="scene-art" aria-label="Current scene">
+        <img id="streetArt" class="street-art" alt="" decoding="async" hidden />
+        <div class="scene-heading">
+          <span id="sceneChapter"></span>
+          <span id="sceneStatus" class="scene-status"></span>
+        </div>
+        <div id="enemyActor" class="enemy-actor" hidden>
+          <img id="enemyArt" class="enemy-art" alt="" decoding="async" hidden />
+        </div>
+        <div id="sceneLocation" class="scene-location"></div>
+      </section>
       <div id="story"></div>
       <div id="combatStats">
         <div class="health-meter player-health">
@@ -2402,6 +2429,7 @@ decayBuffsEndOfRound();
 
   <div id="overlay">
     <div class="panel">
+      <img id="endingArt" alt="" decoding="async" hidden />
       <h2 id="gameOverTitle">GAME OVER</h2>
       <div class="stats">
         <div><b>Level:</b> <span id="ovLevel">-</span></div>

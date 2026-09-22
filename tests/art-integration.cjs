@@ -1,0 +1,61 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const root = path.join(__dirname,'..');
+class Element {
+  constructor(tag='div') {
+    this.tag=tag; this.children=[]; this.dataset={}; this.style={setProperty(){}}; this.hidden=false;
+    this.textContent=''; this.disabled=false; this.attributes={}; this._html='';
+    const classes=new Set();
+    this.classList={add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)};
+  }
+  set innerHTML(v){this._html=v;this.children=[];} get innerHTML(){return this._html;}
+  appendChild(el){this.children.push(el);} querySelectorAll(){return this.children.filter(x=>x.tag==='button');}
+  setAttribute(k,v){this.attributes[k]=v;} getAttribute(k){return this.attributes[k];}
+  addEventListener(){} removeEventListener(){} remove(){} closest(){return null;}
+}
+const elements=new Map();
+const el=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
+const document={querySelector:el,getElementById:id=>el('#'+id),createElement:tag=>new Element(tag),
+  addEventListener(){},removeEventListener(){},documentElement:new Element(),body:new Element()};
+const context=vm.createContext({document,console:{log(){}},localStorage:{getItem(){return null;},setItem(){}},
+  setTimeout(fn){fn();return 1;},clearTimeout(){},innerHeight:800,addEventListener(){},assert,el});
+context.window=context;
+vm.runInContext(fs.readFileSync(path.join(root,'scene-art.js'),'utf8'),context);
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+for(const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) vm.runInContext(script[1],context);
+vm.runInContext(`
+appendStory=()=>{}; appendStoryAsync=async()=>{}; showLevelUp=()=>{};
+newGame();
+assert.equal(el('#streetArt').dataset.asset,'street-ontario');
+assert.equal(el('#enemyActor').hidden,true);
+for(const street of STREETS){Game.level=street.level;updateSceneArt();assert.ok(el('#streetArt').dataset.asset.startsWith('street-'));}
+for(const color of CONFIG.enemyTypes){
+  Game.enemy={name:color,color,hp:30,maxHP:30,isBoss:false};Game.scene='combat';updateHealthMeters();
+  assert.equal(el('#enemyArt').dataset.asset,'alien-'+color);assert.equal(el('#enemyActor').hidden,false);
+}
+Game.enemy.isBoss=true;updateSceneArt();assert.equal(el('#sceneArt').classList.contains('is-boss'),true);
+updateCombatButtons();
+el('#buttons').children.find(b=>b.textContent==='Flee').onclick({});
+assert.equal(Game.scene,'explore');assert.equal(el('#enemyActor').hidden,true);
+Game.level=1;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=2;
+collectReward();assert.equal(Game.level,2);assert.equal(el('#streetArt').dataset.asset,'street-superior');
+Game.level=9;Game.requiredThisLevel=768;Game.aliensThisLevel=767;Game.pendingReward=1;
+collectReward();assert.equal(Game.scene,'victory');assert.equal(el('#endingArt').dataset.asset,'ending-victory');
+assert.equal(el('#streetArt').dataset.asset,'street-erieside');assert.equal(el('#buttons').children.length,0);
+assert.equal(el('#overlay').style.display,'flex');
+Game.scene='combat';Game.enemy={name:'blue',color:'blue',hp:10,maxHP:10};
+gameOver();assert.equal(Game.scene,'gameover');assert.equal(el('#endingArt').dataset.asset,'ending-defeat');assert.equal(el('#enemyActor').hidden,true);
+newGame();assert.equal(Game.level,1);assert.equal(el('#overlay').style.display,'none');assert.equal(el('#enemyActor').hidden,true);
+`,context);
+const paths=new Set();
+for(const element of elements.values()){
+  if(element.src) paths.add(element.src);
+  if(element.srcset) for(const src of element.srcset.split(',')) paths.add(src.trim().split(' ')[0]);
+}
+const assets=fs.readdirSync(path.join(root,'images/art'));
+assert.equal(assets.filter(x=>!x.includes('-small')).length,16);
+assert.equal(assets.filter(x=>x.includes('-small')).length,12);
+for(const src of paths)assert.ok(fs.existsSync(path.join(root,src)),src);
+console.log('PASS: 10 street mappings; 4 enemy mappings; boss styling; flee cleanup; level-up art; victory terminal state; defeat art; restart; 28 optimized asset files.');
