@@ -50,9 +50,11 @@ button:disabled { opacity: .7; }
 .edition-label span { width: 22px; height: 2px; background: #f0b884; }
 .title { font-family: Impact, "Arial Narrow", sans-serif; font-weight: 900; font-size: clamp(70px, 9vw, 126px); text-align: left; line-height: .86; letter-spacing: -.015em; border: 0; padding: 0; margin: 0; text-shadow: 3px 3px 0 #122a30; }
 .title span { color: #9aefd2; text-shadow: 3px 3px 0 #133f43, -1px 0 #e788a3; }
+.title .title-kicker { display:block; color:#f1e7d3; font-size:.6em; letter-spacing:.04em; line-height:1.15; margin-bottom:6px; text-shadow:3px 3px 0 #122a30; }
+.title .title-main { display:block; }
 .title-location { font-size: 14px; letter-spacing: .32em; margin: 22px 0 0; color: #ebd0a5; }
 .title-location b { border-left: 1px solid #b48967; margin-left: 13px; padding-left: 20px; font-weight: 400; }
-.title-description { color: #c2d0c9; font: 15px/1.8 "Cascadia Mono", Consolas, monospace; margin: 24px 0; }
+.title-description { max-width:420px; color: #c2d0c9; font: 15px/1.8 "Cascadia Mono", Consolas, monospace; margin: 24px 0; }
 #startScreen .start-button { width: min(360px, 100%); display: flex; justify-content: space-between; align-items: center; gap: 18px; margin: auto 0 24px; border: 1px solid #a1eed4; border-radius: 2px; padding: 17px 21px; background: #a1eed4; color: #082727; box-shadow: 4px 4px 0 #214445; font-size: 14px; }
 #startScreen .start-button:hover { background: #d5ffea; box-shadow: 5px 5px 0 #376866; }
 .title-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; width: 100%; border-top: 1px solid #73968950; padding-top: 17px; color: #9bb7ac; font-size: 9px; letter-spacing: .1em; }

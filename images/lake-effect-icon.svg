@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Lake Effect Invasion</title>
+  <rect width="64" height="64" rx="10" fill="#0d191f"/>
+  <path d="M12 13h8v27h11v7H12zm24 0h17v7H43v6h9v7h-9v7h10v7H36z" fill="#9aefd2"/>
+  <path d="M10 54q7-5 14 0t14 0t16 0" fill="none" stroke="#f3c582" stroke-width="3"/>
+</svg>

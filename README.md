@@ -1,4 +1,6 @@
-# Alien Invasion Cleveland RPG
+# Lake Effect Invasion
+
+*Cleveland, 1989. Fight. Eat. Fight again.*
 
 A browser text adventure game set in 1989 Cleveland during an alien invasion, with illustrated streets and alien encounters.
 
