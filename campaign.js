@@ -12,7 +12,9 @@ const TRAINING = [
   {id:'counter', name:'Counterattack VHS', price:20, skill:'counter', description:'Guard returns damage after you block a hit.'},
   ...[1,2,3].map(n=>({id:'conditioning'+n,name:'Conditioning '+n,price:12*n,defense:1,requires:n>1?'conditioning'+(n-1):null,description:'Permanent +1 defense against every hit.'}))
 ];
-for (const item of TRAINING) getBusiness('record').items.push({...item,healing:0,message:'Training complete.'});
+const TRAINING_SHOPS = {throwEnemy:'record',counter:'record',conditioning1:'record',superKick:'arcade',conditioning2:'arcade',spinningKick:'chinese',superPunch:'bar',conditioning3:'surplus'};
+for (const item of TRAINING) getBusiness(TRAINING_SHOPS[item.id]).items.push({...item,healing:0,message:'Training complete.'});
+const STREET_LANDMARKS = ['Terminal Tower / Public Square','The abandoned bus blockade','The theater marquees','The bank towers','The civic plaza','The warehouse loading docks','The river lift bridge','The neighborhood sanctuary','The railway viaduct','The Lake Erie harbor'];
 CONFIG.abilities.superKick.name='Lake Effect Kick';
 CONFIG.abilities.superKick.damageMultiplier=1;
 CONFIG.abilities.superPunch.name='Ironworks Punch';
@@ -24,11 +26,27 @@ CONFIG.abilities.spinningKick.hit=.8;
 const FOOD_POWER = {coffee:'accuracy',donut:'maxHP',burger:'punch',corned:'punch',jerky:'punch',generaltso:'kick',eggroll:'kick',hottea:'accuracy',milkshake:'maxHP'};
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
-function availableShopIds() { return DISTRICT_SHOPS.slice(0,Game.highestDistrict).flat(); }
+function streetNumber() { return Game.currentStreet; }
+function streetCleared() { return streetNumber()<Game.level || Game.finalBossDefeated; }
+function availableShopIds() { return DISTRICT_SHOPS[streetNumber()-1] || []; }
+function canVisitShop(id) { return availableShopIds().includes(id) && !['combat','victory','gameover'].includes(Game.scene); }
+function travelToStreet(destination) {
+  if(!Number.isInteger(destination)||Math.abs(destination-streetNumber())!==1||destination<1||destination>Game.highestDistrict) return;
+  if(['start','combat','victory','gameover'].includes(Game.scene)||StoryType.holdLock||StoryType.typing) return;
+  const from=getStreet(streetNumber());
+  Game.currentStreet=destination;Game.scene='explore';Game.currentBiz=null;Game.businessEntered=false;Game.artEncounter=null;
+  Game.lastEncounters=[];Game.lastBusiness=null;Game.streetJustChanged=false;
+  showDirectory('You walk from '+from.name+' to '+getStreet(destination).name+'. '+(destination<Game.level?getStreet(destination).cleared:getStreet(destination).enter));
+}
+function streetOfferings(number) {
+  const shops=DISTRICT_SHOPS[number-1];
+  const training=TRAINING.filter(item=>shops.includes(TRAINING_SHOPS[item.id])).map(item=>item.name);
+  return (shops.length?shops.map(id=>getBusiness(id).name).join(', '):'No shops. Prepare on Huron before the final assault.')+(training.length?' / Training: '+training.join(', '):'');
+}
 function foodBonus(item) { return item.healing>0 && !item.armor && !['lotto','bandages'].includes(item.id) ? (FOOD_POWER[item.id] || 'maxHP') : null; }
 function itemOwned(item) { return !!((item.skill||item.defense) && Game.training.includes(item.id)); }
 function itemDescription(bizId,item) {
@@ -57,24 +75,34 @@ function applyPermanentPurchase(bizId,item) {
 function describeButton(button,text) {
   const detail=document.createElement('small');detail.textContent=text;button.appendChild(detail);button.classList.add('shop-item');
 }
-function showDirectory() {
+function showDirectory(arrival='') {
   if(Game.scene==='combat'||Game.scene==='victory'||Game.scene==='gameover'||StoryType.holdLock||StoryType.typing) return;
   Game.scene='directory';Game.enemy=null;Game.businessEntered=false;Game.artEncounter=null;
+  const here=streetNumber(), cleared=streetCleared();
   $('#story').innerHTML='';updateStats();updateHealthMeters();clearButtons();
-  appendStory('CITY DIRECTORY / '+getStreet(Game.level).name,'special');
-  appendStory('Street progress: '+Game.aliensThisLevel+'/3 victories. '+(Game.aliensThisLevel===2?'The district boss is next.':'Two patrols, then the district boss.'),'system');
-  appendStory('Permanent build: Punch +'+Game.permanent.punch+' · Kick +'+Game.permanent.kick+' · Defense +'+Game.permanent.defense+' · Accuracy +'+Math.round(Game.permanent.accuracy*100)+'%.','system');
-  appendStory('Training: '+(Game.learned.map(k=>CONFIG.abilities[k]?.name||'Counterattack').join(', ')||'None yet. Visit the Record Store for training tapes.'),'system');
-  if(Game.level===10) appendStory('Erieside: defeat the two guards, then the Mothership Commander.','special');
-  addButton(Game.aliensThisLevel===2?'Challenge District Boss':'Patrol / Fight',()=>{$('#story').innerHTML='';startCombat();});
-  addButton('Explore / Encounters',()=>encounter());
-  for(const id of availableShopIds()) addButton(getBusiness(id).name,()=>startBusiness(id));
+  if(arrival)appendStory(arrival,'news');
+  appendStory('STREET DIRECTORY / '+getStreet(here).name,'special');
+  appendStory('LANDMARK / '+STREET_LANDMARKS[here-1],'system');
+  appendStory(cleared?'STREET CLEARED. Safe to revisit: no battles here. The active fight is on '+getStreet(Game.level).name+'.':'Street progress: '+Game.aliensThisLevel+'/3 victories. '+(Game.aliensThisLevel===2?'The district boss is next.':'Two patrols, then the district boss.'),'system');
+  appendStory('LOCAL STOPS / '+streetOfferings(here),'system');
+  appendStory('Build: Punch +'+Game.permanent.punch+' · Kick +'+Game.permanent.kick+' · Defense +'+Game.permanent.defense+' · Accuracy +'+Math.round(Game.permanent.accuracy*100)+'%.','system');
+  appendStory('Training: '+(Game.learned.map(k=>CONFIG.abilities[k]?.name||'Counterattack').join(', ')||'None yet. Find basic tapes at the Record Store on Ontario.'),'system');
+  if(here===10)appendStory('Erieside: defeat the two guards, then the Mothership Commander. No shops on the harbor.','special');
+  if(!cleared)addButton(Game.aliensThisLevel===2?'Challenge District Boss':'Patrol / Fight',()=>{$('#story').innerHTML='';startCombat();});
+  addButton(cleared?'Explore Cleared Street':'Explore / Encounters',()=>encounter());
+  for(const id of availableShopIds())addButton(getBusiness(id).name,()=>startBusiness(id));
+  if(here>1)addButton('Walk back: '+getStreet(here-1).name,()=>travelToStreet(here-1)).classList.add('travel-button');
+  if(here<10){
+    const next=here+1, unlocked=next<=Game.highestDistrict;
+    addButton((unlocked?'Walk onward: ':'Locked: ')+getStreet(next).name,()=>travelToStreet(next),!unlocked).classList.add('travel-button');
+    appendStory((unlocked?'ROAD OPEN / ':'CLEAR THIS STREET TO REACH / ')+getStreet(next).name+' — '+streetOfferings(next),'system');
+  }
   saveGame();
 }
 function addDirectoryReturn() {
   const roaming=['explore','empty','npc'].includes(Game.scene);
   if(roaming || (Game.scene==='business'&&!Game.businessEntered)) {
-    const button=addButton('Back to City Directory',showDirectory);
+    const button=addButton('Back to City Directory',()=>showDirectory());
     button.classList.add('directory-return');
   }
 }
@@ -83,7 +111,7 @@ function updateCampaignHUD() {
   directory.disabled=['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
   directory.title=Game.scene==='combat'?'Finish the fight and collect your bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
-  $('#campaignProgress').textContent='DISTRICT '+Game.level+'/10 · '+Game.aliensThisLevel+'/3 WINS';
+  $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/3 WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';
 }
 function enemyIntent() {
@@ -124,7 +152,7 @@ function saveGame() {
   if(Game.scene==='start'||StoryType.holdLock) return;
   try {
     const state={};for(const key of SAVE_FIELDS)state[key]=Game[key];
-    const data=JSON.stringify({version:1,state},(key,value)=>value instanceof Set?{setValues:[...value]}:value);
+    const data=JSON.stringify({version:2,state},(key,value)=>value instanceof Set?{setValues:[...value]}:value);
     localStorage.setItem(SAVE_KEY,data);$('#saveStatus').textContent='PROGRESS SAVED';
   } catch { $('#saveStatus').textContent='SAVE UNAVAILABLE · KEEP THIS TAB OPEN'; }
 }
@@ -132,8 +160,10 @@ function readSave() {
   try {
     const raw=localStorage.getItem(SAVE_KEY);if(!raw)return null;
     const parsed=JSON.parse(raw);const s=parsed.state;
-    if(parsed.version!==1||!s||!Number.isInteger(s.level)||s.level<1||s.level>10||!Number.isFinite(s.hp)||s.hp<0||!Number.isFinite(s.maxHP)||s.maxHP<1||s.maxHP>1000||s.hp>s.maxHP||!Number.isFinite(s.money)||s.money<0||s.money>1000000) return null;
+    if(![1,2].includes(parsed.version)||!s||!Number.isInteger(s.level)||s.level<1||s.level>10||!Number.isFinite(s.hp)||s.hp<0||!Number.isFinite(s.maxHP)||s.maxHP<1||s.maxHP>1000||s.hp>s.maxHP||!Number.isFinite(s.money)||s.money<0||s.money>1000000) return null;
     if(!Number.isInteger(s.aliensThisLevel)||s.aliensThisLevel<0||s.aliensThisLevel>3||s.requiredThisLevel!==3||s.highestDistrict!==s.level) return null;
+    if(parsed.version===1)s.currentStreet=s.level;
+    if(!Number.isInteger(s.currentStreet)||s.currentStreet<1||s.currentStreet>s.highestDistrict||(s.scene==='combat'&&s.currentStreet!==s.level))return null;
     if(!Array.isArray(s.learned)||s.learned.some(k=>!TRAINING.some(t=>t.skill===k))||!Array.isArray(s.training)||s.training.some(k=>!TRAINING.some(t=>t.id===k))||!Array.isArray(s.tasted)||s.tasted.some(k=>typeof k!=='string'))return null;
     if(!s.permanent||!['punch','kick','defense','accuracy'].every(k=>Number.isFinite(s.permanent[k])&&s.permanent[k]>=0&&s.permanent[k]<=30))return null;
     const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -163,5 +193,5 @@ function continueGame() {
 function startNewRun() { if(readSave()&&!confirm('Start a new run? This replaces your saved campaign.'))return;newGame(); }
 window.addEventListener('DOMContentLoaded',()=>{
   const save=readSave();$('#continueRun').hidden=!save;
-  if(save)$('#continueRun').textContent='CONTINUE · DISTRICT '+save.level;
+  if(save)$('#continueRun').textContent='CONTINUE · STREET '+save.currentStreet;
 });

@@ -103,6 +103,8 @@ button:disabled { opacity: .7; }
 .help-link { color: var(--text); font-size: 9px; letter-spacing: .06em; padding: 7px 5px; text-underline-offset: 3px; }
 #directoryBtn { color: var(--text); border-color: var(--border); }
 #buttons .directory-return { border-color: var(--text); }
+#buttons .travel-button { border-color: var(--amber); color: var(--amber); background: var(--panel); }
+#buttons .travel-button:disabled { opacity: .65; border-style: dashed; }
 .help-link:focus-visible, .title-footer a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 .settings-btn { border-radius: 2px; margin: 0 14px 0 0; font-size: 9px; letter-spacing: .06em; min-height: 28px; padding: 5px 8px; color: var(--muted); }
 .toggle-label { font-size: 8px; letter-spacing: .08em; }

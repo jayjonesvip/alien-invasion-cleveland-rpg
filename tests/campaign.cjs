@@ -15,22 +15,23 @@ el('#buttons').children.find(b=>b.textContent==='Back to City Directory').onclic
 StoryType.typing=true;updateCampaignHUD();assert.equal(el('#directoryBtn').disabled,true);StoryType.typing=false;updateCampaignHUD();assert.equal(el('#directoryBtn').disabled,false);
 newGame();
 assert.equal(availableShopIds().join(','),'coffee,pawn,record');
-Game.money=200;startBusiness('record');
-const tape=getBusiness('record').items.find(x=>x.id==='superKick');
-buyBusinessItem('record',tape);assert.ok(Game.learned.includes('superKick'));
-const afterTape=Game.money;buyBusinessItem('record',tape);assert.equal(Game.money,afterTape);
-startBusiness('record');buyBusinessItem('record',tape);assert.equal(Game.money,afterTape,'Owned training cannot be bought twice');
-const training2=getBusiness('record').items.find(x=>x.id==='conditioning2');
-buyBusinessItem('record',training2);assert.equal(Game.permanent.defense,0,'Prerequisite enforced');
-buyBusinessItem('record',getBusiness('record').items.find(x=>x.id==='conditioning1'));
-buyBusinessItem('record',training2);assert.equal(Game.permanent.defense,2);
-startBusiness('coffee');const donut=getBusiness('coffee').items.find(x=>x.id==='donut');
+Game.money=200;Game.currentStreet=Game.level=Game.highestDistrict=3;startBusiness('arcade');
+const tape=getBusiness('arcade').items.find(x=>x.id==='superKick');
+buyBusinessItem('arcade',tape);assert.ok(Game.learned.includes('superKick'));
+const afterTape=Game.money;buyBusinessItem('arcade',tape);assert.equal(Game.money,afterTape);
+startBusiness('arcade');buyBusinessItem('arcade',tape);assert.equal(Game.money,afterTape,'Owned training cannot be bought twice');
+const training2=getBusiness('arcade').items.find(x=>x.id==='conditioning2');
+buyBusinessItem('arcade',training2);assert.equal(Game.permanent.defense,0,'Prerequisite enforced');
+Game.scene='directory';travelToStreet(2);travelToStreet(1);startBusiness('record');buyBusinessItem('record',getBusiness('record').items.find(x=>x.id==='conditioning1'));
+Game.scene='directory';travelToStreet(2);travelToStreet(3);startBusiness('arcade');
+buyBusinessItem('arcade',training2);assert.equal(Game.permanent.defense,2);
+Game.scene='directory';travelToStreet(2);travelToStreet(1);startBusiness('coffee');const donut=getBusiness('coffee').items.find(x=>x.id==='donut');
 const hp=Game.maxHP;buyBusinessItem('coffee',donut);assert.equal(Game.maxHP,hp+2);
 startBusiness('coffee');buyBusinessItem('coffee',donut);assert.equal(Game.maxHP,hp+2,'First-taste bonus only once');
 startBusiness('pawn');buyBusinessItem('pawn',getBusiness('pawn').items[0]);assert.equal(Game.weaponUses,3);
 useWeaponCharge();decayBuffsEndOfFight();assert.ok(Game.tempWeapon);assert.equal(Game.weaponUses,2);
 useWeaponCharge();useWeaponCharge();decayBuffsEndOfFight();assert.equal(Game.tempWeapon,null);
-startCombat();assert.equal(Game.enemy.isBoss,false);
+Game.scene='directory';travelToStreet(2);travelToStreet(3);startCombat();assert.equal(Game.enemy.isBoss,false);
 Game.enemy.hp=0;Game.turnsThisFight=1;winCombat();const quick=Game.pendingReward;
 Game.turnsThisFight=20;winCombat();assert.equal(Game.pendingReward,quick);
 collectReward();const money=Game.money;collectReward();assert.equal(Game.money,money,'Rewards collected only once');
@@ -53,6 +54,7 @@ Game.enemy.color='red';Game.turnsThisFight=0;const base=enemyIntent().maxDamage;
 // Reach the finale through the real reward/progression functions.
 newGame();let bosses=0;
 for(let win=1;win<=30;win++){
+ if(Game.currentStreet<Game.level)travelToStreet(Game.currentStreet+1);
  startCombat();if(Game.enemy.isBoss)bosses++;
  if(win<30)assert.equal(!!Game.enemy.isFinalBoss,false);
  else assert.equal(Game.enemy.isFinalBoss,true);
@@ -60,7 +62,7 @@ for(let win=1;win<=30;win++){
  if(win<30)assert.notEqual(Game.scene,'victory');
 }
 assert.equal(bosses,10);assert.equal(Game.scene,'victory');assert.equal(Game.aliensDefeated,30);assert.equal(Game.level,10);
-assert.equal(availableShopIds().length,17);assert.equal(Game.finalBossDefeated,true);
+assert.equal(availableShopIds().length,0);assert.equal(Game.finalBossDefeated,true);
 saveGame();continueGame();assert.equal(Game.scene,'victory');
 newGame();assert.equal(Game.weaponUses,0);assert.equal(Game.training.length,0);assert.equal(Game.tasted.length,0);assert.equal(Game.finalBossDefeated,false);
 const goodSave=localStorage.getItem(SAVE_KEY);

@@ -715,7 +715,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.1" />
-  <link rel="stylesheet" href="retro-skin.css?v=2.2" />
+  <link rel="stylesheet" href="retro-skin.css?v=2.4" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1562,8 +1562,9 @@
 
 
     function updateSceneArt() {
-      SceneArt.render({street: getStreet(Game.level), level: Game.level, enemy: Game.enemy, scene: Game.scene,
+      SceneArt.render({street: getStreet(streetNumber()), level: streetNumber(), enemy: Game.enemy, scene: Game.scene,
         business: Game.businessEntered ? Game.currentBiz : null, encounter: Game.artEncounter});
+      if(streetCleared()&&!Game.businessEntered&&!Game.artEncounter)$('#sceneStatus').textContent='STREET CLEARED / SAFE';
     }
 
     function updateStats() {
@@ -1582,7 +1583,7 @@
 
       $('#statArmor').textContent = a;
 
-      const st = getStreet(Game.level);
+      const st = getStreet(streetNumber());
       if (st) $('#statStreet').textContent = st.name;
       updateCampaignHUD();
     }
@@ -1591,7 +1592,7 @@
 
 
     function getNextStreetName() {
-      const idx = Game.level; // next level index in STREETS (levels are 1-based)
+      const idx = streetNumber(); // next street in the route
       if (idx < STREETS.length) return STREETS[idx].name;
       return 'across the city';
     }
@@ -1617,15 +1618,15 @@
     }
 
     function showStreetHeader() {
-      const st = getStreet(Game.level);
+      const st = getStreet(streetNumber());
       appendStory(`[STREET] ${st.name}`, 'system');
     }
     function showStreetEnter() {
-      const st = getStreet(Game.level);
+      const st = getStreet(streetNumber());
       appendStory(st.enter, 'system');
     }
     function maybeAmbient() {
-      const st = getStreet(Game.level);
+      const st = getStreet(streetNumber());
       if (!st?.ambient?.length) return;
       if (Math.random() < 0.33) {
         appendStory(st.ambient[rand(0, st.ambient.length - 1)], 'system');
@@ -1747,7 +1748,7 @@
       // NEW: street banner + enter/ambient
       //showStreetHeader();
       if (Game.streetJustChanged) {
-        appendStory(`[STREET] ${getStreet(Game.level).name}`, 'system');
+        appendStory(`[STREET] ${getStreet(streetNumber()).name}`, 'system');
         showStreetEnter();
         Game.streetJustChanged = false;
       } else {
@@ -1759,7 +1760,7 @@
       const encounterTypes = [
         { type: 'empty', weight: 35 }, { type: 'combat', weight: 25 }, { type: 'business', weight: 15 },
         { type: 'tv', weight: 10 }, { type: 'news', weight: 8 }, { type: 'npc', weight: 4 }, { type: 'police', weight: 3 }
-      ];
+      ].filter(enc=>!(streetCleared() && ['combat','empty'].includes(enc.type)) && !(enc.type==='business' && !availableShopIds().length));
 
       const availableEncounters = encounterTypes.filter(enc => !Game.lastEncounters.includes(enc.type));
       const finalEncounters = availableEncounters.length > 0 ? availableEncounters :
@@ -1805,6 +1806,7 @@
 
 
     function startCombat() {
+      if(streetCleared() || streetNumber()!==Game.level)return;
       Game.scene = 'combat';
       const isBoss = Game.aliensThisLevel === 2;
       Game.enemy = makeEnemy(isBoss);
@@ -2103,13 +2105,17 @@ decayBuffsEndOfRound();
         .filter(b => b.id !== Game.lastBusiness)
         .filter(b => !(Game.tempWeapon && (b.id === 'pawn')))
         .filter(b => !(hasArmorActive() && b.id === 'thrift'));  // <— block thrift if any armor
-      const b = pool[rand(0, pool.length - 1)];
+      const local=businesses.filter(b=>availableShopIds().includes(b.id));
+      if(!local.length){startEmpty();return;}
+      const choices=pool.length?pool:local;
+      const b = choices[rand(0, choices.length - 1)];
       Game.lastBusiness = b.id;
       announceBusiness(b.id);
     }
 
 
     function announceBusiness(id) {
+      if(!canVisitShop(id))return;
       const b = getBusiness(id); Game.scene = 'business';
       Game.currentBiz = id;
       Game.businessEntered = false;
@@ -2120,6 +2126,7 @@ decayBuffsEndOfRound();
     }
 
     function startBusiness(id) {
+      if(!canVisitShop(id))return;
       const b = getBusiness(id);
       Game.currentBiz = id;
       Game.purchasedThisVisit[id]=new Set();
@@ -2164,6 +2171,7 @@ decayBuffsEndOfRound();
     }
 
     function buyBusinessItem(id, it) {
+      if(!canVisitShop(id))return;
       if (!Game.purchasedThisVisit[id]) Game.purchasedThisVisit[id] = new Set();
       if (Game.purchasedThisVisit[id].has(it.id) || itemOwned(it) || (it.requires&&!Game.training.includes(it.requires))) return;
 
@@ -2469,7 +2477,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=1.2"></script>
+<script src="campaign.js?v=2.1"></script>
 </body>
 
 </html>

@@ -15,7 +15,7 @@ Or download the repository ZIP, extract it, and open `index.html` in a modern we
 ## Features
 
 - Turn-based combat with purchasable martial-arts VHS moves, guarding, and counterattacks
-- City directory with reliable access to unlocked shops and visible item effects
+- A local directory for each street, with landmarks, local shops, and visible item effects
 - Food that heals now and grants a permanent first-taste upgrade for the current run
 - A 30-victory campaign with ten district bosses and a playable lakefront finale
 - Automatic local checkpoints, Continue, and shelter recovery after defeat
@@ -35,9 +35,10 @@ Or download the repository ZIP, extract it, and open `index.html` in a modern we
 You're an ordinary person caught in an alien invasion of Cleveland. Fight your way through downtown streets, from Public Square to the lakefront, gathering strength and allies as you push back the invasion.
 
 - **Fight:** Use punch, kick, tackle, and purchased moves. Read each alien's combat hint; guard halves incoming damage, and Counterattack training lets you hit back.
-- **Shop:** Open CITY DIRECTORY between fights. Visit the Record Store for training tapes and conditioning. Try new foods for lasting stat upgrades, and collect business loyalty rewards.
+- **Shop:** Open CITY DIRECTORY between fights. Visit the Ontario Record Store for basic training; find advanced moves at later local shops. Try new foods for lasting stat upgrades, and collect business loyalty rewards.
 - **Grow:** Win two patrol fights and a boss fight per district. Advance through ten districts, ending with the Mothership Commander. Level-ups increase your health and heal you fully.
-- **Equip:** Buy armor and three-swing weapons. All previously unlocked shops remain available as you advance.
+- **Travel:** Clear a street to open the next road, then choose Walk onward. Walk back one street at a time; cleared streets are safe and your campaign progress stays intact.
+- **Equip:** Buy armor and three-swing weapons. Walk back through cleared streets to revisit earlier shops.
 - **Continue:** Progress saves after completed actions. Defeat lets you recover at a shelter with full health and intact upgrades, losing 25% of your cash, rounded up.
 
 ## Technical Details
@@ -57,6 +58,7 @@ Run the dependency-free integration checks with:
 
 ```sh
 node tests/campaign.cjs
+node tests/streets.cjs
 node tests/balance.cjs
 ```
 

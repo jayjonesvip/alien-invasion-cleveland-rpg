@@ -32,7 +32,7 @@ appendStory=()=>{}; appendStoryAsync=async()=>{}; showLevelUp=()=>{};
 newGame();
 assert.equal(el('#streetArt').dataset.asset,'street-ontario');
 assert.equal(el('#enemyActor').hidden,true);
-for(const street of STREETS){Game.level=street.level;updateSceneArt();assert.ok(el('#streetArt').dataset.asset.startsWith('street-'));}
+for(const street of STREETS){Game.level=Game.currentStreet=street.level;updateSceneArt();assert.ok(el('#streetArt').dataset.asset.startsWith('street-'));}
 for(const color of CONFIG.enemyTypes){
   Game.enemy={name:color,color,hp:30,maxHP:30,isBoss:false};Game.scene='combat';updateHealthMeters();
   assert.equal(el('#enemyArt').dataset.asset,'alien-'+color);assert.equal(el('#enemyActor').hidden,false);
@@ -43,10 +43,10 @@ Game.enemy.isBoss=true;updateSceneArt();assert.equal(el('#sceneArt').classList.c
 updateCombatButtons();
 el('#buttons').children.find(b=>b.textContent==='Flee').onclick({});
 assert.equal(Game.scene,'explore');assert.equal(el('#enemyActor').hidden,true);
-Game.level=1;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=2;Game.enemy={hp:0,isBoss:true};
-collectReward();assert.equal(Game.level,2);assert.equal(el('#streetArt').dataset.asset,'street-superior');
-Game.level=9;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=1;Game.enemy={hp:0,isBoss:true};
-collectReward();assert.equal(Game.level,10);assert.notEqual(Game.scene,'victory');
+Game.currentStreet=1;Game.level=1;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=2;Game.enemy={hp:0,isBoss:true};
+collectReward();assert.equal(Game.level,2);assert.equal(Game.currentStreet,1);assert.equal(el('#streetArt').dataset.asset,'street-ontario');travelToStreet(2);assert.equal(el('#streetArt').dataset.asset,'street-superior');
+Game.currentStreet=9;Game.level=9;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=1;Game.enemy={hp:0,isBoss:true};
+collectReward();assert.equal(Game.level,10);assert.notEqual(Game.scene,'victory');travelToStreet(10);
 Game.aliensThisLevel=2;Game.pendingReward=20;Game.enemy={hp:0,isBoss:true,isFinalBoss:true};
 collectReward();assert.equal(Game.scene,'victory');assert.equal(el('#endingArt').dataset.asset,'ending-victory');
 assert.equal(el('#streetArt').dataset.asset,'street-erieside');assert.equal(el('#buttons').children.length,0);
@@ -58,8 +58,9 @@ assert.equal(el('#combatStats').style.display,'none','Restart clears the combat 
 const originalRandom=Math.random;
 Math.random=()=>0;
 for(const business of businesses){
+  Game.currentStreet=DISTRICT_SHOPS.findIndex(ids=>ids.includes(business.id))+1;Game.level=Game.highestDistrict=Game.currentStreet;
   announceBusiness(business.id);
-  assert.equal(el('#streetArt').dataset.asset,'street-ontario','Approaching retains the street');
+  assert.equal(el('#streetArt').dataset.asset,SceneArt.streets[getStreet(streetNumber()).id][0],'Approaching retains the street');
   startBusiness(business.id);
   assert.equal(el('#streetArt').dataset.asset,SceneArt.businesses[business.id][0]);
   assert.equal(el('#sceneLocation').textContent,business.name);
@@ -68,8 +69,9 @@ for(const business of businesses){
   assert.equal(el('#streetArt').dataset.asset,SceneArt.businesses[business.id][0],'Purchases retain the shop');
   el('#buttons').children.find(b=>b.textContent==='Leave').onclick({});
   assert.equal(Game.businessEntered,false);
-  assert.equal(el('#streetArt').dataset.asset,'street-ontario','Leaving restores the street');
+  assert.equal(el('#streetArt').dataset.asset,SceneArt.streets[getStreet(streetNumber()).id][0],'Leaving restores the street');
 }
+newGame();
 for(const [start,key,action] of [[startMisc,'tv','Watch'],[startNews,'newspaper','Read'],[startNPC,'survivor','Talk'],[startPolice,'police','Talk']]){
   start();assert.equal(el('#streetArt').dataset.asset,SceneArt.encounters[key][0]);
   el('#buttons').children.find(b=>b.textContent===action).onclick({});
