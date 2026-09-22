@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /tests/
+Disallow: /docs/
+
+Sitemap: https://lakeeffectinvasion.com/sitemap.xml

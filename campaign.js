@@ -26,7 +26,7 @@ CONFIG.abilities.spinningKick.hit=.8;
 const FOOD_POWER = {coffee:'accuracy',donut:'maxHP',burger:'punch',corned:'punch',jerky:'punch',generaltso:'kick',eggroll:'kick',hottea:'accuracy',milkshake:'maxHP'};
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,finalBossDefeated:false,tutorialSeen:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
@@ -134,7 +134,10 @@ function updateCampaignHUD() {
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
   $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/3 WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';
+  $('#combatTutorial').hidden=!tutorialTackleReady();
 }
+function tutorialTackleReady() { return Game.scene==='combat'&&Game.enemy?.hp>0&&Game.enemy.tutorialTackleReady===true; }
+function scaleEnemyHealth(hp,level=Game.level) { return Math.round(hp*(1+.025*(level-1))); }
 function enemyIntent() {
   const L=Game.level, boss=Game.enemy?.isBoss?2:0;
   const profiles={
@@ -145,7 +148,8 @@ function enemyIntent() {
   };
   const p=profiles[Game.enemy?.color]||profiles.blue;
   const rage=Game.enemy?.color==='red'?Math.min(4,Game.turnsThisFight||0):0;
-  return {...p,minDamage:p.minDamage+Math.floor(L/2)+boss+rage,maxDamage:p.maxDamage+Math.floor(L/2)+boss+rage};
+  const pressure=Math.floor((L-1)/3);
+  return {...p,minDamage:p.minDamage+Math.floor(L/2)+boss+rage+pressure,maxDamage:p.maxDamage+Math.floor(L/2)+boss+rage+pressure};
 }
 function useWeaponCharge() { Game.weaponUses=Math.max(0,(Game.weaponUses||1)-1);Game.tempWeaponUsed=Game.weaponUses===0; }
 async function guardTurn() {
@@ -184,6 +188,8 @@ function readSave() {
     if(![1,2].includes(parsed.version)||!s||!Number.isInteger(s.level)||s.level<1||s.level>10||!Number.isFinite(s.hp)||s.hp<0||!Number.isFinite(s.maxHP)||s.maxHP<1||s.maxHP>1000||s.hp>s.maxHP||!Number.isFinite(s.money)||s.money<0||s.money>1000000) return null;
     if(!Number.isInteger(s.aliensThisLevel)||s.aliensThisLevel<0||s.aliensThisLevel>3||s.requiredThisLevel!==3||s.highestDistrict!==s.level) return null;
     if(parsed.version===1)s.currentStreet=s.level;
+    if(s.tutorialSeen===undefined)s.tutorialSeen=true;
+    if(typeof s.tutorialSeen!=='boolean'||(s.enemy?.tutorialTackleReady!==undefined&&typeof s.enemy.tutorialTackleReady!=='boolean'))return null;
     if(!Number.isInteger(s.currentStreet)||s.currentStreet<1||s.currentStreet>s.highestDistrict||(s.scene==='combat'&&s.currentStreet!==s.level))return null;
     if(!Array.isArray(s.learned)||s.learned.some(k=>!TRAINING.some(t=>t.skill===k))||!Array.isArray(s.training)||s.training.some(k=>!TRAINING.some(t=>t.id===k))||!Array.isArray(s.tasted)||s.tasted.some(k=>typeof k!=='string'))return null;
     if(!s.permanent||!['punch','kick','defense','accuracy'].every(k=>Number.isFinite(s.permanent[k])&&s.permanent[k]>=0&&s.permanent[k]<=30))return null;

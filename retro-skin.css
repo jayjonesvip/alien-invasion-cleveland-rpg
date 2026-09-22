@@ -41,7 +41,7 @@ button:active:not(:disabled) { transform: translateY(1px); }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--pink); outline-offset: 3px; }
 button:disabled { opacity: .7; }
 /* Title card */
-#startScreen { flex: 1; position: relative; padding: 0; min-height: 0; isolation: isolate; background: #071218; color: #eef4df; }
+#startScreen { flex: 1; position: relative; padding: 0; min-height: 0; isolation: isolate; background: #071218; color: #eef4df; overflow-y:auto; }
 .title-art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 67% center; opacity: .76; }
 #startScreen::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #061119ef, #071219a8 45%, #05101922), linear-gradient(0deg, #050f17, transparent 55%); }
 #startScreen::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .13; background: repeating-linear-gradient(0deg, transparent 0 3px, #000 3px 4px); }
@@ -52,6 +52,7 @@ button:disabled { opacity: .7; }
 .title span { color: #9aefd2; text-shadow: 3px 3px 0 #133f43, -1px 0 #e788a3; }
 .title .title-kicker { display:block; color:#f1e7d3; font-size:.6em; letter-spacing:.04em; line-height:1.15; margin-bottom:6px; text-shadow:3px 3px 0 #122a30; }
 .title .title-main { display:block; }
+.title-summary { display:block; margin-top:12px; font-size:12px; line-height:1.7; color:#bdcec5; }
 .title-location { font-size: 14px; letter-spacing: .32em; margin: 22px 0 0; color: #ebd0a5; }
 .title-location b { border-left: 1px solid #b48967; margin-left: 13px; padding-left: 20px; font-weight: 400; }
 .title-description { max-width:420px; color: #c2d0c9; font: 15px/1.8 "Cascadia Mono", Consolas, monospace; margin: 24px 0; }
@@ -115,6 +116,10 @@ button:disabled { opacity: .7; }
 #buttons .directory-return { border-color: var(--text); }
 #buttons .travel-button { border-color: var(--amber); color: var(--amber); background: var(--panel); }
 #buttons .travel-button:disabled { opacity: .65; border-style: dashed; }
+#combatTutorial { padding:10px 12px; margin-bottom:10px; border-left:3px solid var(--amber); color:var(--fg); background:var(--surface); font-size:12px; line-height:1.5; }
+#combatTutorial[hidden] { display:none; }
+#combatTutorial strong { color:var(--amber); }
+#buttons button.tutorial-move { border:2px solid var(--amber); background:var(--amber); color:var(--panel); box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--amber); }
 .help-link:focus-visible, .title-footer a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 .settings-btn { border-radius: 2px; margin: 0 14px 0 0; font-size: 9px; letter-spacing: .06em; min-height: 28px; padding: 5px 8px; color: var(--muted); }
 .toggle-label { font-size: 8px; letter-spacing: .08em; }
@@ -126,7 +131,7 @@ button:disabled { opacity: .7; }
 .action-prompt span { color: var(--cyan); margin-left: 8px; }
 #buttons { padding: 12px 24px max(16px, env(safe-area-inset-bottom)); gap: 9px; background: var(--surface); border-top: 0; max-height: 25dvh; }
 #buttons button { flex: 1 0 auto; min-width: 95px; padding: 12px 18px; }
-#buttons button:first-child:not(:disabled):not([data-tone="quiet"]) { background: var(--cyan); color: var(--panel); border-color: var(--cyan); }
+#buttons button:first-child:not(:disabled):not([data-tone="quiet"]):not(.tutorial-move) { background: var(--cyan); color: var(--panel); border-color: var(--cyan); }
 #buttons button[data-tone="quiet"] { color: var(--muted); background: transparent; flex-grow: 0; }
 #buttons.locked { opacity: .75; }
 #settingsPanel { border-radius: 4px; padding: 18px; border-color: var(--cyan); background: var(--surface); box-shadow: 0 10px 40px #0006; max-height: 60dvh; overflow-y: auto; }

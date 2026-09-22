@@ -67,3 +67,12 @@ Defeating a boss unlocks the next street but leaves the player in place. Walking
 | Prospect | St. Stanislaus | Neighborhood sanctuary |
 | Huron | Hot Dog Cart | Railway viaduct |
 | Erieside | No shops; stock up before arrival | Lake Erie harbor |
+
+
+## First fight and difficulty ramp
+
+New runs highlight Tackle during the first fight. Its first use in that encounter is guaranteed to hit; other moves remain available, and regular odds return after the guarantee is spent. The opening and its consumed state survive reloads. Fleeing, losing, or winning ends that encounter's tutorial. Existing saves from before this feature continue without being interrupted by a tutorial.
+
+Street one retains its previous health and damage ranges. Each subsequent street adds 2.5% of base enemy health to the existing level progression (22.5% extra on street ten). Enemies gain one extra damage per hit on streets four, seven, and ten. The final commander has 147 HP; hit chances, bounties, and shop prices are unchanged. Already-saved enemies retain their existing HP.
+
+In fifty seeded automated shopper runs, the previous tuning averaged 86 combat rounds and the new tuning averaged 92. Both completed all fifty runs with one shelter recovery across the sample. This is a modest pacing increase, not a human difficulty rating. `node tests/tutorial.cjs` checks the guaranteed move, return to normal odds, save compatibility, and the street ramp.

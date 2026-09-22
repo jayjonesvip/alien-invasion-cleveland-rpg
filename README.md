@@ -6,13 +6,13 @@ A browser text adventure game set in 1989 Cleveland during an alien invasion, wi
 
 ## Play the Game
 
-[Play Online](https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/)
+[Play Online](https://lakeeffectinvasion.com/)
 
-[How to Play](https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/how-to-play.html) explains combat, shopping, saving, and how to return to the City Directory after encounters. Open it from the title screen or in-game controls without leaving your game tab.
+[How to Play](https://lakeeffectinvasion.com/how-to-play.html) explains combat, shopping, saving, and how to return to the City Directory after encounters. Open it from the title screen or in-game controls without leaving your game tab.
 
 Or download the repository ZIP, extract it, and open `index.html` in a modern web browser. Keep the HTML, CSS, JavaScript, and images together. No installation or build step is needed.
 
-[Preview the artwork](https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/gallery.html)
+[Preview the artwork](https://lakeeffectinvasion.com/gallery.html)
 
 ## Features
 
@@ -62,9 +62,12 @@ Run the dependency-free integration checks with:
 node tests/campaign.cjs
 node tests/streets.cjs
 node tests/hunt.cjs
+node tests/tutorial.cjs
 node tests/balance.cjs
 ```
 
 The campaign suite includes the artwork integration checks. The balance script runs 50 seeded campaigns with an automated shopper; it is a completion smoke test, not a substitute for human playtesting.
 
 See [campaign notes](docs/CAMPAIGN.md) for mechanics and checkpoint behavior, and [artwork notes](docs/ARTWORK.md) for asset scope and generation prompts.
+
+Search metadata, canonical links, and the three-page [sitemap](https://lakeeffectinvasion.com/sitemap.xml) use lakeeffectinvasion.com. See [SEO notes](docs/SEO.md) for maintenance and verification.

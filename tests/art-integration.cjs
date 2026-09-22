@@ -25,7 +25,7 @@ const context=vm.createContext({document,console:{log(){}},localStorage:{getItem
 context.window=context;
 vm.runInContext(fs.readFileSync(path.join(root,'scene-art.js'),'utf8'),context);
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-for(const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) vm.runInContext(script[1],context);
+for(const script of html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/g)) if(!script[1].includes('application/ld+json'))vm.runInContext(script[2],context);
 vm.runInContext(fs.readFileSync(path.join(root,'campaign.js'),'utf8'),context);
 vm.runInContext(`
 appendStory=()=>{}; appendStoryAsync=async()=>{}; showLevelUp=()=>{};

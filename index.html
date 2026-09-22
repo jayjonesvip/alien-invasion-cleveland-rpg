@@ -6,34 +6,54 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   
   <!-- Primary Meta Tags -->
-  <title>Lake Effect Invasion | Cleveland, 1989</title>
-  <meta name="title" content="Lake Effect Invasion | Cleveland, 1989" />
+  <title>Lake Effect Invasion | Free Retro Browser RPG</title>
+  <meta name="title" content="Lake Effect Invasion | Free Retro Browser RPG" />
   <meta name="description" content="Cleveland, 1989. Fight. Eat. Fight again. A retro browser RPG: battle aliens, visit neighborhood shops, learn new moves, and save the city." />
   <meta name="keywords" content="Lake Effect Invasion, alien invasion game, Cleveland RPG, retro browser game, text-based RPG, turn-based combat, free online game, 1989 game, alien fighting game" />
   <meta name="author" content="Lake Effect Invasion" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://lakeeffectinvasion.com/" />
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/" />
+  <meta property="og:url" content="https://lakeeffectinvasion.com/" />
   <meta property="og:title" content="Lake Effect Invasion" />
   <meta property="og:description" content="Cleveland, 1989. Fight. Eat. Fight again. Battle aliens, shop for upgrades, and make it to Lake Erie in this retro browser RPG." />
-  <meta property="og:image" content="https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/images/art/street-ontario.webp" />
+  <meta property="og:image" content="https://lakeeffectinvasion.com/images/art/street-ontario.webp" />
   <meta property="og:image:width" content="1280" />
   <meta property="og:image:height" content="720" />
   
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/" />
+  <meta name="twitter:url" content="https://lakeeffectinvasion.com/" />
   <meta name="twitter:title" content="Lake Effect Invasion" />
   <meta name="twitter:description" content="Cleveland, 1989. Fight. Eat. Fight again. Battle aliens, shop for upgrades, and make it to Lake Erie in this retro browser RPG." />
-  <meta name="twitter:image" content="https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/images/art/street-ontario.webp" />
+  <meta name="twitter:image" content="https://lakeeffectinvasion.com/images/art/street-ontario.webp" />
   
   <meta property="og:site_name" content="Lake Effect Invasion" />
   <meta property="og:image:alt" content="Alien lights gather over Cleveland in Lake Effect Invasion." />
   <meta name="twitter:image:alt" content="Alien lights gather over Cleveland in Lake Effect Invasion." />
   <link rel="icon" type="image/svg+xml" href="images/lake-effect-icon.svg" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "@id": "https://lakeeffectinvasion.com/#game",
+  "name": "Lake Effect Invasion",
+  "url": "https://lakeeffectinvasion.com/",
+  "description": "Cleveland, 1989. Fight. Eat. Fight again. A free turn-based browser RPG about fighting aliens, visiting local shops, and upgrading your skills.",
+  "image": "https://lakeeffectinvasion.com/images/art/street-ontario.webp",
+  "genre": [
+    "Role-playing game",
+    "Turn-based combat"
+  ],
+  "gamePlatform": "Web browser",
+  "playMode": "https://schema.org/SinglePlayer",
+  "inLanguage": "en",
+  "isAccessibleForFree": true
+}
+  </script>
 
   <!-- Additional Meta Tags -->
   <meta name="theme-color" content="#1a1a1a" />
@@ -720,7 +740,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.1" />
-  <link rel="stylesheet" href="retro-skin.css?v=3.0" />
+  <link rel="stylesheet" href="retro-skin.css?v=3.1" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1798,6 +1818,7 @@
     function makeEnemy(isBoss = false) {
       let L = Game.level, hp = rand(15 + L * 4, 20 + L * 4);
       if (isBoss) hp = Math.floor(hp * 1.6);
+      hp=scaleEnemyHealth(hp);
       let enemyType = CONFIG.enemyTypes[rand(0, CONFIG.enemyTypes.length - 1)];
       return {
         name: isBoss ? ('BOSS ' + enemyType.toUpperCase()) : enemyType,
@@ -1815,7 +1836,8 @@
       Game.scene = 'combat';
       const isBoss = Game.aliensThisLevel === 2;
       Game.enemy = makeEnemy(isBoss);
-      if (Game.level===10 && isBoss) { Game.enemy.isFinalBoss=true;Game.enemy.color="red";Game.enemy.name="MOTHERSHIP COMMANDER";Game.enemy.hp=Game.enemy.maxHP=120; }
+      if (Game.level===10 && isBoss) { Game.enemy.isFinalBoss=true;Game.enemy.color="red";Game.enemy.name="MOTHERSHIP COMMANDER";Game.enemy.hp=Game.enemy.maxHP=scaleEnemyHealth(120); }
+      Game.enemy.tutorialTackleReady=!Game.tutorialSeen;Game.tutorialSeen=true;
       Game.pendingReward=0;Game.guarding=false;
       Game.abilitiesUsed = {};
       // keep any shop-armed temp weapon for “next fight”
@@ -1838,8 +1860,10 @@
         const ability = CONFIG.abilities[abilityKey];
         if (ability.unlockLevel === 1 || Game.learned.includes(abilityKey)) {
           const isOnCooldown = Game.abilitiesUsed[abilityKey] && ability.cooldown > 0;
-          const button=addButton(ability.name + (isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
+          const tutorial=abilityKey==='tackle'&&tutorialTackleReady();
+          const button=addButton(ability.name + (tutorial?' · Guaranteed hit':isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
           button.title=Math.round(Math.min(1,ability.hit+Game.permanent.accuracy)*100)+'% base hit · '+(ability.minDamage+Game.level)+'–'+(ability.maxDamage+Game.level)+' damage before bonuses';
+          if(tutorial){button.classList.add('tutorial-move');button.title='Guaranteed hit once in this first fight. The alien may strike back afterward.';button.setAttribute('aria-describedby','combatTutorial');}
         }
       });
 
@@ -1911,10 +1935,12 @@
 
 
       // --- buffs affect hit chance and damage ---
+      const tutorialHit=abilityKey==='tackle'&&tutorialTackleReady();
+      if(tutorialHit){Game.enemy.tutorialTackleReady=false;updateCampaignHUD();}
       let hitChance = ability.hit;
-      if (Game.buffs?.firstHitGuaranteed) { hitChance = 1; Game.buffs.firstHitGuaranteed = false; }
+      if (Game.buffs?.firstHitGuaranteed && !tutorialHit) { hitChance = 1; Game.buffs.firstHitGuaranteed = false; }
       hitChance += (Game.buffs?.hitBonus || 0) + Game.permanent.accuracy;
-      hitChance = Math.min(1, Math.max(0, hitChance));
+      hitChance = tutorialHit?1:Math.min(1, Math.max(0, hitChance));
 
       let minDmg = ability.minDamage + L;
       let maxDmg = ability.maxDamage + L;
@@ -2376,7 +2402,7 @@ decayBuffsEndOfRound();
       <div class="title-content">
         <p class="edition-label"><span></span> AN ORDINARY PERSON. AN IMPOSSIBLE NIGHT.</p>
         <h1 class="title"><span class="title-kicker">LAKE EFFECT</span><span class="title-main">INVASION</span></h1>
-        <p class="title-description"><em>Cleveland, 1989. Fight. Eat. Fight again.</em></p>
+        <p class="title-description"><em>Cleveland, 1989. Fight. Eat. Fight again.</em><span class="title-summary">A free turn-based browser RPG. Battle aliens, shop for upgrades, and fight your way through Cleveland to Lake Erie.</span></p>
         <button class="start-button" onclick="startNewRun()">START SURVIVING <span aria-hidden="true">↗</span></button>
         <button id="continueRun" onclick="continueGame()" hidden>CONTINUE RUN</button>
         <div class="title-footer"><span>A TURN-BASED SURVIVAL RPG</span><a href="how-to-play.html" target="_blank" rel="noopener">HOW TO PLAY</a><a href="gallery.html">EXPLORE THE ART ↗</a></div>
@@ -2410,6 +2436,7 @@ decayBuffsEndOfRound();
       <section id="huntMeter" class="hunt-meter" aria-label="Alien search" hidden><label id="huntStatus" for="huntProgress" aria-live="polite">Searching the street...</label><progress id="huntProgress" max="100" value="0">Searching</progress></section>
       <div id="story"></div>
       <div id="combatStats">
+        <div id="combatTutorial" role="note" hidden><strong>FIRST FIGHT</strong> · Try the highlighted Tackle. It is guaranteed to land once in this fight. Then the alien may strike back. Other moves are still available.</div>
         <div id="combatIntent"></div>
         <div class="combat-meters">
         <div class="health-meter player-health">
@@ -2482,7 +2509,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=2.4"></script>
+<script src="campaign.js?v=2.5"></script>
 </body>
 
 </html>
