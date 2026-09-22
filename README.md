@@ -6,6 +6,8 @@ A browser text adventure game set in 1989 Cleveland during an alien invasion, wi
 
 [Play Online](https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/)
 
+[How to Play](https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/how-to-play.html) explains combat, shopping, saving, and how to return to the City Directory after encounters. Open it from the title screen or in-game controls without leaving your game tab.
+
 Or download the repository ZIP, extract it, and open `index.html` in a modern web browser. Keep the HTML, CSS, JavaScript, and images together. No installation or build step is needed.
 
 [Preview the artwork](https://jayjonesvip.github.io/alien-invasion-cleveland-rpg/gallery.html)

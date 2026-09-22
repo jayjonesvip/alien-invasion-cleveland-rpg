@@ -71,9 +71,17 @@ function showDirectory() {
   for(const id of availableShopIds()) addButton(getBusiness(id).name,()=>startBusiness(id));
   saveGame();
 }
+function addDirectoryReturn() {
+  const roaming=['explore','empty','npc'].includes(Game.scene);
+  if(roaming || (Game.scene==='business'&&!Game.businessEntered)) {
+    const button=addButton('Back to City Directory',showDirectory);
+    button.classList.add('directory-return');
+  }
+}
 function updateCampaignHUD() {
   const directory=$('#directoryBtn');
   directory.disabled=['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
+  directory.title=Game.scene==='combat'?'Finish the fight and collect your bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
   $('#campaignProgress').textContent='DISTRICT '+Game.level+'/10 · '+Game.aliensThisLevel+'/3 WINS';
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';

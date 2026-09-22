@@ -715,7 +715,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.1" />
-  <link rel="stylesheet" href="retro-skin.css?v=2.1" />
+  <link rel="stylesheet" href="retro-skin.css?v=2.2" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1533,7 +1533,7 @@
 
 
     function divider() { let d = document.createElement('div'); d.className = 'divider'; $('#story').appendChild(d); }
-    function clearButtons() { $('#buttons').innerHTML = ''; updateSceneArt(); updateCampaignHUD(); }
+    function clearButtons() { $('#buttons').innerHTML = ''; updateSceneArt(); updateCampaignHUD(); addDirectoryReturn(); }
     function addButton(lbl, fn, dis = false) {
       const btnWrap = $('#buttons');
       const isLocked = btnWrap?.classList.contains('locked');
@@ -2367,7 +2367,7 @@ decayBuffsEndOfRound();
         <p class="title-description">The city's gone quiet. The sky hasn't.<br>Fight your way through downtown. Find shelter.<br>Make it to the lakefront alive.</p>
         <button class="start-button" onclick="startNewRun()">START SURVIVING <span aria-hidden="true">↗</span></button>
         <button id="continueRun" onclick="continueGame()" hidden>CONTINUE RUN</button>
-        <div class="title-footer"><span>A TURN-BASED SURVIVAL RPG</span><a href="gallery.html">EXPLORE THE ART ↗</a></div>
+        <div class="title-footer"><span>A TURN-BASED SURVIVAL RPG</span><a href="how-to-play.html" target="_blank" rel="noopener">HOW TO PLAY</a><a href="gallery.html">EXPLORE THE ART ↗</a></div>
       </div>
     </div>
 
@@ -2417,6 +2417,7 @@ decayBuffsEndOfRound();
       </div>
       <div class="controls-dock">
         <button id="directoryBtn" class="settings-btn" onclick="showDirectory()">CITY DIRECTORY</button>
+        <a class="help-link" href="how-to-play.html" target="_blank" rel="noopener" aria-label="How to play (opens in a new tab)">HOW TO PLAY</a>
         <button id="settingsBtn" class="settings-btn" title="Settings">TEXT SETTINGS</button>
 
         <!-- Panel lives INSIDE the dock so it anchors correctly -->
@@ -2440,11 +2441,11 @@ decayBuffsEndOfRound();
           </div>
         </div>
 
-        <span class="toggle-label">PAPER</span>
+        <div class="theme-controls"><span class="toggle-label">PAPER</span>
         <button id="themeToggle" class="toggle-switch" onclick="toggleTheme()" aria-label="Neon theme" aria-pressed="false">
           <span class="toggle-handle"></span>
         </button>
-        <span class="toggle-label">NEON</span>
+        <span class="toggle-label">NEON</span></div>
         <span class="action-prompt">YOUR NEXT MOVE <span aria-hidden="true">↓</span></span>
       </div>
       <div id="buttons"></div>
@@ -2468,7 +2469,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=1.1"></script>
+<script src="campaign.js?v=1.2"></script>
 </body>
 
 </html>

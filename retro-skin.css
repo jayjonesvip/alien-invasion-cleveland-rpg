@@ -55,7 +55,7 @@ button:disabled { opacity: .7; }
 .title-description { color: #c2d0c9; font: 15px/1.8 "Cascadia Mono", Consolas, monospace; margin: 24px 0; }
 #startScreen .start-button { width: min(360px, 100%); display: flex; justify-content: space-between; align-items: center; gap: 18px; margin: auto 0 24px; border: 1px solid #a1eed4; border-radius: 2px; padding: 17px 21px; background: #a1eed4; color: #082727; box-shadow: 4px 4px 0 #214445; font-size: 14px; }
 #startScreen .start-button:hover { background: #d5ffea; box-shadow: 5px 5px 0 #376866; }
-.title-footer { display: flex; justify-content: space-between; gap: 24px; width: 100%; border-top: 1px solid #73968950; padding-top: 17px; color: #9bb7ac; font-size: 9px; letter-spacing: .1em; }
+.title-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; width: 100%; border-top: 1px solid #73968950; padding-top: 17px; color: #9bb7ac; font-size: 9px; letter-spacing: .1em; }
 .title-footer a { color: #bddbcc; text-decoration: none; }
 /* Survival dashboard */
 #continueRun { width: min(360px, 100%); margin: -12px 0 20px; background: #152d34; color: #baf4de; border-color: #6db8a3; }
@@ -99,9 +99,14 @@ button:disabled { opacity: .7; }
 .health-fill { border-radius: 0; }
 .health-bar::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), var(--surface) calc(10% - 2px) 10%); opacity: .4; }
 .health-text { font-size: 10px; z-index: 1; }
-.controls-dock { padding: 8px 24px; gap: 8px; background: var(--panel); }
+.controls-dock { padding: 8px 24px; gap: 8px; background: var(--panel); flex-wrap: wrap; }
+.help-link { color: var(--text); font-size: 9px; letter-spacing: .06em; padding: 7px 5px; text-underline-offset: 3px; }
+#directoryBtn { color: var(--text); border-color: var(--border); }
+#buttons .directory-return { border-color: var(--text); }
+.help-link:focus-visible, .title-footer a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 .settings-btn { border-radius: 2px; margin: 0 14px 0 0; font-size: 9px; letter-spacing: .06em; min-height: 28px; padding: 5px 8px; color: var(--muted); }
 .toggle-label { font-size: 8px; letter-spacing: .08em; }
+.theme-controls { display:flex; align-items:center; gap:8px; flex-shrink:0; }
 .toggle-switch { width: 34px; height: 18px; min-height: 18px; padding: 0; flex-shrink: 0; border: 1px solid var(--border); border-radius: 10px; }
 .toggle-handle { width: 12px; height: 12px; top: 2px; left: 2px; box-shadow: none; }
 [data-theme="dark"] .toggle-handle { transform: translateX(16px); }
