@@ -19,12 +19,14 @@ const elements=new Map();
 const el=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 const document={querySelector:el,getElementById:id=>el('#'+id),createElement:tag=>new Element(tag),
   addEventListener(){},removeEventListener(){},documentElement:new Element(),body:new Element()};
-const context=vm.createContext({document,console:{log(){}},localStorage:{getItem(){return null;},setItem(){}},
+const storage=new Map();
+const context=vm.createContext({document,console:{log(){}},localStorage:{getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}},
   setTimeout(fn){fn();return 1;},clearTimeout(){},innerHeight:800,addEventListener(){},assert,el});
 context.window=context;
 vm.runInContext(fs.readFileSync(path.join(root,'scene-art.js'),'utf8'),context);
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 for(const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) vm.runInContext(script[1],context);
+vm.runInContext(fs.readFileSync(path.join(root,'campaign.js'),'utf8'),context);
 vm.runInContext(`
 appendStory=()=>{}; appendStoryAsync=async()=>{}; showLevelUp=()=>{};
 newGame();
@@ -41,9 +43,11 @@ Game.enemy.isBoss=true;updateSceneArt();assert.equal(el('#sceneArt').classList.c
 updateCombatButtons();
 el('#buttons').children.find(b=>b.textContent==='Flee').onclick({});
 assert.equal(Game.scene,'explore');assert.equal(el('#enemyActor').hidden,true);
-Game.level=1;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=2;
+Game.level=1;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=2;Game.enemy={hp:0,isBoss:true};
 collectReward();assert.equal(Game.level,2);assert.equal(el('#streetArt').dataset.asset,'street-superior');
-Game.level=9;Game.requiredThisLevel=768;Game.aliensThisLevel=767;Game.pendingReward=1;
+Game.level=9;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=1;Game.enemy={hp:0,isBoss:true};
+collectReward();assert.equal(Game.level,10);assert.notEqual(Game.scene,'victory');
+Game.aliensThisLevel=2;Game.pendingReward=20;Game.enemy={hp:0,isBoss:true,isFinalBoss:true};
 collectReward();assert.equal(Game.scene,'victory');assert.equal(el('#endingArt').dataset.asset,'ending-victory');
 assert.equal(el('#streetArt').dataset.asset,'street-erieside');assert.equal(el('#buttons').children.length,0);
 assert.equal(el('#overlay').style.display,'flex');
@@ -97,3 +101,4 @@ for(const [asset] of Object.values(catalog)){
 for(const color of ['blue','green','grey','red'])for(const type of ['alien','boss'])paths.add('images/art/'+type+'-'+color+'.webp');
 for(const src of paths)assert.ok(fs.existsSync(path.join(root,src)),src);
 console.log('PASS: 10 streets; 4 aliens; 4 bosses; 17 business entry/purchase/exit flows; 5 encounter types; both care-package rewards; flee cleanup; level-up; endings; restart; 76 optimized assets.');
+module.exports={context,el,storage,vm,assert};

@@ -715,7 +715,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.1" />
-  <link rel="stylesheet" href="retro-skin.css?v=1" />
+  <link rel="stylesheet" href="retro-skin.css?v=2.1" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -728,14 +728,14 @@
     const CONFIG = {
       title: "ALIEN INVASION RPG",
       description: "1989. In Cleveland, small alien creatures land and chaos spreads block by block. You're just a regular person trying to survive: fight aliens, chat with survivors, duck into shops and bars, and catch TVs in window displays blasting invasion news and commercials.",
-      startingHP: 50, startingMoney: 0, aliensRequiredFirstLevel: 3, maxLevel: 10, hpGainPerLevel: 10,
+      startingHP: 50, startingMoney: 8, aliensRequiredFirstLevel: 3, maxLevel: 10, hpGainPerLevel: 10,
       enemyName: "alien",   // <— change to "zombie" etc.
 
 
       abilities: {
-        tackle: { name: 'Tackle', hit: 0.99, minDamage: 1, maxDamage: 4, verb: 'tackle', unlockLevel: 1, cooldown: 0 },
-        punch: { name: 'Punch', hit: 0.50, minDamage: 6, maxDamage: 10, verb: 'punch', unlockLevel: 1, cooldown: 0 },
-        kick: { name: 'Kick', hit: 0.25, minDamage: 12, maxDamage: 16, verb: 'kick', unlockLevel: 1, cooldown: 0 },
+        tackle: { name: 'Tackle', hit: 0.98, minDamage: 4, maxDamage: 6, verb: 'tackle', unlockLevel: 1, cooldown: 0 },
+        punch: { name: 'Punch', hit: 0.85, minDamage: 6, maxDamage: 10, verb: 'punch', unlockLevel: 1, cooldown: 0 },
+        kick: { name: 'Kick', hit: 0.70, minDamage: 9, maxDamage: 14, verb: 'kick', unlockLevel: 1, cooldown: 0 },
         superKick: { name: 'Super Kick', hit: 0.85, minDamage: 24, maxDamage: 32, verb: 'SUPER KICK', unlockLevel: 3, cooldown: 1, damageMultiplier: 2 },
         superPunch: { name: 'Super Punch', hit: 0.85, minDamage: 12, maxDamage: 20, verb: 'SUPER PUNCH', unlockLevel: 5, cooldown: 1, damageMultiplier: 2 },
         spinningKick: { name: 'Spinning Kick', hit: 0.35, minDamage: 18, maxDamage: 25, verb: 'spinning kick', unlockLevel: 7, cooldown: 0 },
@@ -1213,6 +1213,7 @@
     }
 
     function decayBuffsEndOfFight() {
+      if (Game.weaponUses <= 0) Game.tempWeapon = null;
       if (!Game.buffs) return;
       if (Game.buffs.fights != null) {
         Game.buffs.fights--;
@@ -1225,8 +1226,6 @@
           appendStory('[BUFF] Fight-based power-ups expire.', 'system');
         }
       }
-      // clear temp weapon if it was used
-      if (Game.tempWeaponUsed) Game.tempWeapon = null;
     }
 
 
@@ -1244,8 +1243,9 @@
 
       if (Math.random() < 0.25) {
         Game.tempWeapon = Math.random() < 0.5 ? 'leadPipe' : 'baseballBat';
+        Game.weaponUses = 3;
         const w = TEMP_WEAPONS[Game.tempWeapon];
-        appendStory('A bystander hurls a ' + w.name + ' to you! (one-time use)', 'system');
+        appendStory('A bystander hurls a ' + w.name + ' to you! (3 swings)', 'system');
         updateCombatButtons();
       }
     }
@@ -1308,11 +1308,14 @@
 
     function beginTurnLock() {
       StoryType.holdLock = true;
+      updateCampaignHUD();
       lockButtonsUI();         // visual + pointer-events
       setButtonsDisabled(true); // keyboard safety
     }
     function endTurnLock() {
       StoryType.holdLock = false;
+      saveGame();
+      updateCampaignHUD();
       // if the typewriter has no more lines in queue, unlock now
       if (StoryType.queue.length === 0) {
         unlockButtonsUI();
@@ -1343,7 +1346,7 @@
 
 
     function lockButtonsUI() { $('#buttons')?.classList.add('locked'); }
-    function unlockButtonsUI() { $('#buttons')?.classList.remove('locked'); }
+    function unlockButtonsUI() { $('#buttons')?.classList.remove('locked'); updateCampaignHUD(); }
 
     function getMeterEls(target) { // 'player' | 'enemy'
       if (target === 'enemy') {
@@ -1433,6 +1436,7 @@
       }
 
       StoryType.typing = false;
+      updateCampaignHUD();
       if (cleanupSkip) cleanupSkip();
 
       // if no more items queued, end the session and unlock
@@ -1529,7 +1533,7 @@
 
 
     function divider() { let d = document.createElement('div'); d.className = 'divider'; $('#story').appendChild(d); }
-    function clearButtons() { $('#buttons').innerHTML = ''; updateSceneArt(); }
+    function clearButtons() { $('#buttons').innerHTML = ''; updateSceneArt(); updateCampaignHUD(); }
     function addButton(lbl, fn, dis = false) {
       const btnWrap = $('#buttons');
       const isLocked = btnWrap?.classList.contains('locked');
@@ -1547,10 +1551,13 @@
       b.onclick = (e) => {
         if ($('#buttons')?.classList.contains('locked')) return;
         if (b.disabled) return;
-        fn(e);
+        const result = fn(e);
+        if (result && typeof result.then === 'function') result.then(saveGame);
+        else saveGame();
       };
 
       btnWrap.appendChild(b);
+      return b;
     }
 
 
@@ -1577,6 +1584,7 @@
 
       const st = getStreet(Game.level);
       if (st) $('#statStreet').textContent = st.name;
+      updateCampaignHUD();
     }
     function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
     function showGameUI() { $('#startScreen').classList.add('hidden'); $('#gameUI').classList.remove('hidden'); $('#statsBar').style.display = 'block'; }
@@ -1708,6 +1716,7 @@
       });
 
 
+      initCampaign();
       $('#story').innerHTML = '';
 
       // 1) Show the game blurb as the first line the player sees
@@ -1719,12 +1728,8 @@
       appendStory('TVs in window displays show breaking news: ALIEN INVASION IN CLEVELAND, 1989.', 'system');
       divider();
       clearButtons();
-      addButton('Start Adventure', () => {
-        Game.scene = 'explore';
-        updateStats();
-        encounter();
-      });
-      updateStats();
+      addButton('Start Adventure', () => { Game.scene='explore';showDirectory(); });
+      updateStats();saveGame();
     };
 
     // Encounter system
@@ -1785,8 +1790,8 @@
 
     // Combat system
     function makeEnemy(isBoss = false) {
-      let L = Game.level, hp = rand(10 + L * 5, 20 + L * 8);
-      if (isBoss) hp = Math.floor(hp * 2.2);
+      let L = Game.level, hp = rand(15 + L * 4, 20 + L * 4);
+      if (isBoss) hp = Math.floor(hp * 1.6);
       let enemyType = CONFIG.enemyTypes[rand(0, CONFIG.enemyTypes.length - 1)];
       return {
         name: isBoss ? ('BOSS ' + enemyType.toUpperCase()) : enemyType,
@@ -1801,8 +1806,10 @@
 
     function startCombat() {
       Game.scene = 'combat';
-      const isBoss = ((Game.aliensDefeated + 1) % 5 === 0);
+      const isBoss = Game.aliensThisLevel === 2;
       Game.enemy = makeEnemy(isBoss);
+      if (Game.level===10 && isBoss) { Game.enemy.isFinalBoss=true;Game.enemy.color="red";Game.enemy.name="MOTHERSHIP COMMANDER";Game.enemy.hp=Game.enemy.maxHP=120; }
+      Game.pendingReward=0;Game.guarding=false;
       Game.abilitiesUsed = {};
       // keep any shop-armed temp weapon for “next fight”
       Game.tempWeaponUsed = false;
@@ -1822,18 +1829,21 @@
       // Normal abilities
       Object.keys(CONFIG.abilities).forEach(abilityKey => {
         const ability = CONFIG.abilities[abilityKey];
-        if (Game.level >= ability.unlockLevel) {
+        if (ability.unlockLevel === 1 || Game.learned.includes(abilityKey)) {
           const isOnCooldown = Game.abilitiesUsed[abilityKey] && ability.cooldown > 0;
-          addButton(ability.name + (isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
+          const button=addButton(ability.name + (isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
+          button.title=Math.round(Math.min(1,ability.hit+Game.permanent.accuracy)*100)+'% base hit · '+(ability.minDamage+Game.level)+'–'+(ability.maxDamage+Game.level)+' damage before bonuses';
         }
       });
 
-      // Temporary weapon (one-time)
+      // Temporary weapon (three swings)
       if (Game.tempWeapon && !Game.tempWeaponUsed) {
         const tw = TEMP_WEAPONS[Game.tempWeapon];
-        addButton(tw.name + ' (One-Time)', () => playerAttack(Game.tempWeapon));
+        addButton(tw.name + ' ('+Game.weaponUses+' uses)', () => playerAttack(Game.tempWeapon));
       }
 
+      addButton(Game.learned.includes('counter')?'Guard / Counter':'Guard',guardTurn);
+      updateCampaignHUD();
       addButton('Flee', () => {
         const wasBroke = Game.money <= 0;
 
@@ -1877,7 +1887,7 @@
 
 
     async function playerAttack(abilityKey) {
-      if (Game.scene !== 'combat' || !Game.enemy) return;
+      if (Game.scene !== 'combat' || !Game.enemy || Game.enemy.hp<=0 || StoryType.holdLock) return;
 
       beginTurnLock();                      // lock through the whole turn
       const L = Game.level;
@@ -1896,11 +1906,13 @@
       // --- buffs affect hit chance and damage ---
       let hitChance = ability.hit;
       if (Game.buffs?.firstHitGuaranteed) { hitChance = 1; Game.buffs.firstHitGuaranteed = false; }
-      hitChance += (Game.buffs?.hitBonus || 0);
+      hitChance += (Game.buffs?.hitBonus || 0) + Game.permanent.accuracy;
       hitChance = Math.min(1, Math.max(0, hitChance));
 
       let minDmg = ability.minDamage + L;
       let maxDmg = ability.maxDamage + L;
+      const permanentDamage = /kick/i.test(abilityKey)?Game.permanent.kick:Game.permanent.punch;
+      minDmg+=permanentDamage;maxDmg+=permanentDamage;
       if (Game.buffs?.damageRangeDelta) {
         minDmg += Game.buffs.damageRangeDelta.min || 0;
         maxDmg += Game.buffs.damageRangeDelta.max || 0;
@@ -1929,7 +1941,7 @@
         if (Game.enemy.hp <= 0) {
           await appendStoryAsync(cap(enemyNoun()) + ' defeated!', 'system');
 
-          if (isTemp) { Game.tempWeaponUsed = true; }
+          if (isTemp) { useWeaponCharge(); }
           else if (ability.cooldown > 0) { Game.abilitiesUsed[abilityKey] = true; }
 
           winCombat();
@@ -1941,8 +1953,8 @@
         showDamageFloat('enemy', 'miss');
       }
 
-      // handle cooldown/one-time after action text
-      if (isTemp) { Game.tempWeaponUsed = true; }
+      // Spend a weapon charge or a once-per-fight move after the action.
+      if (isTemp) { useWeaponCharge(); }
       else if (ability.cooldown > 0) { Game.abilitiesUsed[abilityKey] = true; }
 
       // Enemy's turn
@@ -1963,7 +1975,7 @@
     async function enemyTurnSequence() {
       if (!Game.enemy) return;
       const L = Game.level;
-      const mv = CONFIG.enemyMoves[rand(0, CONFIG.enemyMoves.length - 1)];
+      const mv = enemyIntent();
       let enemyHit = mv.hit;
 // first enemy turn miss bonus
 if ((Game.turnsThisFight|0) === 1 && Game.buffs?.enemyFirstTurnMissBonus) {
@@ -1973,7 +1985,9 @@ if ((Game.turnsThisFight|0) === 1 && Game.buffs?.enemyFirstTurnMissBonus) {
 await appendStoryAsync(`The ${enemyLabel()} uses ${mv.name.toUpperCase()}...`, 'system');
 
 if (Math.random() < enemyHit) {
-  let base = rand(mv.minDamage + L, mv.maxDamage + L * 2);
+  let base = rand(mv.minDamage, mv.maxDamage);
+  base=Math.max(0,base-Game.permanent.defense);
+  if(Game.guarding) {base=Math.floor(base/2);Game.blockedHit=true;}
 
   // damage taken multiplier (e.g., Arcade Power Token)
   if (Game.buffs?.damageTakenMult) {
@@ -1982,7 +1996,7 @@ if (Math.random() < enemyHit) {
 
   // Armor soak
   let soaked = 0;
-  if (Game.armor && Game.armor.durabilityHits > 0) {
+  if (!mv.pierce && Game.armor && Game.armor.durabilityHits > 0) {
     soaked = Math.min(Game.armor.dr || 0, base);
     base = Math.max(0, base - (Game.armor.dr || 0));
     Game.armor.durabilityHits--;
@@ -2023,71 +2037,36 @@ decayBuffsEndOfRound();
 
 
     function winCombat() {
-
-      const turns = Math.max(1, Game.turnsThisFight || 0);
-      const bonus = Game.enemy?.isBoss ? 2 : 0;
-      const reward = Math.min(10, turns + bonus);
-      Game.pendingReward = reward;
-
-      clearButtons();
-      appendStory(`Townspeople cheer and toss cash! $${reward}`, 'system'); // (fixed stray ')')
-      addButton('Collect $' + reward, collectReward);
+      const reward=4+Game.level+(Game.enemy?.isBoss?6:0);
+      Game.pendingReward=reward;
+      clearButtons();updateHealthMeters();
+      appendStory('Threat cleared. Bounty: $'+reward+'.','special');
+      addButton('Collect $'+reward,collectReward);
     }
-
-
     function collectReward() {
-      $('#story').innerHTML = '';
-      appendStory('You scoop up the cash the crowd threw: $' + Game.pendingReward + '.', 'system');
-      Game.money += Game.pendingReward; Game.pendingReward = 0;
-      Game.aliensDefeated++; Game.aliensThisLevel++; checkLevelUp();
-      Game.enemy = null; Game.scene = 'explore';
-      decayBuffsEndOfFight();
-      updateHealthMeters();
-      updateStats(); clearButtons();
-      if (Game.level >= CONFIG.maxLevel) { checkVictory(); return; }
-      addButton('Explore', () => encounter());
+      if(!Game.enemy || Game.enemy.hp>0 || Game.pendingReward<=0)return;
+      const final=!!Game.enemy.isFinalBoss;
+      Game.money+=Game.pendingReward;Game.pendingReward=0;
+      Game.aliensDefeated++;Game.aliensThisLevel++;
+      Game.enemy=null;Game.scene='explore';decayBuffsEndOfFight();
+      if(final) {Game.finalBossDefeated=true;updateStats();updateHealthMeters();gameVictory();saveGame();return;}
+      checkLevelUp();updateStats();updateHealthMeters();showDirectory();saveGame();
     }
-
     function checkLevelUp() {
-      while (Game.aliensThisLevel >= Game.requiredThisLevel) {
-        const prevStreet = getStreet(Game.level);
-
-        Game.aliensThisLevel -= Game.requiredThisLevel;
-        Game.level++;
-        Game.requiredThisLevel *= 2;
-
-        Game.maxHP += CONFIG.hpGainPerLevel;
-        Game.hp = Game.maxHP;
-
-        if (prevStreet) appendStory(`[STREET CLEARED] ${prevStreet.cleared}`, 'news');
-
-        const nextStreet = getStreet(Game.level);
-        if (nextStreet) {
-          appendStory(`[ADVANCE] Next: ${nextStreet.name}`, 'news');
-          Game.streetJustChanged = true;
-        }
-
-        const unlocked = getUnlockedAt(Game.level);      // <-- bring this back
-        appendStory(`[LEVEL UP] You reached level ${Game.level}! Max HP +${CONFIG.hpGainPerLevel}.`, 'news');
-        if (unlocked.length) appendStory(`New ability unlocked: ${unlocked.join(', ')}.`, 'news');
-        showLevelUp(Game.level, CONFIG.hpGainPerLevel, unlocked);  // <-- confetti + toast
-      }
+      if(Game.aliensThisLevel<3||Game.level>=10)return;
+      Game.aliensThisLevel=0;Game.level++;Game.highestDistrict=Game.level;Game.requiredThisLevel=3;
+      Game.maxHP+=CONFIG.hpGainPerLevel;Game.hp=Game.maxHP;Game.streetJustChanged=true;
+      showLevelUp(Game.level,CONFIG.hpGainPerLevel,[]);
     }
-
-
-    function checkVictory() {
-      if (Game.level >= CONFIG.maxLevel) gameVictory();
-    }
-
+    function checkVictory() { if(Game.finalBossDefeated)gameVictory(); }
     function gameVictory() {
-      Game.scene = 'victory';
-      SceneArt.ending('victory');
-      appendStory("VICTORY! You have defeated all " + enemyNoun() + " forces in Cleveland!", 'system');
-      appendStory("The mothership retreats above Lake Erie. The city is safe!", 'system');
-      clearButtons(); $('#gameOverTitle').textContent = 'VICTORY!';
-      $('#ovLevel').textContent = Game.level; $('#ovDefeated').textContent = Game.aliensDefeated;
-      $('#ovMoney').textContent = Game.money; $('#overlay').style.display = 'flex';
+      Game.scene='victory';SceneArt.ending('victory');
+      appendStory('VICTORY! The Mothership Commander falls. Cleveland stands.','special');
+      clearButtons();$('#gameOverTitle').textContent='VICTORY!';
+      $('#ovLevel').textContent=Game.level;$('#ovDefeated').textContent=Game.aliensDefeated;$('#ovMoney').textContent=Game.money;
+      $('#recoverBtn').hidden=true;$('#overlay').style.display='flex';saveGame();
     }
+
 
     function heal(amount, msg) {
       const before = Game.hp;
@@ -2107,6 +2086,7 @@ decayBuffsEndOfRound();
       }
 
       updateHealthMeters();
+      if(Game.hp<=0)gameOver();
     }
 
 
@@ -2119,7 +2099,7 @@ decayBuffsEndOfRound();
     function getBusiness(id) { return businesses.find(b => b.id === id); }
 
     function announceRandomBusiness() {
-      const pool = businesses
+      const pool = businesses.filter(b=>availableShopIds().includes(b.id))
         .filter(b => b.id !== Game.lastBusiness)
         .filter(b => !(Game.tempWeapon && (b.id === 'pawn')))
         .filter(b => !(hasArmorActive() && b.id === 'thrift'));  // <— block thrift if any armor
@@ -2142,6 +2122,7 @@ decayBuffsEndOfRound();
     function startBusiness(id) {
       const b = getBusiness(id);
       Game.currentBiz = id;
+      Game.purchasedThisVisit[id]=new Set();
       Game.scene = 'business';
       Game.businessEntered = true;
       Game.artEncounter = null;
@@ -2163,7 +2144,7 @@ decayBuffsEndOfRound();
       if (!Game.purchasedThisVisit[id]) Game.purchasedThisVisit[id] = new Set();
 
       b.items.forEach(it => {
-        const purchased = Game.purchasedThisVisit[id].has(it.id);
+        const purchased = Game.purchasedThisVisit[id].has(it.id) || itemOwned(it);
         const finalPrice = computeFinalPrice(id, it);
         const label =
           finalPrice === 0
@@ -2174,21 +2155,24 @@ decayBuffsEndOfRound();
 
         const afford = Game.money >= finalPrice;
         const alreadyHaveWeapon = it.tempWeapon && Game.tempWeapon === it.tempWeapon && !Game.tempWeaponUsed;
-        addButton(label, () => buyBusinessItem(id, it), !afford || purchased || alreadyHaveWeapon);
+        const locked=it.requires&&!Game.training.includes(it.requires);
+        const button=addButton(label, () => buyBusinessItem(id, it), !afford || purchased || alreadyHaveWeapon || locked);
+        describeButton(button,itemDescription(id,it));
         
       });
-      addButton('Leave', () => { $('#story').innerHTML = ''; encounter(); });
+      addButton('Leave', () => { Game.businessEntered=false;showDirectory(); });
     }
 
     function buyBusinessItem(id, it) {
       if (!Game.purchasedThisVisit[id]) Game.purchasedThisVisit[id] = new Set();
-      if (Game.purchasedThisVisit[id].has(it.id)) return;
+      if (Game.purchasedThisVisit[id].has(it.id) || itemOwned(it) || (it.requires&&!Game.training.includes(it.requires))) return;
 
       const basePrice = it.price ?? 0;
       const finalPrice = computeFinalPrice(id, it);
       if (Game.money < finalPrice) return;
 
       Game.money -= finalPrice;
+      applyPermanentPurchase(id,it);
 
       // track paid vs free for loyalty logic
       if (finalPrice > 0) {
@@ -2213,10 +2197,10 @@ decayBuffsEndOfRound();
         appendStory('Bartender says: "' + tip + '"', 'system');
       }
 
-      // Temp weapon (one-time use; kept for next fight unless thrown mid-fight)
+      // Temporary weapon: three swings, carried between fights.
       if (it.tempWeapon && TEMP_WEAPONS[it.tempWeapon]) {
         Game.tempWeapon = it.tempWeapon;
-        Game.tempWeaponUsed = false;
+        Game.tempWeaponUsed = false;Game.weaponUses=3;
         appendSpecial('[BUFF] ' + TEMP_WEAPONS[it.tempWeapon].name + ' armed for your next fight.');
       }
 
@@ -2245,7 +2229,8 @@ decayBuffsEndOfRound();
 
       Game.purchasedThisVisit[id].add(it.id);
       updateStats();
-      renderBusinessMenu(id);
+      if(Game.hp>0)renderBusinessMenu(id);
+      saveGame();
     }
 
     function startEmpty() {
@@ -2359,7 +2344,8 @@ decayBuffsEndOfRound();
       appendStory('You fall as Cleveland fades...', 'system'); clearButtons();
       $('#gameOverTitle').textContent = 'GAME OVER'; $('#ovLevel').textContent = Game.level;
       $('#ovDefeated').textContent = Game.aliensDefeated; $('#ovMoney').textContent = Game.money;
-      $('#overlay').style.display = 'flex';
+      $('#recoverBtn').hidden=false;
+      $('#overlay').style.display = 'flex';saveGame();
     }
 
     console.log('Game loaded successfully!');
@@ -2379,7 +2365,8 @@ decayBuffsEndOfRound();
         <h1 class="title">ALIEN<br><span>INVASION</span></h1>
         <p class="title-location">CLEVELAND <b>1989</b></p>
         <p class="title-description">The city's gone quiet. The sky hasn't.<br>Fight your way through downtown. Find shelter.<br>Make it to the lakefront alive.</p>
-        <button class="start-button" onclick="newGame()">START SURVIVING <span aria-hidden="true">↗</span></button>
+        <button class="start-button" onclick="startNewRun()">START SURVIVING <span aria-hidden="true">↗</span></button>
+        <button id="continueRun" onclick="continueGame()" hidden>CONTINUE RUN</button>
         <div class="title-footer"><span>A TURN-BASED SURVIVAL RPG</span><a href="gallery.html">EXPLORE THE ART ↗</a></div>
       </div>
     </div>
@@ -2407,8 +2394,10 @@ decayBuffsEndOfRound();
         </div>
         <div id="sceneLocation" class="scene-location"></div>
       </section>
+      <div class="campaign-strip"><span id="campaignProgress"></span><span id="saveStatus">AUTOSAVE READY</span></div>
       <div id="story"></div>
       <div id="combatStats">
+        <div id="combatIntent"></div>
         <div class="combat-meters">
         <div class="health-meter player-health">
           <div class="health-label">PLAYER</div>
@@ -2427,6 +2416,7 @@ decayBuffsEndOfRound();
         </div>
       </div>
       <div class="controls-dock">
+        <button id="directoryBtn" class="settings-btn" onclick="showDirectory()">CITY DIRECTORY</button>
         <button id="settingsBtn" class="settings-btn" title="Settings">TEXT SETTINGS</button>
 
         <!-- Panel lives INSIDE the dock so it anchors correctly -->
@@ -2471,12 +2461,14 @@ decayBuffsEndOfRound();
         <div><b>Money:</b> $<span id="ovMoney">-</span></div>
       </div>
       <div class="actions">
-        <button onclick="location.reload()">New Game</button>
+        <button id="recoverBtn" onclick="recoverAtShelter()" hidden>Recover at shelter · lose 25% cash</button>
+        <button onclick="location.reload()">Title Screen</button>
       </div>
 
     </div>
   </div>
 
+<script src="campaign.js?v=1.1"></script>
 </body>
 
 </html>

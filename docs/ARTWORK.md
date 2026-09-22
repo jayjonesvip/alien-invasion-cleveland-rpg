@@ -23,7 +23,7 @@ The environments are illustrated interpretations of the game's 1989 setting, not
 
 ## Gameplay scope
 
-Game balance is unchanged. Victory still triggers on reaching level 10; Erieside appears as the finale backdrop. These artwork releases do not add a playable final chapter. The first release also made victory and defeat retain terminal scenes for correct artwork cleanup.
+The original artwork releases preserved game balance. The subsequent [campaign update](CAMPAIGN.md) adds shopping-driven upgrades, thirty required victories, and a playable Erieside chapter ending with the Mothership Commander. Victory now requires defeating that final boss. The existing red boss illustration represents the Commander. Victory and defeat retain terminal scenes for correct artwork cleanup.
 
 ## Validation
 
