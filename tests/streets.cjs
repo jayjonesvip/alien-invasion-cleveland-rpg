@@ -1,6 +1,7 @@
 const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`
 newGame();Game.scene='explore';showDirectory();
+assert.equal(winsRequiredForStreet(3),3);assert.equal(winsRequiredForStreet(4),4);assert.equal(winsRequiredForStreet(9),4);assert.equal(winsRequiredForStreet(10),3);
 assert.equal(el('#buttons').children.find(b=>b.textContent==='Hunt an Alien').disabled,false);
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'));
 assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('Locked:')),'Locked roads are status text, not buttons');

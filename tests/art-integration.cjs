@@ -45,7 +45,7 @@ el('#buttons').children.find(b=>b.textContent==='Flee').onclick({});
 assert.equal(Game.scene,'explore');assert.equal(el('#enemyActor').hidden,true);
 Game.currentStreet=1;Game.level=1;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=2;Game.enemy={hp:0,isBoss:true};
 collectReward();assert.equal(Game.level,2);assert.equal(Game.currentStreet,1);assert.equal(el('#streetArt').dataset.asset,'street-ontario');travelToStreet(2);assert.equal(el('#streetArt').dataset.asset,'street-superior');
-Game.currentStreet=9;Game.level=9;Game.requiredThisLevel=3;Game.aliensThisLevel=2;Game.pendingReward=1;Game.enemy={hp:0,isBoss:true};
+Game.currentStreet=9;Game.level=9;Game.requiredThisLevel=4;Game.aliensThisLevel=3;Game.pendingReward=1;Game.enemy={hp:0,isBoss:true};
 collectReward();assert.equal(Game.level,10);assert.notEqual(Game.scene,'victory');travelToStreet(10);
 Game.aliensThisLevel=2;Game.pendingReward=20;Game.enemy={hp:0,isBoss:true,isFinalBoss:true};
 collectReward();assert.equal(Game.scene,'victory');assert.equal(el('#endingArt').dataset.asset,'ending-victory');

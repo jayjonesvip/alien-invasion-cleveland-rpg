@@ -14,6 +14,8 @@ const TRAINING = [
 ];
 const TRAINING_SHOPS = {throwEnemy:'record',counter:'record',conditioning1:'drugstore',superKick:'arcade',conditioning2:'thrift',spinningKick:'pawn',superPunch:'surplus',conditioning3:'church'};
 for (const item of TRAINING) getBusiness(TRAINING_SHOPS[item.id]).items.push({...item,healing:0,message:'Training complete.'});
+function winsRequiredForStreet(number=Game.level) { return number>=4&&number<=9?4:3; }
+function regularWinsRequired(number=Game.level) { return winsRequiredForStreet(number)-1; }
 const STREET_LANDMARKS = ['Terminal Tower / Public Square','The abandoned bus blockade','The theater marquees','The bank towers','The civic plaza','The warehouse loading docks','The river lift bridge','The neighborhood sanctuary','The railway viaduct','The Lake Erie harbor'];
 CONFIG.abilities.superKick.name='Lake Effect Kick';
 CONFIG.abilities.superKick.damageMultiplier=1;
@@ -87,13 +89,15 @@ function showDirectory(arrival='') {
   if(arrival)appendStory(arrival,'news');
   appendStory('STREET DIRECTORY / '+getStreet(here).name,'special');
   appendStory('LANDMARK / '+STREET_LANDMARKS[here-1],'system');
-  appendStory(cleared?'STREET CLEARED. Safe to revisit: no battles here. The active fight is on '+getStreet(Game.level).name+'.':'Street progress: '+Game.aliensThisLevel+'/3 victories. '+(Game.aliensThisLevel===2?'The district boss is next.':'Two regular fights, then the district boss.'),'system');
+  const required=winsRequiredForStreet(here), regularRequired=required-1;
+  appendStory(cleared?'STREET CLEARED. Safe to revisit: no battles here. The active fight is on '+getStreet(Game.level).name+'.':'Street progress: '+Game.aliensThisLevel+'/'+required+' victories. '+(Game.aliensThisLevel===regularRequired?'The district boss is next.':(regularRequired-Game.aliensThisLevel)+' regular fight'+(regularRequired-Game.aliensThisLevel===1?'':'s')+' until the district boss.'),'system');
   appendStory('LOCAL STOPS / '+streetOfferings(here),'system');
   appendStory('Build: Punch +'+Game.permanent.punch+' · Kick +'+Game.permanent.kick+' · Defense +'+Game.permanent.defense+' · Accuracy +'+Math.round(Game.permanent.accuracy*100)+'%.','system');
   appendStory('Training: '+(Game.learned.map(k=>CONFIG.abilities[k]?.name||'Counterattack').join(', ')||'None yet. Find basic tapes at the Record Store on Ontario.'),'system');
   if(here===10)appendStory('Erieside: defeat the two guards, then the Mothership Commander. No shops on the harbor.','special');
   if(!cleared){
-    addButton(Game.aliensThisLevel===2?'Challenge District Boss':'Hunt an Alien',()=>{if(Game.aliensThisLevel===2){$('#story').innerHTML='';startCombat();}else return huntAlien();});
+    const bossReady=Game.aliensThisLevel===regularWinsRequired(here);
+    addButton(bossReady?'Challenge District Boss':'Hunt an Alien',()=>{if(bossReady){$('#story').innerHTML='';startCombat();}else return huntAlien();});
   }
   const exploreButton=addButton(cleared?'Explore Safely':'Explore Street',()=>encounter());
   describeActionButton(exploreButton,cleared?'No aliens remain here.':'Random event or alien encounter.');
@@ -135,7 +139,7 @@ function updateCampaignHUD() {
   directory.disabled=['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
   directory.title=Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight for an automatic bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
-  $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/3 WINS');
+  $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/'+winsRequiredForStreet(streetNumber())+' WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';
 }
 function scaleEnemyHealth(hp,level=Game.level) { return Math.round(hp*(1+.025*(level-1))); }
@@ -189,7 +193,10 @@ function readSave() {
     const raw=localStorage.getItem(SAVE_KEY);if(!raw)return null;
     const parsed=JSON.parse(raw);const s=parsed.state;
     if(![1,2].includes(parsed.version)||!s||!Number.isInteger(s.level)||s.level<1||s.level>10||!Number.isFinite(s.hp)||s.hp<0||!Number.isFinite(s.maxHP)||s.maxHP<1||s.maxHP>1000||s.hp>s.maxHP||!Number.isFinite(s.money)||s.money<0||s.money>1000000) return null;
-    if(!Number.isInteger(s.aliensThisLevel)||s.aliensThisLevel<0||s.aliensThisLevel>3||s.requiredThisLevel!==3||s.highestDistrict!==s.level) return null;
+    const expectedWins=winsRequiredForStreet(s.level);
+    if(!Number.isInteger(s.aliensThisLevel)||s.aliensThisLevel<0||s.aliensThisLevel>expectedWins||![3,4].includes(s.requiredThisLevel)||s.highestDistrict!==s.level) return null;
+    if(s.level>=4&&s.level<=9&&s.requiredThisLevel===3&&s.scene==='combat'&&s.enemy?.isBoss)s.aliensThisLevel=3;
+    s.requiredThisLevel=expectedWins;
     if(parsed.version===1)s.currentStreet=s.level;
     // Ignore retired first-fight hints in older checkpoints.
     delete s.tutorialSeen;

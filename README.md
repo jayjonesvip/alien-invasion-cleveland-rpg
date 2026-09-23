@@ -38,7 +38,7 @@ You're an ordinary person caught in an alien invasion of Cleveland. Fight your w
 
 - **Fight:** Hunt an Alien is available from level 1, with a 2.5-second search meter before combat. You can also find aliens while exploring. Use punch, kick, tackle, and purchased moves. Read each alien's combat hint; guard halves incoming damage, and Counterattack training lets you hit back.
 - **Shop:** Open STREET DIRECTORY between fights. Visit the Ontario Record Store for basic training; find advanced moves at later local shops. Try new foods for lasting stat upgrades, and collect business loyalty rewards.
-- **Grow:** Win two patrol fights and a boss fight per district. Advance through ten districts, ending with the Mothership Commander. Level-ups increase your health and heal you fully.
+- **Grow:** Streets 1–3 require two regular victories before the boss; streets 4–9 require three. The final street has two guards and the Mothership Commander. Level-ups increase your health and heal you fully.
 - **Travel:** Clear a street to open the next road, then choose the adjacent destination marked Active. Move one street at a time; cleared streets are safe and your campaign progress stays intact.
 - **Equip:** Buy armor and three-swing weapons. Walk back through cleared streets to revisit earlier shops.
 - **Continue:** Progress saves after completed actions. Defeat lets you recover at a shelter with full health and intact upgrades, losing 25% of your cash, rounded up.

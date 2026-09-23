@@ -54,15 +54,15 @@ Game.enemy.color='grey';assert.equal(enemyIntent().pierce,true);
 Game.enemy.color='red';Game.turnsThisFight=0;const base=enemyIntent().maxDamage;Game.turnsThisFight=3;assert.equal(enemyIntent().maxDamage,base+3);Math.random=random;
 // Reach the finale through the real reward/progression functions.
 newGame();let bosses=0;
-for(let win=1;win<=30;win++){
+for(let win=1;win<=36;win++){
  if(Game.currentStreet<Game.level)travelToStreet(Game.currentStreet+1);
  startCombat();if(Game.enemy.isBoss)bosses++;
- if(win<30)assert.equal(!!Game.enemy.isFinalBoss,false);
+ if(win<36)assert.equal(!!Game.enemy.isFinalBoss,false);
  else assert.equal(Game.enemy.isFinalBoss,true);
  Game.enemy.hp=0;winCombat();collectReward();
- if(win<30)assert.notEqual(Game.scene,'victory');
+ if(win<36)assert.notEqual(Game.scene,'victory');
 }
-assert.equal(bosses,10);assert.equal(Game.scene,'victory');assert.equal(Game.aliensDefeated,30);assert.equal(Game.level,10);
+assert.equal(bosses,10);assert.equal(Game.scene,'victory');assert.equal(Game.aliensDefeated,36);assert.equal(Game.level,10);
 assert.equal(availableShopIds().length,0);assert.equal(Game.finalBossDefeated,true);
 saveGame();continueGame();assert.equal(Game.scene,'victory');
 newGame();assert.equal(Game.weaponUses,0);assert.equal(Game.training.length,0);assert.equal(Game.tasted.length,0);assert.equal(Game.finalBossDefeated,false);
@@ -72,6 +72,6 @@ const write=localStorage.setItem;localStorage.setItem=()=>{throw new Error('Stor
 localStorage.setItem(SAVE_KEY,'{broken');assert.equal(readSave(),null);
 localStorage.setItem(SAVE_KEY,JSON.stringify({version:99,state:{}}));assert.equal(readSave(),null);
 })()`,context);
-console.log('PASS: training and prerequisites; permanent food bonuses; weapon durability; fixed rewards; double-claim prevention; save/resume including pending loot; recovery; atomic turn saves; guard/counter; species behaviors; 30-win campaign and final boss; fresh reset; invalid saves.');
+console.log('PASS: training and prerequisites; permanent food bonuses; weapon durability; fixed rewards; double-claim prevention; save/resume including pending loot; recovery; atomic turn saves; guard/counter; species behaviors; 36-win campaign and final boss; fresh reset; invalid saves.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

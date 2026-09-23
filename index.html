@@ -1695,7 +1695,7 @@
     function startCombat() {
       if(streetCleared() || streetNumber()!==Game.level)return;
       Game.scene = 'combat';
-      const isBoss = Game.aliensThisLevel === 2;
+      const isBoss = Game.aliensThisLevel === regularWinsRequired(Game.level);
       Game.enemy = makeEnemy(isBoss);
       if (Game.level===10 && isBoss) { Game.enemy.isFinalBoss=true;Game.enemy.color="red";Game.enemy.name="MOTHERSHIP COMMANDER";Game.enemy.hp=Game.enemy.maxHP=scaleEnemyHealth(120); }
       Game.pendingReward=0;Game.guarding=false;
@@ -1952,8 +1952,8 @@ decayBuffsEndOfRound();
       showDirectory('BOUNTY COLLECTED / $'+reward+(levelUp?' · LEVEL '+levelUp.level+' · MAX HP +'+levelUp.hpGain+' · FULLY HEALED':''));saveGame();
     }
     function checkLevelUp() {
-      if(Game.aliensThisLevel<3||Game.level>=10)return null;
-      Game.aliensThisLevel=0;Game.level++;Game.highestDistrict=Game.level;Game.requiredThisLevel=3;
+      if(Game.aliensThisLevel<Game.requiredThisLevel||Game.level>=10)return null;
+      Game.aliensThisLevel=0;Game.level++;Game.highestDistrict=Game.level;Game.requiredThisLevel=winsRequiredForStreet(Game.level);
       Game.maxHP+=CONFIG.hpGainPerLevel;Game.hp=Game.maxHP;Game.streetJustChanged=true;
       window.trackGameEvent?.('level_up', {level:Game.level});
       return {level:Game.level,hpGain:CONFIG.hpGainPerLevel};
@@ -2369,7 +2369,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=3.1"></script>
+<script src="campaign.js?v=3.2"></script>
 </body>
 
 </html>
