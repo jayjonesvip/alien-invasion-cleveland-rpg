@@ -91,7 +91,9 @@ button:disabled { opacity: .7; }
 .hud-money strong { color: var(--amber); }
 .hud-armor strong, .hud-street strong { font-size: 12px; line-height: 1.4; }
 #gameUI .scene-art { flex: 0 0 33dvh; height: 33dvh; max-height: 360px; min-height: 125px; border-bottom-color: var(--border); }
-.scene-location { font-family: Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(24px, 3vw, 35px); letter-spacing: .025em; bottom: 19px; left: 24px; }
+.scene-location { display:flex; flex-direction:column; align-items:flex-start; font-family: Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(24px, 3vw, 35px); letter-spacing: .025em; bottom: 19px; left: 24px; }
+.scene-back { min-height:0; margin:0 0 2px; padding:0; border:0; background:transparent; color:var(--amber); font-family:inherit; font-size:.42em; font-weight:400; letter-spacing:.06em; line-height:1.1; text-shadow:0 2px 8px #000; }
+.scene-back:hover:not(:disabled) { background:transparent; border:0; box-shadow:none; color:var(--fg); }
 .scene-heading { left: 24px; right: 22px; top: 16px; font-size: 9px; }
 .scene-status { border-radius: 2px; padding: 4px 8px; font-size: 9px; }
 /* Story and combat */
@@ -211,18 +213,19 @@ input { accent-color: var(--cyan); }
 .map-route { fill:none; stroke:#447a6a; stroke-width:2; stroke-dasharray:3 2; }
 .map-pin { fill:#b54052; }
 .scene-map:disabled { opacity:.5; }
-#settingsPanel { position:fixed; inset:0; margin:auto; width:min(440px,calc(100% - 32px)); max-height:calc(100dvh - 32px); padding:24px; overflow-y:auto; background:var(--surface); color:var(--fg); border:1px solid var(--cyan); border-radius:5px; box-shadow:0 20px 80px #0008; }
-#settingsPanel::backdrop { background:#02080ed9; backdrop-filter:blur(5px); }
+#settingsPanel, #buildPanel { position:fixed; inset:0; margin:auto; width:min(440px,calc(100% - 32px)); max-height:calc(100dvh - 32px); padding:24px; overflow-y:auto; background:var(--surface); color:var(--fg); border:1px solid var(--cyan); border-radius:5px; box-shadow:0 20px 80px #0008; }
+#settingsPanel::backdrop, #buildPanel::backdrop { background:#02080ed9; backdrop-filter:blur(5px); }
 .settings-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .settings-eyebrow { margin:0 0 7px; font-size:9px; letter-spacing:.12em; color:var(--muted); }
 #settingsTitle { margin:0; font-size:24px; }
-#settingsClose { flex-shrink:0; width:44px; height:44px; font-size:18px; color:var(--fg); background:var(--panel); }
+#settingsClose, #buildClose { flex-shrink:0; width:44px; height:44px; font-size:18px; color:var(--fg); background:var(--panel); }
 .settings-help { display:block; padding:16px; margin:22px 0; border:1px solid var(--border); background:var(--panel); color:var(--cyan); text-decoration:none; font-weight:bold; }
 .settings-help .help-arrow { float:right; }
 .help-question { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border:1px solid currentColor; border-radius:50%; margin-right:10px; font-size:15px; }
 .settings-help small { display:block; margin-top:6px; font-size:10px; color:var(--muted); font-weight:normal; }
-#settingsPanel section { border-top:1px solid var(--border); padding-top:16px; margin-top:18px; }
-#settingsPanel h3 { margin:0 0 8px; color:var(--cyan); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+#settingsPanel section, #buildPanel section { border-top:1px solid var(--border); padding-top:16px; margin-top:18px; }
+#settingsPanel h3, #buildPanel h3 { margin:0 0 8px; color:var(--cyan); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+#buildPanel p { margin:0; line-height:1.5; font-size:14px; white-space:pre-line; }
 #settingsPanel .row { display:flex; align-items:center; justify-content:space-between; gap:14px; min-height:44px; margin:8px 0; font-size:13px; }
 #settingsPanel .row label { line-height:1.5; }
 #settingsPanel input[type="checkbox"] { width:20px; height:20px; flex-shrink:0; }

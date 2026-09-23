@@ -71,7 +71,23 @@ window.SceneArt = (() => {
     const event = ['npc', 'empty'].includes(scene) && Object.hasOwn(encounters, encounter) ? encounters[encounter] : null;
     const data = shop || event || streets[street.id] || streets.ontario;
     setImage(document.getElementById('streetArt'), data[0], data[1]);
-    document.getElementById('sceneLocation').textContent = data[2] || street.name;
+    const loc = document.getElementById('sceneLocation');
+    loc.innerHTML = '';
+    const index = !fighting && !shop && !event && typeof routeIndex === 'function' ? routeIndex(Game.currentStreet) : -1;
+    if (index > 0 && routeIndex(Game.route[index - 1]) < Game.level - 1) {
+      const previous = getStreet(Game.route[index - 1]);
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'scene-back';
+      back.textContent = '← ' + previous.name;
+      back.setAttribute('aria-label', 'Return to ' + previous.name);
+      back.onclick = () => travelToStreet(previous.level);
+      loc.appendChild(back);
+    }
+    const label = data[2] || street.name;
+    const current = document.createElement('span');
+    current.textContent = label;
+    loc.appendChild(current);
     document.getElementById('sceneChapter').textContent = `CLEVELAND · 1989 / STREET ${String(level).padStart(2, '0')}`;
     const color = enemy?.color || enemy?.name?.toLowerCase().replace('boss ', '');
     const hasSprite = fighting && Object.hasOwn(enemies, color);

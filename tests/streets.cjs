@@ -2,21 +2,22 @@ const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`
 newGame();Game.scene='explore';showDirectory();
 assert.equal(winsRequiredForStreet(3),3);assert.equal(winsRequiredForStreet(4),4);assert.equal(winsRequiredForStreet(9),4);assert.equal(winsRequiredForStreet(10),3);
-assert.equal(el('#buttons').children.find(b=>b.textContent==='Hunt an Alien').disabled,false);
+assert.ok(!el('#buttons').children.some(b=>b.textContent==='Hunt an Alien'));
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'));
 assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('Locked:')),'Locked roads are status text, not buttons');
 // Exploration must still provide a complete path through the first street.
-const initialRandom=Math.random;Math.random=()=>.4;
+const initialRandom=Math.random;Math.random=()=>.45;
 for(let tries=0;tries<30&&Game.level===1;tries++){
  encounter();
  if(Game.scene==='combat'){
   assert.equal(Game.enemy.isBoss,Game.aliensThisLevel===2);
   Game.enemy.hp=0;winCombat();collectReward();
-  if(Game.level===1)assert.ok(el('#buttons').children.some(b=>['Hunt an Alien','Challenge District Boss'].includes(b.textContent)&&!b.disabled));
+  if(Game.level===1)assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'&&!b.disabled));
+  assert.ok(!el('#buttons').children.some(b=>b.textContent==='Challenge District Boss'));
  }
 }
 Math.random=initialRandom;assert.equal(Game.level,2);assert.equal(Game.aliensDefeated,3);
-travelToStreet(2);assert.equal(el('#buttons').children.find(b=>b.textContent==='Hunt an Alien').disabled,false);
+travelToStreet(2);assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'&&!b.disabled));
 newGame();Game.scene='explore';showDirectory();
 assert.equal(streetNumber(),1);travelToStreet(2);assert.equal(streetNumber(),1,'Uncleared exit remains locked');
 startBusiness('pizza');assert.equal(Game.scene,'directory','Remote shop is inaccessible');
@@ -28,6 +29,10 @@ assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Superior Ave')
 startCombat();assert.equal(Game.enemy,null,'Cleared streets cannot start battles');
 const cash=Game.money, wins=Game.aliensDefeated;
 travelToStreet(2);assert.equal(streetNumber(),2);assert.equal(availableShopIds().join(','),'pizza,thrift,drugstore');
+assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('←')),'Cleared streets are not directory buttons');
+const back=el('#sceneLocation').children.find(node=>node.tag==='button');
+assert.equal(back.textContent,'← Ontario St — Public Square');
+back.onclick();assert.equal(streetNumber(),1);travelToStreet(2);
 assert.equal(el('#streetArt').dataset.asset,'street-superior');
 startBusiness('coffee');assert.equal(Game.scene,'directory');
 travelToStreet(1);assert.equal(availableShopIds().join(','),'coffee,pawn,record');
@@ -54,6 +59,54 @@ const invalid=JSON.parse(localStorage.getItem(SAVE_KEY));invalid.state.currentSt
 // A one-shop street cannot exhaust random shop selection; the harbor has no shops.
 Game.level=Game.highestDistrict=Game.currentStreet=9;Game.scene='directory';Game.lastBusiness='hotdog';announceRandomBusiness();assert.equal(Game.currentBiz,'hotdog');
 Game.level=Game.highestDistrict=Game.currentStreet=10;Game.scene='directory';announceRandomBusiness();assert.equal(Game.scene,'empty');
+newGame();showDirectory();
+assert.equal(el('#buttons').children.filter(b=>b.textContent==='Unknown stop'&&b.disabled).length,3);
+announceBusiness('coffee');showDirectory();
+assert.ok(el('#buttons').children.some(b=>b.textContent==='Coffee Shop'&&!b.disabled));
+assert.equal(el('#buttons').children.filter(b=>b.textContent==='Unknown stop').length,2);
+const seeded=Game.exploreSeed;Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];
+const dealt=[];for(let i=0;i<STREET_SIGHTS[0].length+4;i++)dealt.push(drawExploreCard());
+Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];Game.exploreSeed=seeded;
+const redealt=[];for(let i=0;i<STREET_SIGHTS[0].length+4;i++)redealt.push(drawExploreCard());
+assert.deepEqual(redealt,dealt,'A street deals the same cards after a reload');
+assert.ok(dealt.includes('combat')&&dealt.includes('sign')&&dealt.includes('npc')&&dealt.includes('hidden')&&dealt.includes('news'));
+assert.ok(['shop:coffee','shop:pawn','shop:record'].every(card=>dealt.includes(card)));
+Game.level=1;Game.currentStreet=1;Game.aliensThisLevel=2;Game.knownShops=[];Game.streetSeen={};Game.streetDecks[1]=['combat'];
+assert.notEqual(drawExploreCard(),'combat','The boss waits until the block has been seen');
+Game.knownShops=['coffee','pawn','record'];Game.streetSeen={1:{sign:true,npc:true,hidden:true,news:true}};Game.streetDecks[1]=['combat'];
+assert.equal(drawExploreCard(),'combat');
+Game.level=Game.highestDistrict=Game.currentStreet=4;Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];
+const banks=buildStreetDeck(4);
+assert.deepEqual(banks.filter(card=>!card.startsWith('shop:')).sort(),['combat','hidden','sign']);
+Game.level=Game.highestDistrict=Game.currentStreet=10;Game.streetDecks={};Game.deckBuilds={};
+const harbor=buildStreetDeck(10);
+assert.ok(!harbor.some(card=>card.startsWith('shop:')||card==='news'));
+assert.ok(harbor.includes('sign')&&harbor.includes('npc')&&harbor.includes('hidden')&&harbor.includes('combat'));
+assert.notEqual(STREET_SIGNS[0],STREET_SIGNS[9]);
 newGame();assert.equal(streetNumber(),1);
+assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore on foot'));
+assert.ok(!el('#buttons').children.some(b=>b.textContent==='Start Adventure'));
+const transitRandom=Math.random;Math.random=()=>0;
+el('#buttons').children.find(b=>b.textContent==='Take the bus').onclick({});
+assert.ok(el('#buttons').children.some(b=>b.textContent==='Walk'));
+el('#buttons').children.find(b=>b.textContent==='Walk').onclick({});
+assert.equal(streetNumber(),2);assert.equal(Game.level,1);assert.deepEqual(Game.route,[2,3,4,5,6,7,8,9,1,10]);
+assert.equal(activeStreet(),2);startCombat();assert.ok(Game.enemy);assert.equal(Game.enemy.isBoss,false);
+newGame();Math.random=()=>0.9;el('#buttons').children.find(b=>b.textContent==='Take the Rapid').onclick({});
+assert.equal(streetNumber(),1,'A clean Rapid still arrives at the Square');
+newGame();Math.random=()=>0;el('#buttons').children.find(b=>b.textContent==='Take the Rapid').onclick({});
+const hp=Game.hp;el('#buttons').children.find(b=>b.textContent==='Square doors').onclick({});
+assert.equal(Game.hp,hp-8);assert.equal(streetNumber(),1);
+newGame();Math.random=()=>0;el('#buttons').children.find(b=>b.textContent==='Take the Rapid').onclick({});
+el('#buttons').children.find(b=>b.textContent==='Prospect doors').onclick({});
+assert.equal(streetNumber(),8);assert.equal(Game.route[9],10);
+newGame();Math.random=()=>0;el('#buttons').children.find(b=>b.textContent==='Take the Rapid').onclick({});
+el('#buttons').children.find(b=>b.textContent==='Climb out of the trench').onclick({});
+assert.equal(streetNumber(),9);assert.equal(winsRequiredForStreet(Game.level),3);
+newGame();Math.random=()=>0;el('#buttons').children.find(b=>b.textContent==='Hail a cab').onclick({});
+assert.equal(streetNumber(),4);assert.equal(Game.route[0],4);assert.equal(Game.route[9],10);
+newGame();Math.random=()=>0.9;el('#buttons').children.find(b=>b.textContent==='Hail a cab').onclick({});
+assert.equal(streetNumber(),6);
+Math.random=transitRandom;
 `,context);
 console.log('PASS: local shop boundaries; boss road unlock; adjacent travel; safe backtracking; travel/combat gating; distributed training; frontier preservation; version-1 save migration; harbor and one-shop encounters.');

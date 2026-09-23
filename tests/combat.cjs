@@ -2,7 +2,7 @@ const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`(async()=>{
 newGame();startCombat();
 for(const color of ['blue','green','grey','red']){await playEnemyAttackFX(color);assert.equal(el('#sceneArt').classList.contains('attack-'+color),false);}
-assert.ok(el('#buttons').children.some(b=>b.textContent==='Tackle'));
+assert.ok(el('#buttons').children.some(b=>b.textContent.startsWith('Tackle · ')));
 assert.ok(!el('#buttons').children.some(b=>b.textContent.includes('Guaranteed')));
 const random=Math.random;Math.random=()=>.999;
 const hp=Game.enemy.hp;await playerAttack('tackle');assert.equal(Game.enemy.hp,hp,'Opening tackle uses normal miss odds');

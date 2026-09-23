@@ -1,7 +1,8 @@
 const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`(async()=>{
 newGame();showDirectory();
-assert.ok(el('#buttons').children.some(b=>b.textContent==='Hunt an Alien'&&!b.disabled),'Hunt available at level one');
+assert.ok(!el('#buttons').children.some(b=>b.textContent==='Hunt an Alien'),'Exploring replaces the hunt button');
+assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'&&!b.disabled));
 const checkpoint=localStorage.getItem(SAVE_KEY), waits=[], realSleep=sleep;
 sleep=async ms=>{waits.push(ms);};
 const hunting=huntAlien();
@@ -13,11 +14,12 @@ await huntAlien();await hunting;
 assert.equal(waits.length,10,'Double click cannot start a second hunt');assert.equal(waits.reduce((a,b)=>a+b,0),2500);
 assert.equal(el('#huntProgress').value,100);assert.equal(el('#huntMeter').hidden,true);
 assert.equal(Game.scene,'combat');assert.ok(Game.enemy);assert.equal(StoryType.holdLock,false);
-assert.ok(el('#buttons').children.some(b=>b.textContent==='Punch'&&!b.disabled));
+assert.ok(el('#buttons').children.some(b=>b.textContent.startsWith('Punch · ')&&b.textContent.includes('%')&&!b.disabled));
 assert.equal(readSave().scene,'combat','Finished search saves the encounter');sleep=realSleep;
 newGame();Game.aliensThisLevel=2;showDirectory();
-el('#buttons').children.find(b=>b.textContent==='Challenge District Boss').onclick({});
-assert.ok(Game.enemy.isBoss,'First street boss can be challenged directly');
+assert.ok(!el('#buttons').children.some(b=>b.textContent==='Challenge District Boss'));
+Game.knownShops=['coffee','pawn','record'];Game.streetSeen={1:{sign:true,npc:true,hidden:true,news:true}};Game.streetDecks[1]=['combat'];encounter();
+assert.ok(Game.enemy&&Game.enemy.isBoss,'Exploring finds the district boss');
 newGame();Game.level=Game.highestDistrict=2;showDirectory();await huntAlien();
 assert.equal(Game.enemy,null,'Cleared street still cannot spawn aliens');
 travelToStreet(2);await huntAlien();assert.equal(Game.scene,'combat','Later streets remain huntable');

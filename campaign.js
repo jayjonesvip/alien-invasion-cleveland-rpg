@@ -17,6 +17,46 @@ for (const item of TRAINING) getBusiness(TRAINING_SHOPS[item.id]).items.push({..
 function winsRequiredForStreet(number=Game.level) { return number>=4&&number<=9?4:3; }
 function regularWinsRequired(number=Game.level) { return winsRequiredForStreet(number)-1; }
 const STREET_LANDMARKS = ['Terminal Tower / Public Square','The abandoned bus blockade','The theater marquees','The bank towers','The civic plaza','The warehouse loading docks','The river lift bridge','The neighborhood sanctuary','The railway viaduct','The Lake Erie harbor'];
+const STREET_SIGHTS = [
+  ['sign','npc','news','hidden'], ['sign','npc','hidden'], ['sign','news','hidden'], ['sign','hidden'], ['sign','npc','news'],
+  ['sign','npc','hidden'], ['sign','hidden'], ['sign','npc','news'], ['sign','hidden'], ['sign','npc','hidden']
+];
+const STREET_SIGNS = [
+  'A hawker shoves a wet Plain Dealer at you. The mayor is missing, and Terminal Tower is the dateline.',
+  'The sideways bus still has a passenger list. One name is circled in ballpoint.',
+  'The Palace marquee has been re-lettered by hand: THEY LEARN YOUR GUARD.',
+  'A revolving door turns by itself and spits out a safe-deposit tag from the tower bank.',
+  'A seagull drops a police radio on the civic steps. It is still switched on.',
+  'Steam off a manhole fogs a loading schedule. Tonight\'s dock is already crossed out.',
+  'The lift-bridge horn sounds. The tender\'s shack is empty.',
+  'One candle is still burning in a sanctuary window above Prospect.',
+  'Fresh chalk on the viaduct: RED GETS WORSE IF YOU WAIT.',
+  'The harbormaster\'s binoculars are set on a tripod, aimed back at the city.'
+];
+const STREET_VOICES = [
+  'Stay under the Tower lights. They hate the square.',
+  'I saw it zap the tire. I am not driving that bus.',
+  null,
+  null,
+  'The plaza is the only open ground. Do not bring anything that shines.',
+  'Pop the flare if the bay door bangs twice.',
+  null,
+  'The side door of the church still opens.',
+  null,
+  'The commander watches for the second guard to fall.'
+];
+const STREET_PAPERS = [
+  'CLEVELAND PRESS: Troops at Public Square. The Rapid is still running.',
+  null,
+  'CLEVELAND PRESS: Euclid marquees to go dark. Do not trust a quiet lobby.',
+  null,
+  'CLEVELAND PRESS: Lakeside plaza held through the night. Bring nothing that shines.',
+  null,
+  null,
+  'CLEVELAND PRESS: St. Stanislaus is housing anyone who saw the boss land.',
+  null,
+  null
+];
 CONFIG.abilities.superKick.name='Lake Effect Kick';
 CONFIG.abilities.superKick.damageMultiplier=1;
 CONFIG.abilities.superPunch.name='Ironworks Punch';
@@ -26,24 +66,86 @@ CONFIG.abilities.superPunch.maxDamage=36;
 CONFIG.abilities.throwEnemy.hit=.9;
 CONFIG.abilities.spinningKick.hit=.8;
 const FOOD_POWER = {coffee:'accuracy',donut:'maxHP',burger:'punch',corned:'punch',jerky:'punch',generaltso:'kick',eggroll:'kick',hottea:'accuracy',milkshake:'maxHP'};
+function defaultRoute() { return [1,2,3,4,5,6,7,8,9,10]; }
+function buildRoute(start) {
+  const body=[];
+  for(let number=start;number<=9;number++) body.push(number);
+  for(let number=1;number<start;number++) body.push(number);
+  body.push(10);
+  return body;
+}
+function activeStreet() { return (Game.route||defaultRoute())[Game.level-1]; }
+function routeIndex(street) { return (Game.route||defaultRoute()).indexOf(street); }
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,route:defaultRoute(),secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
 function streetNumber() { return Game.currentStreet; }
-function streetCleared() { return streetNumber()<Game.level || Game.finalBossDefeated; }
+function streetCleared() { const index=routeIndex(streetNumber()); return index<0 || index<Game.level-1 || Game.finalBossDefeated; }
 function availableShopIds() { return DISTRICT_SHOPS[streetNumber()-1] || []; }
 function canVisitShop(id) { return availableShopIds().includes(id) && !['combat','victory','gameover'].includes(Game.scene); }
+function noteShop(id) { Game.knownShops=Game.knownShops||[]; if(id&&!Game.knownShops.includes(id)) Game.knownShops.push(id); }
+function exploreRandom(seed) {
+  let value=seed>>>0;
+  return ()=>{ value=Math.imul(value^(value>>>15),value|1); value^=value+Math.imul(value^(value>>>7),value|61); return ((value^(value>>>14))>>>0)/4294967296; };
+}
+function buildStreetDeck(street=streetNumber()) {
+  Game.deckBuilds=Game.deckBuilds||{};
+  const built=(Game.deckBuilds[street]||0)+1; Game.deckBuilds[street]=built;
+  const cards=[...(STREET_SIGHTS[street-1]||[])];
+  if(!streetCleared()) cards.push('combat');
+  for(const id of (DISTRICT_SHOPS[street-1]||[])) if(!(Game.knownShops||[]).includes(id)) cards.push('shop:'+id);
+  const random=exploreRandom((Game.exploreSeed||1)^(street*997)^(built*131));
+  for(let i=cards.length-1;i>0;i--){ const j=Math.floor(random()*(i+1)); const swap=cards[i]; cards[i]=cards[j]; cards[j]=swap; }
+  return cards;
+}
+function streetSights(street=streetNumber()) {
+  return [...(STREET_SIGHTS[street-1]||[]),(DISTRICT_SHOPS[street-1]||[]).map(id=>'shop:'+id)].flat();
+}
+function streetFullySeen(street=streetNumber()) {
+  const seen=Game.streetSeen?.[street]||{};
+  return streetSights(street).every(card=>card.startsWith('shop:')?(Game.knownShops||[]).includes(card.slice(5)):!!seen[card]);
+}
+function holdBossForSights(street) {
+  const bossReady=!streetCleared()&&street===activeStreet()&&Game.aliensThisLevel===regularWinsRequired(Game.level);
+  if(!bossReady||streetFullySeen(street)) return;
+  const deck=Game.streetDecks[street]||[];
+  const waiting=deck.filter(card=>card==='combat');
+  const rest=deck.filter(card=>card!=='combat');
+  const seen=Game.streetSeen?.[street]||{};
+  for(const card of streetSights(street)){
+    const found=card.startsWith('shop:')?(Game.knownShops||[]).includes(card.slice(5)):!!seen[card];
+    if(!found&&!rest.includes(card)) rest.push(card);
+  }
+  Game.streetDecks[street]=rest.concat(waiting.length?waiting:['combat']);
+}
+function drawExploreCard() {
+  const street=streetNumber();
+  Game.streetDecks=Game.streetDecks||{};
+  Game.streetSeen=Game.streetSeen||{};
+  let deck=Game.streetDecks[street];
+  if(!Array.isArray(deck)||!deck.length) deck=Game.streetDecks[street]=buildStreetDeck(street);
+  holdBossForSights(street);
+  deck=Game.streetDecks[street];
+  let card=deck.shift();
+  while(card==='combat'&&streetCleared()){
+    if(!deck.length) deck=Game.streetDecks[street]=buildStreetDeck(street);
+    card=deck.shift();
+  }
+  if(card==='sign'||card==='npc'||card==='hidden'||card==='news'){ Game.streetSeen[street]=Game.streetSeen[street]||{}; Game.streetSeen[street][card]=true; }
+  return card;
+}
 function travelToStreet(destination) {
-  if(!Number.isInteger(destination)||Math.abs(destination-streetNumber())!==1||destination<1||destination>Game.highestDistrict) return;
-  if(['start','combat','victory','gameover'].includes(Game.scene)||StoryType.holdLock||StoryType.typing) return;
+  const fromIndex=routeIndex(streetNumber()), toIndex=routeIndex(destination);
+  if(!Number.isInteger(destination)||toIndex<0||Math.abs(toIndex-fromIndex)!==1||toIndex>Game.level-1) return;
+  if(['start','combat','victory','gameover','intro'].includes(Game.scene)||StoryType.holdLock||StoryType.typing) return;
   const from=getStreet(streetNumber());
   window.trackGameEvent?.('street_travel', {from_street:streetNumber(),to_street:destination});
   Game.currentStreet=destination;Game.scene='explore';Game.currentBiz=null;Game.businessEntered=false;Game.artEncounter=null;
   Game.lastEncounters=[];Game.lastBusiness=null;Game.streetJustChanged=false;
-  showDirectory('You walk from '+from.name+' to '+getStreet(destination).name+'. '+(destination<Game.level?getStreet(destination).cleared:getStreet(destination).enter));
+  showDirectory('You walk from '+from.name+' to '+getStreet(destination).name+'. '+(toIndex<Game.level-1?getStreet(destination).cleared:getStreet(destination).enter));
 }
 function streetOfferings(number) {
   const shops=DISTRICT_SHOPS[number-1];
@@ -52,8 +154,15 @@ function streetOfferings(number) {
 }
 function foodBonus(item) { return item.healing>0 && !item.armor && !['lotto','bandages'].includes(item.id) ? (FOOD_POWER[item.id] || 'maxHP') : null; }
 function itemOwned(item) { return !!((item.skill||item.defense) && Game.training.includes(item.id)); }
+function gearOwned(item) {
+  if(itemOwned(item)) return true;
+  if(item.armor&&Game.armor&&Game.armor.durabilityHits>0&&Game.armor.name===item.armor.name) return true;
+  if(item.tempWeapon&&Game.tempWeapon===item.tempWeapon&&!Game.tempWeaponUsed&&Game.weaponUses>0) return true;
+  return false;
+}
 function itemDescription(bizId,item) {
-  if(item.skill||item.defense) return itemOwned(item)?'OWNED · permanent training':item.description+(item.requires&&!Game.training.includes(item.requires)?' Requires previous conditioning.':'');
+  if(gearOwned(item)&&(item.skill||item.defense||item.armor||item.tempWeapon)) return 'OWNED · already carrying this';
+  if(item.skill||item.defense) return item.description+(item.requires&&!Game.training.includes(item.requires)?' Requires previous conditioning.':'');
   const parts=[];
   if(item.healing>0) parts.push('Restore '+item.healing+' HP');
   if(item.healing<0) parts.push('Lose '+Math.abs(item.healing)+' HP');
@@ -87,30 +196,25 @@ function showDirectory(arrival='') {
   const here=streetNumber(), cleared=streetCleared();
   $('#story').innerHTML='';updateStats();updateHealthMeters();clearButtons();
   if(arrival)appendStory(arrival,'news');
-  appendStory('STREET DIRECTORY / '+getStreet(here).name,'special');
-  appendStory('LANDMARK / '+STREET_LANDMARKS[here-1],'system');
-  const required=winsRequiredForStreet(here), regularRequired=required-1;
-  appendStory(cleared?'STREET CLEARED. Safe to revisit: no battles here. The active fight is on '+getStreet(Game.level).name+'.':'Street progress: '+Game.aliensThisLevel+'/'+required+' victories. '+(Game.aliensThisLevel===regularRequired?'The district boss is next.':(regularRequired-Game.aliensThisLevel)+' regular fight'+(regularRequired-Game.aliensThisLevel===1?'':'s')+' until the district boss.'),'system');
-  appendStory('LOCAL STOPS / '+streetOfferings(here),'system');
-  appendStory('Build: Punch +'+Game.permanent.punch+' · Kick +'+Game.permanent.kick+' · Defense +'+Game.permanent.defense+' · Accuracy +'+Math.round(Game.permanent.accuracy*100)+'%.','system');
-  appendStory('Training: '+(Game.learned.map(k=>CONFIG.abilities[k]?.name||'Counterattack').join(', ')||'None yet. Find basic tapes at the Record Store on Ontario.'),'system');
-  if(here===10)appendStory('Erieside: defeat the two guards, then the Mothership Commander. No shops on the harbor.','special');
-  if(!cleared){
-    const bossReady=Game.aliensThisLevel===regularWinsRequired(here);
-    addButton(bossReady?'Challenge District Boss':'Hunt an Alien',()=>{if(bossReady){$('#story').innerHTML='';startCombat();}else return huntAlien();});
-  }
+  appendStory('You are on '+getStreet(here).name+'.','special');
+  appendStory(STREET_LANDMARKS[here-1]+'.','system');
+  const required=winsRequiredForStreet(Game.level), regularRequired=required-1;
+  appendStory(cleared?'This street is clear. The fight is on '+getStreet(activeStreet()).name+'.':Game.aliensThisLevel+' of '+required+' fights won. '+(Game.aliensThisLevel===regularRequired?'The boss is hiding here.':(regularRequired-Game.aliensThisLevel)+' more before the boss.'),'system');
+  if(here===10&&!cleared)appendStory('Two guards, then the Mothership Commander. No shops on the harbor.','special');
+  const bossReady=!cleared&&Game.aliensThisLevel===regularWinsRequired(Game.level);
   const exploreButton=addButton(cleared?'Explore Safely':'Explore Street',()=>encounter());
-  describeActionButton(exploreButton,cleared?'No aliens remain here.':'Random event or alien encounter.');
-  for(const id of availableShopIds())addButton(getBusiness(id).name,()=>startBusiness(id));
-  if(here>1){
-    const previous=here-1;
-    addButton('← '+getStreet(previous).name+' · '+(previous<Game.level?'Cleared':'Active'),()=>travelToStreet(previous)).classList.add('travel-button');
+  describeActionButton(exploreButton,cleared?'Shops, rumors, and anything still hidden. No aliens.':bossReady?'The district boss is hiding on this street.':'Aliens, rumors, and hidden caches.');
+  for(const id of availableShopIds()){
+    if((Game.knownShops||[]).includes(id)) addButton(getBusiness(id).name,()=>startBusiness(id));
+    else addButton('Unknown stop',()=>{},true);
   }
-  if(here<10){
-    const next=here+1, unlocked=next<=Game.highestDistrict;
-    if(unlocked)addButton(getStreet(next).name+' · '+(next<Game.level?'Cleared':'Active')+' →',()=>travelToStreet(next)).classList.add('travel-button');
-    appendStory((unlocked?'ROAD OPEN / '+getStreet(next).name:'ROAD LOCKED / Defeat the district boss to reach '+getStreet(next).name)+' — '+streetOfferings(next),'system');
+  const index=routeIndex(here);
+  if(index>=0&&index<9){
+    const next=Game.route[index+1], unlocked=routeIndex(next)<=Game.level-1;
+    if(unlocked)addButton(getStreet(next).name+' · '+(routeIndex(next)<Game.level-1?'Cleared':'Active')+' →',()=>travelToStreet(next)).classList.add('travel-button');
+    else appendStory(getStreet(next).name+' is locked until you beat the boss.','system');
   }
+  addButton('Your build',openBuild);
   saveGame();
 }
 async function huntAlien() {
@@ -139,7 +243,7 @@ function updateCampaignHUD() {
   directory.disabled=['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
   directory.title=Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight for an automatic bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
-  $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/'+winsRequiredForStreet(streetNumber())+' WINS');
+  $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/'+winsRequiredForStreet(Game.level)+' WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';
 }
 function scaleEnemyHealth(hp,level=Game.level) { return Math.round(hp*(1+.025*(level-1))); }
@@ -197,16 +301,23 @@ function readSave() {
     if(!Number.isInteger(s.aliensThisLevel)||s.aliensThisLevel<0||s.aliensThisLevel>expectedWins||![3,4].includes(s.requiredThisLevel)||s.highestDistrict!==s.level) return null;
     if(s.level>=4&&s.level<=9&&s.requiredThisLevel===3&&s.scene==='combat'&&s.enemy?.isBoss)s.aliensThisLevel=3;
     s.requiredThisLevel=expectedWins;
+    if(!Array.isArray(s.route)||s.route.length!==10||new Set(s.route).size!==10||s.route.some(n=>!Number.isInteger(n)||n<1||n>10)) s.route=defaultRoute();
     if(parsed.version===1)s.currentStreet=s.level;
     // Ignore retired first-fight hints in older checkpoints.
     delete s.tutorialSeen;
     if(s.enemy)delete s.enemy.tutorialTackleReady;
-    if(!Number.isInteger(s.currentStreet)||s.currentStreet<1||s.currentStreet>s.highestDistrict||(s.scene==='combat'&&s.currentStreet!==s.level))return null;
+    if(!Number.isInteger(s.currentStreet)||!s.route.slice(0,s.level).includes(s.currentStreet)||(s.scene==='combat'&&s.currentStreet!==s.route[s.level-1]))return null;
     if(!Array.isArray(s.learned)||s.learned.some(k=>!TRAINING.some(t=>t.skill===k))||!Array.isArray(s.training)||s.training.some(k=>!TRAINING.some(t=>t.id===k))||!Array.isArray(s.tasted)||s.tasted.some(k=>typeof k!=='string'))return null;
     if(!s.permanent||!['punch','kick','defense','accuracy'].every(k=>Number.isFinite(s.permanent[k])&&s.permanent[k]>=0&&s.permanent[k]<=30))return null;
     const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
     if(!['loyalty','visitPaidCounts','visitFreeDollarUsed','purchasedThisVisit','abilitiesUsed'].every(k=>object(s[k])))return null;
     if(!Array.isArray(s.lastEncounters)||!Number.isInteger(s.aliensDefeated)||s.aliensDefeated<0||!Number.isInteger(s.turnsThisFight)||s.turnsThisFight<0||!Number.isInteger(s.weaponUses)||s.weaponUses<0||s.weaponUses>3)return null;
+    if(s.secretsFound!=null&&(!Array.isArray(s.secretsFound)||s.secretsFound.some(id=>typeof id!=='string')))return null;
+    if(s.knownShops!=null&&(!Array.isArray(s.knownShops)||s.knownShops.some(id=>typeof id!=='string')))return null;
+    if(s.exploreSeed!=null&&(!Number.isInteger(s.exploreSeed)||s.exploreSeed<1))return null;
+    if(s.streetDecks!=null&&(typeof s.streetDecks!=='object'||Array.isArray(s.streetDecks)))return null;
+    if(s.deckBuilds!=null&&(typeof s.deckBuilds!=='object'||Array.isArray(s.deckBuilds)))return null;
+    if(s.streetSeen!=null&&(typeof s.streetSeen!=='object'||Array.isArray(s.streetSeen)))return null;
     if(s.tempWeapon!==null&&!Object.hasOwn(TEMP_WEAPONS,s.tempWeapon))return null;
     if(s.armor!==null&&(!object(s.armor)||typeof s.armor.name!=='string'||!Number.isFinite(s.armor.dr)||!Number.isFinite(s.armor.durabilityHits)))return null;
     if(s.buffs!==null&&!object(s.buffs))return null;
@@ -220,13 +331,83 @@ function continueGame() {
   for(const key of SAVE_FIELDS)if(Object.hasOwn(state,key))Game[key]=state[key];
   Game.purchasedThisVisit={};for(const [id,value]of Object.entries(state.purchasedThisVisit||{}))if(getBusiness(id))Game.purchasedThisVisit[id]=new Set(Array.isArray(value?.setValues)?value.setValues:[]);
   window.trackGameEvent?.('game_resume', {saved_scene:Game.scene});
-  Game.guarding=false;showGameUI();$('#story').innerHTML='';updateStats();updateHealthMeters();
+  Game.guarding=false;Game.secretsFound=Array.isArray(Game.secretsFound)?Game.secretsFound:[];Game.knownShops=Array.isArray(Game.knownShops)?Game.knownShops:[];
+  if(!Number.isInteger(Game.exploreSeed))Game.exploreSeed=1;Game.streetDecks=Game.streetDecks||{};Game.deckBuilds=Game.deckBuilds||{};Game.streetSeen=Game.streetSeen||{};showGameUI();$('#story').innerHTML='';updateStats();updateHealthMeters();
   if(Game.scene==='victory'){gameVictory();return;}
   if(Game.hp<=0||Game.scene==='gameover'){gameOver(false);return;}
   if(Game.scene==='combat') {
     if(Game.enemy.hp<=0)collectReward();
     else {appendStory('Resumed your encounter with '+enemyLabel()+'.','system');updateCombatButtons();}
-  } else { Game.scene='explore';showDirectory(); }
+  } else if(Game.scene==='intro') showDepartures();
+  else { Game.scene='explore';showDirectory(); }
+}
+function openBuild() {
+  const names=id=>TRAINING.filter(item=>(DISTRICT_SHOPS[id-1]||[]).includes(TRAINING_SHOPS[item.id])&&(Game.knownShops||[]).includes(TRAINING_SHOPS[item.id])).map(item=>item.name);
+  const moves=Object.keys(CONFIG.abilities).filter(key=>CONFIG.abilities[key].unlockLevel===1||Game.learned.includes(key));
+  $('#buildKnown').textContent=moves.map(key=>{
+    const ability=CONFIG.abilities[key];
+    const bonus=/kick/i.test(key)?Game.permanent.kick:Game.permanent.punch;
+    const min=ability.minDamage+Game.level+bonus, max=ability.maxDamage+Game.level+bonus;
+    return ability.name+' · '+Math.round(attackHitChance(ability)*100)+'% · '+min+'–'+max;
+  }).concat([Game.learned.includes('counter')?'Guard, then counter':'Guard']).join('\n');
+  const bonus=[];
+  if(Game.permanent.punch)bonus.push('Punch damage +'+Game.permanent.punch);
+  if(Game.permanent.kick)bonus.push('Kick damage +'+Game.permanent.kick);
+  if(Game.permanent.defense)bonus.push('Defense +'+Game.permanent.defense);
+  if(Game.permanent.accuracy)bonus.push('Accuracy +'+Math.round(Game.permanent.accuracy*100)+'%');
+  $('#buildStats').hidden=!bonus.length;
+  $('#buildStats').textContent=bonus.join(' · ');
+  const hereTrain=names(streetNumber()), nextIndex=routeIndex(streetNumber())+1, nextTrain=nextIndex<10?names(Game.route[nextIndex]):[];
+  $('#buildHere').textContent=hereTrain.length?hereTrain.join(', '):'No training found on this street yet.';
+  $('#buildNext').textContent=nextTrain.length?nextTrain.join(', '):'You have not found training on the next street.';
+  $('#buildPanel').showModal();
+}
+function showDepartures() {
+  Game.scene='intro';clearButtons();
+  appendStory('Public Square, 1989. The Rapid runs under Terminal Tower. Buses still roll out Euclid. A cab idles at the curb.','system');
+  const walk=addButton('Explore on foot',()=>arriveByTransit(1,'You stay on foot. Public Square is as far as you get. The fight starts on Ontario.'));
+  describeActionButton(walk,'Start on Ontario.');
+  const bus=addButton('Take the bus',boardBus);
+  describeActionButton(bus,'Euclid if the bus makes it. Superior if you have to walk.');
+  const rapid=addButton('Take the Rapid',boardRapid);
+  describeActionButton(rapid,'Public Square if the train makes it. Prospect or Huron if it stops.');
+  const cab=addButton('Hail a cab',boardCab);
+  describeActionButton(cab,'East 9th if he hears the radio. West 6th if he sings over it.');
+}
+function boardCab() {
+  clearButtons();
+  if(Math.random()<0.5){
+    arriveByTransit(4,'The driver catches the radio. Aliens on East 9th. He stops the meter and puts you out.');
+    return;
+  }
+  arriveByTransit(6,'The driver sings over the radio and misses the report. The fare you named was West 6th. He leaves you at the docks.');
+}
+function boardBus() {
+  clearButtons();
+  if(Math.random()<0.5){
+    appendStory('An alien zap blows a tire before Euclid.','special');
+    addButton('Wait for the next bus',()=>arriveByTransit(3,'You wait in the rain. The next bus leaves you on Euclid. Lost 8 HP.',8));
+    addButton('Walk',()=>arriveByTransit(2,'You leave the bus and walk. Superior is where the fight starts.'));
+    return;
+  }
+  arriveByTransit(3,'The bus makes it. You step off on Euclid.');
+}
+function boardRapid() {
+  clearButtons();
+  if(Math.random()<0.5){
+    appendStory('The Rapid dies in the trench under Terminal Tower.','special');
+    addButton('Square doors',()=>arriveByTransit(1,'You wait, then take the Public Square doors. Lost 8 HP. The fight starts on Ontario.',8));
+    addButton('Prospect doors',()=>arriveByTransit(8,'Staff open the south doors. You come out on Prospect.'));
+    addButton('Climb out of the trench',()=>arriveByTransit(9,'You climb out of the trench by the Huron viaduct.'));
+    return;
+  }
+  arriveByTransit(1,'The Rapid pulls into Tower City. You come up into Public Square.');
+}
+function arriveByTransit(street,text,hpLoss=0) {
+  Game.route=buildRoute(street);
+  Game.currentStreet=street;Game.level=1;Game.highestDistrict=1;Game.aliensThisLevel=0;Game.requiredThisLevel=winsRequiredForStreet(1);
+  Game.hp=Math.max(1,Game.hp-(hpLoss||0));Game.scene='explore';Game.streetJustChanged=false;
+  showDirectory(text);
 }
 function startNewRun() { if(readSave()&&!confirm('Start a new run? This replaces your saved campaign.'))return;newGame(); }
 window.addEventListener('DOMContentLoaded',()=>{

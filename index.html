@@ -635,7 +635,7 @@
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
   <link rel="stylesheet" href="retro-skin.css?v=3.8" />
-  <script src="scene-art.js?v=2.1"></script>
+  <script src="scene-art.js?v=2.3"></script>
 </head>
 
 <body>
@@ -1171,6 +1171,7 @@
 
     function initSettingsUI() {
       $('#themeToggle').setAttribute('aria-pressed', String(document.documentElement.getAttribute('data-theme') === 'dark'));
+      $('#buildClose').onclick=()=>$('#buildPanel').close();
       const btn = $('#settingsBtn'), panel = $('#settingsPanel');
       if (!btn || !panel) return;
 
@@ -1615,7 +1616,7 @@
       appendStory('TVs in window displays show breaking news: ALIEN INVASION IN CLEVELAND, 1989.', 'system');
       divider();
       clearButtons();
-      addButton('Start Adventure', () => { Game.scene='explore';showDirectory(); });
+      showDepartures();
       updateStats();saveGame();
     };
 
@@ -1641,37 +1642,16 @@
         maybeAmbient();
       }
 
-      console.log('Current encounter, last 2 were:', Game.lastEncounters);
-
-      const encounterTypes = [
-        { type: 'empty', weight: 35 }, { type: 'combat', weight: 25 }, { type: 'business', weight: 15 },
-        { type: 'tv', weight: 10 }, { type: 'news', weight: 8 }, { type: 'npc', weight: 4 }, { type: 'police', weight: 3 }
-      ].filter(enc=>!(streetCleared() && ['combat','empty'].includes(enc.type)) && !(enc.type==='business' && !availableShopIds().length));
-
-      const availableEncounters = encounterTypes.filter(enc => !Game.lastEncounters.includes(enc.type));
-      const finalEncounters = availableEncounters.length > 0 ? availableEncounters :
-        encounterTypes.filter(enc => enc.type !== Game.lastEncounters[Game.lastEncounters.length - 1]);
-
-      const totalWeight = finalEncounters.reduce((sum, enc) => sum + enc.weight, 0);
-      let randomWeight = rand(1, totalWeight), selectedEncounter = null;
-
-      for (const encounter of finalEncounters) {
-        randomWeight -= encounter.weight;
-        if (randomWeight <= 0) { selectedEncounter = encounter.type; break; }
-      }
-
-      Game.lastEncounters.push(selectedEncounter);
-      if (Game.lastEncounters.length > 2) Game.lastEncounters.shift();
-
-      switch (selectedEncounter) {
+      const card = drawExploreCard();
+      Game.lastEncounters = [card];
+      if (card.startsWith('shop:')) announceBusiness(card.slice(5));
+      else switch (card) {
         case 'combat': startCombat(); break;
-        case 'business': announceRandomBusiness(); break;
-        case 'empty': startEmpty(); break;
-        case 'tv': startMisc(); break;
+        case 'sign': startStreetSign(); break;
+        case 'hidden': startHidden(); break;
         case 'news': startNews(); break;
         case 'npc': startNPC(); break;
-        case 'police': startPolice(); break;
-        default: startEmpty();
+        default: startHidden();
       }
     }
 
@@ -1693,7 +1673,7 @@
 
 
     function startCombat() {
-      if(streetCleared() || streetNumber()!==Game.level)return;
+      if(streetCleared() || streetNumber()!==activeStreet())return;
       Game.scene = 'combat';
       const isBoss = Game.aliensThisLevel === regularWinsRequired(Game.level);
       Game.enemy = makeEnemy(isBoss);
@@ -1706,12 +1686,19 @@
       window.trackGameEvent?.('fight_start', {enemy_type:Game.enemy.color,is_boss:isBoss});
 
       const behavior = CONFIG.enemyBehaviors[rand(0, CONFIG.enemyBehaviors.length - 1)];
+      if(isBoss) appendStory('You find the district boss.', 'special');
       appendStory('A ' + enemyLabel() + ' ' + behavior + '!', 'system');
       updateHealthMeters();
       updateCombatButtons();
     }
 
 
+
+    function attackHitChance(ability) {
+      let hit = Game.buffs?.firstHitGuaranteed ? 1 : ability.hit;
+      hit += (Game.buffs?.hitBonus || 0) + (Game.permanent?.accuracy || 0);
+      return Math.min(1, Math.max(0, hit));
+    }
 
     function updateCombatButtons() {
       clearButtons();
@@ -1721,15 +1708,15 @@
         const ability = CONFIG.abilities[abilityKey];
         if (ability.unlockLevel === 1 || Game.learned.includes(abilityKey)) {
           const isOnCooldown = Game.abilitiesUsed[abilityKey] && ability.cooldown > 0;
-          const button=addButton(ability.name + (isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
-          button.title=Math.round(Math.min(1,ability.hit+Game.permanent.accuracy)*100)+'% base hit · '+(ability.minDamage+Game.level)+'–'+(ability.maxDamage+Game.level)+' damage before bonuses';
+          const button=addButton(ability.name + ' · ' + Math.round(attackHitChance(ability)*100) + '%' + (isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
+          button.title=(ability.minDamage+Game.level)+'–'+(ability.maxDamage+Game.level)+' damage before bonuses';
         }
       });
 
       // Temporary weapon (three swings)
       if (Game.tempWeapon && !Game.tempWeaponUsed) {
         const tw = TEMP_WEAPONS[Game.tempWeapon];
-        addButton(tw.name + ' ('+Game.weaponUses+' uses)', () => playerAttack(Game.tempWeapon));
+        addButton(tw.name + ' · ' + Math.round(attackHitChance(tw)*100) + '% ('+Game.weaponUses+' uses)', () => playerAttack(Game.tempWeapon));
       }
 
       addButton(Game.learned.includes('counter')?'Guard / Counter':'Guard',guardTurn);
@@ -1795,10 +1782,8 @@
 
 
       // --- buffs affect hit chance and damage ---
-      let hitChance = ability.hit;
-      if (Game.buffs?.firstHitGuaranteed) { hitChance = 1; Game.buffs.firstHitGuaranteed = false; }
-      hitChance += (Game.buffs?.hitBonus || 0) + Game.permanent.accuracy;
-      hitChance = Math.min(1, Math.max(0, hitChance));
+      const hitChance = attackHitChance(ability);
+      if (Game.buffs?.firstHitGuaranteed) Game.buffs.firstHitGuaranteed = false;
 
       let minDmg = ability.minDamage + L;
       let maxDmg = ability.maxDamage + L;
@@ -1983,6 +1968,34 @@ decayBuffsEndOfRound();
     }
 
 
+    function wastedFood(it) {
+      const lines = {
+        peanuts: "You don't even like peanuts. Full health, and a wasted dollar.",
+        coffee: 'You were already awake. The coffee goes cold in your hand.',
+        donut: 'You were full. The donut sits there while you stare at it.',
+        slice: 'One more slice would be a mistake. You paid anyway.',
+        soda: 'You crack it, take one sip, and pour the rest out. You were full.',
+        dog: 'Stadium mustard on a full stomach. That was a waste.',
+        burger: 'You cannot finish the burger. The money is gone either way.',
+        pie: 'The pie smells great. You were too full to care.',
+        milkshake: 'The shake melts while you decide you did not need it.',
+        beer: 'You were fine. Now the room tilts.',
+        whiskey: 'You did not need this. The room tilts anyway.',
+        corned: 'That sandwich was too much. You were already full.',
+        pickle: 'A pickle you did not want. Still a dollar.',
+        lotto: 'You were already fine. The ticket changes nothing.',
+        chips: 'You eat three chips and close the bag. Waste of money.',
+        jerky: 'Jerky for a full stomach. You chew it out of spite.',
+        eggroll: 'Too full for an egg roll. You bought it anyway.',
+        hottea: 'The tea cools down. You did not need calming.',
+        generaltso: "You stare at General Tso's and admit you were not hungry.",
+        mre: 'An MRE on a full stomach. Even the army would judge you.',
+        bandages: 'You wrap a bandage around nothing. The cut was not there.',
+        blessing: 'You were already in one piece. The blessing has nowhere to land.'
+      };
+      return lines[it.id] || 'You were already full. That was a waste of money.';
+    }
+
     function heal(amount, msg) {
       const before = Game.hp;
       const newHP = Math.min(Game.maxHP, Math.max(0, Game.hp + amount));
@@ -1994,9 +2007,10 @@ decayBuffsEndOfRound();
       } else {
         if (gained > 0) {
           appendStory((msg || 'You recover.') + ' (+' + gained + ' HP, now ' + Game.hp + '/' + Game.maxHP + ')', 'system');
+        } else if (amount > 0) {
+          appendStory('You were already full. That did nothing.', 'system');
         } else {
-          // Full health (or no change): show simple message only
-          appendStory(msg || 'You are already at full health.', 'system');
+          appendStory(msg || 'Nothing changes.', 'system');
         }
       }
 
@@ -2033,6 +2047,7 @@ decayBuffsEndOfRound();
       Game.currentBiz = id;
       Game.businessEntered = false;
       Game.artEncounter = null;
+      noteShop(id);
       appendStory('[' + b.name.toUpperCase() + '] ' + b.intro, 'system'); clearButtons();
       addButton('Visit ' + b.name, () => startBusiness(id));
       addButton('Keep Exploring', () => { $('#story').innerHTML = ''; encounter(); });
@@ -2040,6 +2055,7 @@ decayBuffsEndOfRound();
 
     function startBusiness(id) {
       if(!canVisitShop(id))return;
+      noteShop(id);
       const b = getBusiness(id);
       Game.currentBiz = id;
       Game.purchasedThisVisit[id]=new Set();
@@ -2064,7 +2080,7 @@ decayBuffsEndOfRound();
       if (!Game.purchasedThisVisit[id]) Game.purchasedThisVisit[id] = new Set();
 
       b.items.forEach(it => {
-        const purchased = Game.purchasedThisVisit[id].has(it.id) || itemOwned(it);
+        const purchased = Game.purchasedThisVisit[id].has(it.id) || gearOwned(it);
         const finalPrice = computeFinalPrice(id, it);
         const label =
           finalPrice === 0
@@ -2086,7 +2102,7 @@ decayBuffsEndOfRound();
     function buyBusinessItem(id, it) {
       if(!canVisitShop(id))return;
       if (!Game.purchasedThisVisit[id]) Game.purchasedThisVisit[id] = new Set();
-      if (Game.purchasedThisVisit[id].has(it.id) || itemOwned(it) || (it.requires&&!Game.training.includes(it.requires))) return;
+      if (Game.purchasedThisVisit[id].has(it.id) || gearOwned(it) || (it.requires&&!Game.training.includes(it.requires))) return;
 
       const basePrice = it.price ?? 0;
       const finalPrice = computeFinalPrice(id, it);
@@ -2109,6 +2125,8 @@ decayBuffsEndOfRound();
       if (it.armor) {
         Game.armor = { ...it.armor };
         appendStory(it.message || ('You equip ' + it.name + '.'), 'system');
+      } else if (it.healing > 0 && Game.hp >= Game.maxHP) {
+        appendStory(wastedFood(it), 'system');
       } else {
         heal(it.healing, it.message);
       }
@@ -2156,6 +2174,46 @@ decayBuffsEndOfRound();
       saveGame();
     }
 
+    const HIDDEN_FINDS = {
+      1: [{id:'ontario-locker', cash:6, text:'A locker under the Terminal Tower steps clicks open. $6 inside.'}, {id:'ontario-token', cash:3, text:'A Rapid token is stuck in the grate. You pocket $3.'}],
+      2: [{id:'superior-fare', cash:4, text:'The blown-tire bus still has a fare box ajar. $4.'}, {id:'superior-note', cash:2, text:'A driver left a route card and $2 under the visor.'}],
+      3: [{id:'euclid-marquee', cash:5, text:'The Palace box office drawer was never locked. $5.'}, {id:'euclid-stub', cash:2, text:'A ticket stub marks $2 tucked in the marquee letters.'}],
+      4: [{id:'ninth-drop', cash:8, text:'The night-drop at the bank spits a forgotten deposit. $8.'}, {id:'ninth-coin', cash:3, text:'A teller window holds a roll of coins. $3.'}],
+      5: [{id:'lakeside-megaphone', cash:4, text:'The plaza megaphone case has $4 and fresh batteries.'}, {id:'lakeside-bench', cash:2, text:'Someone wedged $2 under a plaza bench slat.'}],
+      6: [{id:'sixth-flare', cash:5, text:'The dock flare box has $5 under the flares.'}, {id:'sixth-manifest', cash:3, text:'A loading manifest wraps $3.'}],
+      7: [{id:'river-toll', cash:4, text:'The bridge tender left the toll cup. $4.'}, {id:'river-glove', cash:2, text:'A work glove on the rail holds $2.'}],
+      8: [{id:'prospect-poorbox', cash:5, text:'The church poor box was pried, then abandoned. $5 left.'}, {id:'prospect-candle', cash:2, text:'A candle stand hides $2 in the wax cup.'}],
+      9: [{id:'huron-chalk', cash:4, text:'Under the viaduct chalk, a coffee can. $4.'}, {id:'huron-spike', cash:3, text:'A rail spike tin holds $3.'}],
+      10: [{id:'erie-radio', cash:6, text:'The harbormaster shack radio sits on $6.'}, {id:'erie-net', cash:3, text:'A dry net bag holds $3 in damp bills.'}]
+    };
+    function takeHiddenFind() {
+      Game.secretsFound = Game.secretsFound || [];
+      return (HIDDEN_FINDS[streetNumber()] || []).find(find => !Game.secretsFound.includes(find.id)) || null;
+    }
+    function revealHidden(find) {
+      Game.secretsFound.push(find.id);
+      Game.money += find.cash;
+      appendStory('HIDDEN / ' + find.text, 'special');
+      updateStats();
+    }
+    function startStreetSign() {
+      Game.scene = 'npc';
+      Game.artEncounter = null;
+      clearButtons();
+      appendStory('ONLY ON THIS STREET / ' + STREET_SIGNS[streetNumber() - 1], 'special');
+      addButton('Keep Exploring', () => encounter());
+    }
+
+    function startHidden() {
+      Game.scene = 'npc';
+      Game.artEncounter = null;
+      const find = takeHiddenFind();
+      clearButtons();
+      if (find) revealHidden(find);
+      else { Game.money += 2; appendStory('You already turned this block over. A stranger still presses $2 into your hand.', 'system'); updateStats(); }
+      addButton('Keep Exploring', () => encounter());
+    }
+
     function startEmpty() {
       Game.scene = 'empty';
       Game.artEncounter = null;
@@ -2196,6 +2254,10 @@ decayBuffsEndOfRound();
             appendStory('You equip the Kevlar Vest (-3 dmg for 25 hits).', 'system');
           }
           updateStats();
+        } else if (roll < 0.8) {
+          const find = takeHiddenFind();
+          if (find) revealHidden(find);
+          else { Game.money += 3; appendStory('HIDDEN / A folded $3 in a payphone coin return.', 'special'); updateStats(); }
         } else {
           const lookTexts = [
             'You search but find nothing of interest.', 'The area seems completely abandoned.',
@@ -2229,7 +2291,7 @@ decayBuffsEndOfRound();
       Game.artEncounter = 'newspaper';
       Game.scene = 'npc'; appendStory('[NEWS STAND] you see todays paper.', 'system'); clearButtons();
       addButton('Read', () => {
-        const headline = CONFIG.newspaperHeadlines[rand(0, CONFIG.newspaperHeadlines.length - 1)];
+        const headline = STREET_PAPERS[streetNumber() - 1] || CONFIG.newspaperHeadlines[rand(0, CONFIG.newspaperHeadlines.length - 1)];
         const healAmount = rand(1, 5);
         appendStory('[CLEVELAND PRESS]: ' + headline, 'news');
         heal(healAmount, 'Reading the news helps you relax and recover.');
@@ -2243,7 +2305,7 @@ decayBuffsEndOfRound();
       Game.artEncounter = 'survivor';
       Game.scene = 'npc'; appendStory('[SURVIVOR] a local bystander hiding in the shadows.', 'system'); clearButtons();
       addButton('Talk', () => {
-        const dialogue = CONFIG.survivorDialogue[rand(0, CONFIG.survivorDialogue.length - 1)];
+        const dialogue = STREET_VOICES[streetNumber() - 1] || CONFIG.survivorDialogue[rand(0, CONFIG.survivorDialogue.length - 1)];
         appendStory('They say: "' + dialogue + '"', 'system'); clearButtons();
         addButton('Keep Exploring', () => encounter());
       });
@@ -2347,6 +2409,17 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
+  <dialog id="buildPanel" aria-labelledby="buildTitle">
+    <header class="settings-heading">
+      <div><p class="settings-eyebrow">THIS RUN</p><h2 id="buildTitle">Your build</h2></div>
+      <button id="buildClose" aria-label="Close build" autofocus>✕</button>
+    </header>
+    <p id="buildStats" hidden></p>
+    <section><h3>Moves</h3><p id="buildKnown"></p></section>
+    <section><h3>Training on this street</h3><p id="buildHere"></p></section>
+    <section><h3>Training on the next street</h3><p id="buildNext"></p></section>
+  </dialog>
+
   <dialog id="settingsPanel" aria-labelledby="settingsTitle">
     <header class="settings-heading">
       <div><p class="settings-eyebrow">LAKE EFFECT INVASION</p><h2 id="settingsTitle">Settings</h2></div>
@@ -2384,7 +2457,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=3.2"></script>
+<script src="campaign.js?v=3.9"></script>
 </body>
 
 </html>

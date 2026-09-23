@@ -63,7 +63,7 @@ for(const business of businesses){
   assert.equal(el('#streetArt').dataset.asset,SceneArt.streets[getStreet(streetNumber()).id][0],'Approaching retains the street');
   startBusiness(business.id);
   assert.equal(el('#streetArt').dataset.asset,SceneArt.businesses[business.id][0]);
-  assert.equal(el('#sceneLocation').textContent,business.name);
+  assert.equal(el('#sceneLocation').children.find(node=>node.tag==='span').textContent,business.name);
   assert.equal(el('#enemyActor').hidden,true);
   Game.money=100;buyBusinessItem(business.id,business.items[0]);
   assert.equal(el('#streetArt').dataset.asset,SceneArt.businesses[business.id][0],'Purchases retain the shop');
@@ -76,14 +76,14 @@ for(const [start,key,action] of [[startMisc,'tv','Watch'],[startNews,'newspaper'
   start();assert.equal(el('#streetArt').dataset.asset,SceneArt.encounters[key][0]);
   el('#buttons').children.find(b=>b.textContent===action).onclick({});
   assert.equal(el('#streetArt').dataset.asset,SceneArt.encounters[key][0],'Dialogue retains illustration');
-  encounter();assert.equal(Game.artEncounter,null);
+  Game.streetDecks[streetNumber()]=['hidden'];encounter();assert.equal(Game.artEncounter,null);
   assert.equal(el('#streetArt').dataset.asset,'street-ontario');
 }
 for(const roll of [0.2,0.35]){
   startEmpty();Math.random=()=>roll;
   el('#buttons').children.find(b=>b.textContent==='Look Around').onclick({});
   assert.equal(el('#streetArt').dataset.asset,'encounter-care-package');
-  Math.random=()=>0;encounter();assert.equal(Game.artEncounter,null);
+  Game.streetDecks[streetNumber()]=['hidden'];encounter();assert.equal(Game.artEncounter,null);
 }
 newGame();assert.equal(Game.currentBiz,null);assert.equal(Game.businessEntered,false);assert.equal(Game.artEncounter,null);
 Math.random=originalRandom;
