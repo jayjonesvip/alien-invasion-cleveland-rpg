@@ -132,7 +132,6 @@ input { accent-color: var(--cyan); }
 #overlay .stats { display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: 13px; }
 #overlay .stats b { color: var(--muted); font-weight: 400; }
 #overlay .actions button { width: 100%; margin-top: 12px; }
-#levelUpToast { background: var(--amber); border: 1px solid var(--panel); border-radius: 3px; font-size: 15px; }
 @media (min-width: 1500px) { .wrap { margin-top: 32px; height: calc(100dvh - 64px); } }
 @media (max-width: 760px) {
   .wrap { width: 100%; height: 100dvh; margin: 0; }
@@ -199,10 +198,12 @@ input { accent-color: var(--cyan); }
 
 /* Settings stay out of the action area; the map lives on the scene. */
 .transmission-header { flex-basis:54px; padding-bottom:8px; gap:14px; }
-.header-settings { display:flex; align-items:center; gap:7px; min-height:40px; padding:7px 10px; font-size:10px; background:var(--surface); color:var(--fg); }
+.header-settings { display:flex; align-items:center; gap:7px; min-height:40px; padding:7px 10px; font-size:10px; background:transparent; color:var(--fg); border:0; box-shadow:none; }
+.header-settings:hover:not(:disabled) { background:transparent; border-color:transparent; box-shadow:none; color:var(--cyan); }
 .header-settings span { font-size:19px; line-height:1; }
 #gameUI .scene-location { left:24px; right:110px; bottom:16px; }
-.scene-map { position:absolute; z-index:4; bottom:12px; right:18px; left:auto; display:flex; flex-direction:column; align-items:center; gap:2px; width:74px; min-height:52px; padding:5px 6px; background:#0a2029eb; color:#e8edcf; border:1px solid #acd8c5; box-shadow:0 3px 10px #0006; }
+.scene-map { position:absolute; z-index:4; bottom:12px; right:18px; left:auto; display:flex; flex-direction:column; align-items:center; gap:2px; width:74px; min-height:52px; padding:5px 6px; background:transparent; color:#e8edcf; border:0; box-shadow:none; text-shadow:0 2px 5px #000; }
+.scene-map:hover:not(:disabled) { background:transparent; border-color:transparent; box-shadow:none; color:#fff; }
 .scene-map svg { width:40px; height:27px; }
 .scene-map span { font-size:8px; letter-spacing:.15em; }
 .map-paper { fill:#e1d7af; stroke:#f9f1d6; stroke-width:1.2; }

@@ -3,8 +3,6 @@ async function main(){
 await vm.runInContext(`(async()=>{
 newGame();assert.equal(Game.money,8);assert.equal(Game.learned.length,0);
 assert.ok(businesses.every(b=>b.items.length<=3),'Every store is capped at three purchasable items');
-beginTurnLock();let rewardTap=false;const rewardButton=addButton('Collect $1',()=>{rewardTap=true;},false,{allowWhileLocked:true});
-assert.equal(rewardButton.disabled,false,'A completed-fight reward remains tappable during the closing text');rewardButton.onclick({});assert.equal(rewardTap,true);endTurnLock();clearButtons();
 // Every non-combat encounter has a visible route back, including after dialogue.
 for(const [start,action] of [[startMisc,'Watch'],[startNews,'Read'],[startNPC,'Talk'],[startPolice,'Talk'],[startEmpty,'Look Around'],[()=>announceBusiness('coffee'),null]]) {
  start();assert.ok(el('#buttons').children.some(b=>b.textContent==='Return to Street Directory'));
@@ -35,15 +33,15 @@ startBusiness('pawn');buyBusinessItem('pawn',getBusiness('pawn').items[0]);asser
 useWeaponCharge();decayBuffsEndOfFight();assert.ok(Game.tempWeapon);assert.equal(Game.weaponUses,2);
 useWeaponCharge();useWeaponCharge();decayBuffsEndOfFight();assert.equal(Game.tempWeapon,null);
 Game.scene='directory';travelToStreet(2);travelToStreet(3);startCombat();assert.equal(Game.enemy.isBoss,false);
-Game.enemy.hp=0;Game.turnsThisFight=1;winCombat();const quick=Game.pendingReward;
-Game.turnsThisFight=20;winCombat();assert.equal(Game.pendingReward,quick);
-collectReward();const money=Game.money;collectReward();assert.equal(Game.money,money,'Rewards collected only once');
+Game.enemy.hp=0;Game.turnsThisFight=1;const beforeBounty=Game.money;winCombat();const quick=Game.money-beforeBounty;
+assert.ok(quick>0);assert.equal(Game.pendingReward,0);assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('Collect $')),'Bounties progress automatically');
+Game.turnsThisFight=20;winCombat();collectReward();assert.equal(Game.money,beforeBounty+quick,'Rewards collected only once');
 Game.scene='explore';saveGame();const savedMoney=Game.money;const savedMax=Game.maxHP;
 Game.money=0;Game.learned=[];continueGame();assert.equal(Game.money,savedMoney);assert.ok(Game.learned.includes('superKick'));assert.equal(Game.maxHP,savedMax);
 startCombat();Game.enemy.hp-=3;Game.hp-=4;saveGame();const enemyHP=Game.enemy.hp,playerHP=Game.hp;
 Game.enemy=null;continueGame();assert.equal(Game.enemy.hp,enemyHP);assert.equal(Game.hp,playerHP);
-Game.enemy.hp=0;winCombat();saveGame();const bounty=Game.pendingReward;continueGame();assert.equal(Game.pendingReward,bounty);
-collectReward();saveGame();continueGame();assert.equal(Game.pendingReward,0);assert.notEqual(Game.scene,'combat');
+Game.enemy.hp=0;Game.pendingReward=9;saveGame();const legacyMoney=Game.money;continueGame();assert.equal(Game.pendingReward,0);assert.equal(Game.money,legacyMoney+9,'Saved unclaimed bounties resolve on resume');
+saveGame();continueGame();assert.equal(Game.pendingReward,0);assert.notEqual(Game.scene,'combat');
 Game.money=40;Game.hp=0;gameOver();assert.equal(el('#recoverBtn').hidden,false);recoverAtShelter();assert.equal(Game.money,30);assert.equal(Game.hp,Game.maxHP);assert.ok(Game.learned.includes('superKick'));
 // Exhausting a weapon on a losing turn cannot restore it at the next battle.
 Game.tempWeapon='leadPipe';Game.weaponUses=0;Game.tempWeaponUsed=true;Game.hp=0;gameOver();recoverAtShelter();startCombat();assert.equal(Game.tempWeapon,null);

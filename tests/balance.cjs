@@ -17,12 +17,12 @@ for(let seed=1;seed<=50;seed++){
   }
   walkTo(Game.level);
   startCombat();let turns=0;
-  while(Game.hp>0&&Game.enemy.hp>0&&turns++<40){
+   while(Game.hp>0&&Game.enemy&&Game.enemy.hp>0&&turns++<40){
    const usable=Object.keys(CONFIG.abilities).filter(k=>(CONFIG.abilities[k].unlockLevel===1||Game.learned.includes(k))&&!(CONFIG.abilities[k].cooldown&&Game.abilitiesUsed[k]));
    usable.sort((a,b)=>{const score=k=>{const x=CONFIG.abilities[k];return Math.min(1,x.hit+Game.permanent.accuracy)*((x.minDamage+x.maxDamage)/2+Game.level);};return score(b)-score(a);});
    await playerAttack(usable[0]);rounds++;
   }
-  if(Game.hp<=0){deaths++;recoverAtShelter();}else if(Game.enemy.hp<=0)collectReward();else throw new Error('Stalled battle');
+   if(Game.hp<=0){deaths++;recoverAtShelter();}else if(!Game.enemy){/* Reward and progression resolve automatically. */}else throw new Error('Stalled battle');
  }
  if(Game.scene!=='victory')throw new Error('Campaign did not finish for seed '+seed);
  runs.push({deaths,rounds,skills:Game.learned.length});

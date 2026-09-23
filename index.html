@@ -421,12 +421,9 @@
 
     /* Button lock while typing/turn */
     #buttons.locked {
+      pointer-events: none;
       opacity: .6;
       filter: grayscale(.2);
-    }
-
-    #buttons.locked button:not(.lock-exempt) {
-      pointer-events: none;
     }
 
     #buttons.locked button {
@@ -580,47 +577,6 @@
       }
     }
 
-    /* Level-up FX */
-    #levelUpToast {
-      position: absolute;
-      left: 50%;
-      top: 68px;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #ffd54f, #ff7043);
-      color: #111;
-      border: 2px solid #000;
-      border-radius: 12px;
-      padding: 10px 16px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      text-align: center;
-      z-index: 1001;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
-      animation: lu-pop 280ms ease-out;
-    }
-
-    #levelUpToast.hidden {
-      display: none;
-    }
-
-    #levelUpToast small {
-      display: block;
-      font-weight: 700;
-      margin-top: 4px;
-    }
-
-    @keyframes lu-pop {
-      from {
-        transform: translateX(-50%) scale(.7);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateX(-50%) scale(1);
-        opacity: 1;
-      }
-    }
-
     .shake {
       animation: lu-shake 400ms ease-in-out;
     }
@@ -678,7 +634,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.3" />
-  <link rel="stylesheet" href="retro-skin.css?v=3.7" />
+  <link rel="stylesheet" href="retro-skin.css?v=3.8" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1507,24 +1463,22 @@
 
     function divider() { let d = document.createElement('div'); d.className = 'divider'; $('#story').appendChild(d); }
     function clearButtons() { $('#buttons').innerHTML = ''; updateSceneArt(); updateCampaignHUD(); addDirectoryReturn(); }
-    function addButton(lbl, fn, dis = false, options = {}) {
+    function addButton(lbl, fn, dis = false) {
       const btnWrap = $('#buttons');
       const isLocked = btnWrap?.classList.contains('locked');
-      const allowWhileLocked = options.allowWhileLocked === true;
 
       const b = document.createElement('button');
       b.textContent = lbl;
       b.dataset.tone = /^(Flee|Leave|Ignore|Keep Exploring)$/.test(lbl) ? 'quiet' : 'action';
-      if (allowWhileLocked) b.classList.add('lock-exempt');
 
       // Respect business rules now, respect lock visually now
       // but remember the ORIGINAL (business) disabled state for unlock restore
-      b.disabled = dis || (isLocked && !allowWhileLocked);
+      b.disabled = dis || isLocked;
       b.dataset.origDisabled = dis ? '1' : '0';   // <-- key line (preserve business rule)
 
       // Safety: ignore clicks while locked or disabled
       b.onclick = (e) => {
-        if ($('#buttons')?.classList.contains('locked') && !allowWhileLocked) return;
+        if ($('#buttons')?.classList.contains('locked')) return;
         if (b.disabled) return;
         const result = fn(e);
         if (result && typeof result.then === 'function') result.then(saveGame);
@@ -1605,50 +1559,6 @@
       if (!st?.ambient?.length) return;
       if (Math.random() < 0.33) {
         appendStory(st.ambient[rand(0, st.ambient.length - 1)], 'system');
-      }
-    }
-
-
-    function getUnlockedAt(level) {
-      return Object.values(CONFIG.abilities)
-        .filter(a => a.unlockLevel === level)
-        .map(a => a.name);
-    }
-
-    function showLevelUp(level, hpGain, unlockedList = []) {
-      const toast = $('#levelUpToast');
-      toast.innerHTML = `LEVEL UP! → <b>LV ${level}</b>
-    <small>Max HP +${hpGain}${unlockedList.length ? ' • New: ' + unlockedList.join(', ') : ''}</small>`;
-      toast.classList.remove('hidden');
-
-      // Shake the game panel
-      $('#gameUI').classList.add('shake');
-      setTimeout(() => $('#gameUI').classList.remove('shake'), 420);
-
-      // Fire confetti
-      spawnConfetti(60);
-
-      // Hide toast after a moment
-      setTimeout(() => { toast.classList.add('hidden'); }, 2200);
-    }
-
-    function spawnConfetti(n = 40) {
-      const wrap = document.querySelector('.wrap');
-      for (let i = 0; i < n; i++) {
-        const c = document.createElement('div');
-        c.className = 'confetti';
-        const x = Math.random() * 260 - 130;      // horizontal spread
-        const startX = (wrap.clientWidth / 2) + x;   // center-ish
-        c.style.left = startX + 'px';
-        c.style.top = '60px';
-        // random drift
-        const dx = (Math.random() * 200 - 100) + 'px';
-        c.style.setProperty('--dx', dx);
-        // random color set
-        c.style.background = ['#ffd54f', '#ff7043', '#4CAF50', '#42a5f5', '#ab47bc'][Math.floor(Math.random() * 5)];
-        c.style.animationDuration = (800 + Math.random() * 700) + 'ms';
-        wrap.appendChild(c);
-        setTimeout(() => c.remove(), 1600);
       }
     }
 
@@ -1927,6 +1837,7 @@
 
           winCombat();
           endTurnLock();
+          collectReward();
           return;
         }
       } else {
@@ -2018,6 +1929,7 @@ decayBuffsEndOfRound();
 
 
     function winCombat() {
+      if(!Game.enemy||Game.enemy.hp>0||Game.pendingReward>0)return;
       if(Game.enemy && !Game.enemy.defeatTracked){
         Game.enemy.defeatTracked=true;
         window.trackGameEvent?.('alien_defeated', {enemy_type:Game.enemy.color,is_boss:!!Game.enemy.isBoss,is_final_boss:!!Game.enemy.isFinalBoss,turns:Game.turnsThisFight});
@@ -2025,25 +1937,26 @@ decayBuffsEndOfRound();
       const reward=4+Game.level+(Game.enemy?.isBoss?6:0);
       Game.pendingReward=reward;
       clearButtons();updateHealthMeters();
-      appendStory('Threat cleared. Bounty: $'+reward+'.','special');
-      addButton('Collect $'+reward,collectReward,false,{allowWhileLocked:true});
+      if(!StoryType.holdLock)collectReward();
     }
     function collectReward() {
       if(!Game.enemy || Game.enemy.hp>0 || Game.pendingReward<=0)return;
       const final=!!Game.enemy.isFinalBoss;
-      window.trackGameEvent?.('earn_virtual_currency', {virtual_currency_name:'Cleveland cash',value:Game.pendingReward});
-      Game.money+=Game.pendingReward;Game.pendingReward=0;
+      const reward=Game.pendingReward;
+      window.trackGameEvent?.('earn_virtual_currency', {virtual_currency_name:'Cleveland cash',value:reward});
+      Game.money+=reward;Game.pendingReward=0;
       Game.aliensDefeated++;Game.aliensThisLevel++;
       Game.enemy=null;Game.scene='explore';decayBuffsEndOfFight();
       if(final) {Game.finalBossDefeated=true;window.trackGameEvent?.('campaign_complete', {aliens_defeated:Game.aliensDefeated});updateStats();updateHealthMeters();gameVictory();saveGame();return;}
-      checkLevelUp();updateStats();updateHealthMeters();showDirectory();saveGame();
+      const levelUp=checkLevelUp();updateStats();updateHealthMeters();
+      showDirectory('BOUNTY COLLECTED / $'+reward+(levelUp?' · LEVEL '+levelUp.level+' · MAX HP +'+levelUp.hpGain+' · FULLY HEALED':''));saveGame();
     }
     function checkLevelUp() {
-      if(Game.aliensThisLevel<3||Game.level>=10)return;
+      if(Game.aliensThisLevel<3||Game.level>=10)return null;
       Game.aliensThisLevel=0;Game.level++;Game.highestDistrict=Game.level;Game.requiredThisLevel=3;
       Game.maxHP+=CONFIG.hpGainPerLevel;Game.hp=Game.maxHP;Game.streetJustChanged=true;
       window.trackGameEvent?.('level_up', {level:Game.level});
-      showLevelUp(Game.level,CONFIG.hpGainPerLevel,[]);
+      return {level:Game.level,hpGain:CONFIG.hpGainPerLevel};
     }
     function checkVictory() { if(Game.finalBossDefeated)gameVictory(); }
     function gameVictory() {
@@ -2354,7 +2267,6 @@ decayBuffsEndOfRound();
       <span class="signal"><i aria-hidden="true"></i> EMERGENCY FREQUENCY</span>
       <button id="settingsBtn" class="header-settings" aria-label="Open settings" aria-haspopup="dialog" aria-controls="settingsPanel" aria-expanded="false"><span aria-hidden="true">⚙</span> SETTINGS</button>
     </header>
-    <div id="levelUpToast" class="hidden"></div>
     <div id="startScreen" class="frame">
       <img class="title-art" src="images/art/street-ontario.webp" alt="Alien lights gather over Cleveland's deserted Public Square." />
       <div class="title-content">
@@ -2457,7 +2369,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=3.0"></script>
+<script src="campaign.js?v=3.1"></script>
 </body>
 
 </html>

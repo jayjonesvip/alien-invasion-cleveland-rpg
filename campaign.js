@@ -133,7 +133,7 @@ function addDirectoryReturn() {
 function updateCampaignHUD() {
   const directory=$('#directoryBtn');
   directory.disabled=['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
-  directory.title=Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight and collect your bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
+  directory.title=Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight for an automatic bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
   $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/3 WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';
@@ -163,8 +163,9 @@ async function guardTurn() {
     Game.enemy.hp=Math.max(0,Game.enemy.hp-damage);
     await appendStoryAsync('COUNTERATTACK! You return '+damage+' damage.','hit');
   }
-  if(Game.hp>0&&Game.enemy) { updateStats();updateHealthMeters();if(Game.enemy.hp<=0)winCombat();else updateCombatButtons(); }
-  endTurnLock();
+  const won=Game.hp>0&&Game.enemy&&Game.enemy.hp<=0;
+  if(Game.hp>0&&Game.enemy) { updateStats();updateHealthMeters();if(won)winCombat();else updateCombatButtons(); }
+  endTurnLock();if(won)collectReward();
 }
 function recoverAtShelter() {
   window.trackGameEvent?.('shelter_recovery');
@@ -216,9 +217,8 @@ function continueGame() {
   if(Game.scene==='victory'){gameVictory();return;}
   if(Game.hp<=0||Game.scene==='gameover'){gameOver(false);return;}
   if(Game.scene==='combat') {
-    appendStory('Resumed your encounter with '+enemyLabel()+'.','system');
-    if(Game.enemy.hp<=0) { clearButtons();addButton('Collect $'+Game.pendingReward,collectReward,false,{allowWhileLocked:true}); }
-    else updateCombatButtons();
+    if(Game.enemy.hp<=0)collectReward();
+    else {appendStory('Resumed your encounter with '+enemyLabel()+'.','system');updateCombatButtons();}
   } else { Game.scene='explore';showDirectory(); }
 }
 function startNewRun() { if(readSave()&&!confirm('Start a new run? This replaces your saved campaign.'))return;newGame(); }
