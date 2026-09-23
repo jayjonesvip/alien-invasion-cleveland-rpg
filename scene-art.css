@@ -1,7 +1,7 @@
 .scene-art {
   position: relative;
   isolation: isolate;
-  flex: 0 1 34dvh;
+  flex: 0 0 34dvh;
   height: 34dvh;
   min-height: 130px;
   max-height: 330px;
