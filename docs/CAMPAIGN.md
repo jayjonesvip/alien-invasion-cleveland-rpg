@@ -4,7 +4,7 @@ The campaign uses the existing 1989 Cleveland setting and artwork. Start with 50
 
 ## Progression and money
 
-Hunt an Alien is locked until level 2, including direct boss challenges. On the first street, players find all three battles through Explore / Encounters; the third battle is its boss. Collecting that boss bounty reaches level 2 and unlocks direct fights on the next active street. Exploration remains available afterward. Hunt an Alien fills a search meter over 2.5 seconds, locking other actions until the encounter starts. Boss challenges start directly. Reloading during a hunt resumes the last completed checkpoint.
+Hunt an Alien is available from level 1. Every street offers two regular fights, followed by a direct district boss challenge. Exploration can also lead to these encounters. Hunt an Alien fills a search meter over 2.5 seconds, locking other actions until the encounter starts. Boss challenges start directly. Reloading during a hunt resumes the last completed checkpoint.
 
 Each of ten districts requires two regular victories and one boss victory. Reaching district ten begins the final chapter; its third victory defeats the Mothership Commander and ends the thirty-win campaign. Fleeing and losing do not advance the counter. Advancing a district grants +10 maximum HP and a full heal.
 
@@ -69,10 +69,12 @@ Defeating a boss unlocks the next street but leaves the player in place. Walking
 | Erieside | No shops; stock up before arrival | Lake Erie harbor |
 
 
-## First fight and difficulty ramp
+## Combat and difficulty ramp
 
-New runs highlight Tackle during the first fight. Its first use in that encounter is guaranteed to hit; other moves remain available, and regular odds return after the guarantee is spent. The opening and its consumed state survive reloads. Fleeing, losing, or winning ends that encounter's tutorial. Existing saves from before this feature continue without being interrupted by a tutorial.
+All fights use normal move accuracy from the start; there is no opening tutorial or free guaranteed Tackle. Older checkpoints still load, and retired tutorial flags are discarded.
 
 Street one retains its previous health and damage ranges. Each subsequent street adds 2.5% of base enemy health to the existing level progression (22.5% extra on street ten). Enemies gain one extra damage per hit on streets four, seven, and ten. The final commander has 147 HP; hit chances, bounties, and shop prices are unchanged. Already-saved enemies retain their existing HP.
 
-In fifty seeded automated shopper runs, the previous tuning averaged 86 combat rounds and the new tuning averaged 92. Both completed all fifty runs with one shelter recovery across the sample. This is a modest pacing increase, not a human difficulty rating. `node tests/tutorial.cjs` checks the guaranteed move, return to normal odds, save compatibility, and the street ramp.
+`node tests/combat.cjs` checks normal opening accuracy, paid accuracy buffs, older checkpoints, and the street difficulty ramp.
+
+The action menu expands to fit all its buttons instead of scrolling independently. On screens too short for a full shop menu, the game panel scrolls so all items and Leave remain reachable.

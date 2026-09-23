@@ -36,7 +36,7 @@ Or download the repository ZIP, extract it, and open `index.html` in a modern we
 
 You're an ordinary person caught in an alien invasion of Cleveland. Fight your way through downtown streets, from Public Square to the lakefront, gathering strength and allies as you push back the invasion.
 
-- **Fight:** Explore to find aliens at level 1. At level 2, Hunt an Alien unlocks with a 2.5-second search meter before combat. Use punch, kick, tackle, and purchased moves. Read each alien's combat hint; guard halves incoming damage, and Counterattack training lets you hit back.
+- **Fight:** Hunt an Alien is available from level 1, with a 2.5-second search meter before combat. You can also find aliens while exploring. Use punch, kick, tackle, and purchased moves. Read each alien's combat hint; guard halves incoming damage, and Counterattack training lets you hit back.
 - **Shop:** Open CITY DIRECTORY between fights. Visit the Ontario Record Store for basic training; find advanced moves at later local shops. Try new foods for lasting stat upgrades, and collect business loyalty rewards.
 - **Grow:** Win two patrol fights and a boss fight per district. Advance through ten districts, ending with the Mothership Commander. Level-ups increase your health and heal you fully.
 - **Travel:** Clear a street to open the next road, then choose Walk onward. Walk back one street at a time; cleared streets are safe and your campaign progress stays intact.
@@ -62,7 +62,7 @@ Run the dependency-free integration checks with:
 node tests/campaign.cjs
 node tests/streets.cjs
 node tests/hunt.cjs
-node tests/tutorial.cjs
+node tests/combat.cjs
 node tests/analytics.cjs
 node tests/balance.cjs
 ```

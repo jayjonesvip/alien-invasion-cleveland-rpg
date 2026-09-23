@@ -740,8 +740,8 @@
       apply();
     })();
   </script>
-  <link rel="stylesheet" href="scene-art.css?v=2.1" />
-  <link rel="stylesheet" href="retro-skin.css?v=3.1" />
+  <link rel="stylesheet" href="scene-art.css?v=2.2" />
+  <link rel="stylesheet" href="retro-skin.css?v=3.2" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1839,14 +1839,12 @@
       const isBoss = Game.aliensThisLevel === 2;
       Game.enemy = makeEnemy(isBoss);
       if (Game.level===10 && isBoss) { Game.enemy.isFinalBoss=true;Game.enemy.color="red";Game.enemy.name="MOTHERSHIP COMMANDER";Game.enemy.hp=Game.enemy.maxHP=scaleEnemyHealth(120); }
-      Game.enemy.tutorialTackleReady=!Game.tutorialSeen;Game.tutorialSeen=true;
       Game.pendingReward=0;Game.guarding=false;
       Game.abilitiesUsed = {};
       // keep any shop-armed temp weapon for “next fight”
       Game.tempWeaponUsed = false;
       Game.turnsThisFight = 0;                  // <-- add this
       window.trackGameEvent?.('fight_start', {enemy_type:Game.enemy.color,is_boss:isBoss});
-      if(Game.enemy.tutorialTackleReady)window.trackGameEvent?.('tutorial_begin');
 
       const behavior = CONFIG.enemyBehaviors[rand(0, CONFIG.enemyBehaviors.length - 1)];
       appendStory('A ' + enemyLabel() + ' ' + behavior + '!', 'system');
@@ -1864,10 +1862,8 @@
         const ability = CONFIG.abilities[abilityKey];
         if (ability.unlockLevel === 1 || Game.learned.includes(abilityKey)) {
           const isOnCooldown = Game.abilitiesUsed[abilityKey] && ability.cooldown > 0;
-          const tutorial=abilityKey==='tackle'&&tutorialTackleReady();
-          const button=addButton(ability.name + (tutorial?' · Guaranteed hit':isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
+          const button=addButton(ability.name + (isOnCooldown ? ' (Used)' : ''), () => playerAttack(abilityKey), isOnCooldown);
           button.title=Math.round(Math.min(1,ability.hit+Game.permanent.accuracy)*100)+'% base hit · '+(ability.minDamage+Game.level)+'–'+(ability.maxDamage+Game.level)+' damage before bonuses';
-          if(tutorial){button.classList.add('tutorial-move');button.title='Guaranteed hit once in this first fight. The alien may strike back afterward.';button.setAttribute('aria-describedby','combatTutorial');}
         }
       });
 
@@ -1940,12 +1936,10 @@
 
 
       // --- buffs affect hit chance and damage ---
-      const tutorialHit=abilityKey==='tackle'&&tutorialTackleReady();
-      if(tutorialHit){Game.enemy.tutorialTackleReady=false;window.trackGameEvent?.('tutorial_complete');updateCampaignHUD();}
       let hitChance = ability.hit;
-      if (Game.buffs?.firstHitGuaranteed && !tutorialHit) { hitChance = 1; Game.buffs.firstHitGuaranteed = false; }
+      if (Game.buffs?.firstHitGuaranteed) { hitChance = 1; Game.buffs.firstHitGuaranteed = false; }
       hitChance += (Game.buffs?.hitBonus || 0) + Game.permanent.accuracy;
-      hitChance = tutorialHit?1:Math.min(1, Math.max(0, hitChance));
+      hitChance = Math.min(1, Math.max(0, hitChance));
 
       let minDmg = ability.minDamage + L;
       let maxDmg = ability.maxDamage + L;
@@ -2450,7 +2444,6 @@ decayBuffsEndOfRound();
       <section id="huntMeter" class="hunt-meter" aria-label="Alien search" hidden><label id="huntStatus" for="huntProgress" aria-live="polite">Searching the street...</label><progress id="huntProgress" max="100" value="0">Searching</progress></section>
       <div id="story"></div>
       <div id="combatStats">
-        <div id="combatTutorial" role="note" hidden><strong>FIRST FIGHT</strong> · Try the highlighted Tackle. It is guaranteed to land once in this fight. Then the alien may strike back. Other moves are still available.</div>
         <div id="combatIntent"></div>
         <div class="combat-meters">
         <div class="health-meter player-health">
@@ -2523,7 +2516,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=2.6"></script>
+<script src="campaign.js?v=2.7"></script>
 </body>
 
 </html>

@@ -26,9 +26,9 @@ const events=[];window.gtag=(command,name,params)=>events.push({command,name,par
 const count=name=>events.filter(e=>e.name===name).length;
 newGame();assert.equal(count('new_game'),1);
 saveGame();continueGame();assert.equal(count('new_game'),1);assert.equal(count('game_resume'),1);
-startCombat();assert.equal(count('fight_start'),1);assert.equal(count('tutorial_begin'),1);
-await playerAttack('tackle');assert.equal(count('tutorial_complete'),1);
-saveGame();continueGame();assert.equal(count('tutorial_complete'),1);assert.equal(count('tutorial_begin'),1);
+startCombat();assert.equal(count('fight_start'),1);assert.equal(count('tutorial_begin'),0);
+await playerAttack('tackle');assert.equal(count('tutorial_complete'),0);
+saveGame();continueGame();assert.equal(count('tutorial_complete'),0);assert.equal(count('tutorial_begin'),0);
 Game.enemy.hp=0;winCombat();winCombat();assert.equal(count('alien_defeated'),1);
 saveGame();continueGame();winCombat();assert.equal(count('alien_defeated'),1,'Defeated saved enemy is not counted again');
 collectReward();collectReward();assert.equal(count('earn_virtual_currency'),1);
@@ -51,4 +51,4 @@ assert.equal(count('purchase'),0,'Virtual shopping must not create real revenue'
 window.gtag=()=>{throw new Error('Blocked analytics');};newGame();startCombat();
 assert.equal(Game.scene,'combat','Transport failures cannot break gameplay');
 delete window.trackGameEvent;newGame();assert.equal(Game.level,1,'Missing analytics file cannot break gameplay');
-})()`,context).then(()=>console.log('PASS: GA4 tag, production-only loading, event payloads, one-time kills/levels/tutorial/ending, save resume, purchases, blocked analytics.')).catch(e=>{console.error(e);process.exitCode=1;});
+})()`,context).then(()=>console.log('PASS: GA4 tag, production-only loading, event payloads, one-time kills/levels/ending; no tutorial events, save resume, purchases, blocked analytics.')).catch(e=>{console.error(e);process.exitCode=1;});

@@ -28,7 +28,7 @@
 #overlay { z-index: 1100; }
 #overlay .panel { box-sizing: border-box; max-height: 94dvh; overflow-y: auto; }
 #story { line-height: 1.55; }
-#buttons { max-height: 30dvh; overflow-y: auto; }
+#buttons { max-height: none; overflow: visible; }
 #startScreen { overflow-y: auto; }
 @media (max-width: 600px) {
   .scene-art { flex-basis: 27dvh; height: 27dvh; min-height: 115px; }

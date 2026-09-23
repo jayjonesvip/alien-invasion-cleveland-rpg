@@ -26,7 +26,7 @@ CONFIG.abilities.spinningKick.hit=.8;
 const FOOD_POWER = {coffee:'accuracy',donut:'maxHP',burger:'punch',corned:'punch',jerky:'punch',generaltso:'kick',eggroll:'kick',hottea:'accuracy',milkshake:'maxHP'};
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,finalBossDefeated:false,tutorialSeen:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
@@ -90,12 +90,7 @@ function showDirectory(arrival='') {
   appendStory('Training: '+(Game.learned.map(k=>CONFIG.abilities[k]?.name||'Counterattack').join(', ')||'None yet. Find basic tapes at the Record Store on Ontario.'),'system');
   if(here===10)appendStory('Erieside: defeat the two guards, then the Mothership Commander. No shops on the harbor.','special');
   if(!cleared){
-    const locked=Game.level<2;
-    const button=addButton(locked?'Hunt an Alien (Level 2)':Game.aliensThisLevel===2?'Challenge District Boss':'Hunt an Alien',()=>{if(Game.level<2)return;if(Game.aliensThisLevel===2){$('#story').innerHTML='';startCombat();}else return huntAlien();},locked);
-    if(locked){
-      button.title='Unlocks at level 2. Explore to find aliens and the first street boss.';
-      appendStory('Hunt an Alien unlocks at level 2. Use Explore / Encounters to find aliens; your third victory clears the street.','special');
-    }
+    addButton(Game.aliensThisLevel===2?'Challenge District Boss':'Hunt an Alien',()=>{if(Game.aliensThisLevel===2){$('#story').innerHTML='';startCombat();}else return huntAlien();});
   }
   addButton(cleared?'Explore Cleared Street':'Explore / Encounters',()=>encounter());
   for(const id of availableShopIds())addButton(getBusiness(id).name,()=>startBusiness(id));
@@ -108,7 +103,7 @@ function showDirectory(arrival='') {
   saveGame();
 }
 async function huntAlien() {
-  if(Game.level<2||streetCleared()||Game.scene!=='directory'||StoryType.holdLock||StoryType.typing)return;
+  if(streetCleared()||Game.scene!=='directory'||StoryType.holdLock||StoryType.typing)return;
   beginTurnLock();Game.scene='hunting';clearButtons();
   const meter=$('#huntMeter'), progress=$('#huntProgress');
   progress.value=0;$('#huntStatus').textContent='Searching '+getStreet(streetNumber()).name+'…';meter.hidden=false;
@@ -135,9 +130,7 @@ function updateCampaignHUD() {
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
   $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/3 WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';
-  $('#combatTutorial').hidden=!tutorialTackleReady();
 }
-function tutorialTackleReady() { return Game.scene==='combat'&&Game.enemy?.hp>0&&Game.enemy.tutorialTackleReady===true; }
 function scaleEnemyHealth(hp,level=Game.level) { return Math.round(hp*(1+.025*(level-1))); }
 function enemyIntent() {
   const L=Game.level, boss=Game.enemy?.isBoss?2:0;
@@ -190,8 +183,9 @@ function readSave() {
     if(![1,2].includes(parsed.version)||!s||!Number.isInteger(s.level)||s.level<1||s.level>10||!Number.isFinite(s.hp)||s.hp<0||!Number.isFinite(s.maxHP)||s.maxHP<1||s.maxHP>1000||s.hp>s.maxHP||!Number.isFinite(s.money)||s.money<0||s.money>1000000) return null;
     if(!Number.isInteger(s.aliensThisLevel)||s.aliensThisLevel<0||s.aliensThisLevel>3||s.requiredThisLevel!==3||s.highestDistrict!==s.level) return null;
     if(parsed.version===1)s.currentStreet=s.level;
-    if(s.tutorialSeen===undefined)s.tutorialSeen=true;
-    if(typeof s.tutorialSeen!=='boolean'||(s.enemy?.tutorialTackleReady!==undefined&&typeof s.enemy.tutorialTackleReady!=='boolean'))return null;
+    // Ignore retired first-fight hints in older checkpoints.
+    delete s.tutorialSeen;
+    if(s.enemy)delete s.enemy.tutorialTackleReady;
     if(!Number.isInteger(s.currentStreet)||s.currentStreet<1||s.currentStreet>s.highestDistrict||(s.scene==='combat'&&s.currentStreet!==s.level))return null;
     if(!Array.isArray(s.learned)||s.learned.some(k=>!TRAINING.some(t=>t.skill===k))||!Array.isArray(s.training)||s.training.some(k=>!TRAINING.some(t=>t.id===k))||!Array.isArray(s.tasted)||s.tasted.some(k=>typeof k!=='string'))return null;
     if(!s.permanent||!['punch','kick','defense','accuracy'].every(k=>Number.isFinite(s.permanent[k])&&s.permanent[k]>=0&&s.permanent[k]<=30))return null;

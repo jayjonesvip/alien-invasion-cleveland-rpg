@@ -1,8 +1,7 @@
 const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`
 newGame();Game.scene='explore';showDirectory();
-const lockedPatrol=el('#buttons').children.find(b=>b.textContent==='Hunt an Alien (Level 2)');
-assert.equal(lockedPatrol.disabled,true);lockedPatrol.onclick({});assert.equal(Game.scene,'directory');
+assert.equal(el('#buttons').children.find(b=>b.textContent==='Hunt an Alien').disabled,false);
 // Exploration must still provide a complete path through the first street.
 const initialRandom=Math.random;Math.random=()=>.4;
 for(let tries=0;tries<30&&Game.level===1;tries++){
@@ -10,7 +9,7 @@ for(let tries=0;tries<30&&Game.level===1;tries++){
  if(Game.scene==='combat'){
   assert.equal(Game.enemy.isBoss,Game.aliensThisLevel===2);
   Game.enemy.hp=0;winCombat();collectReward();
-  if(Game.level===1)assert.equal(el('#buttons').children.find(b=>b.textContent==='Hunt an Alien (Level 2)').disabled,true);
+  if(Game.level===1)assert.ok(el('#buttons').children.some(b=>['Hunt an Alien','Challenge District Boss'].includes(b.textContent)&&!b.disabled));
  }
 }
 Math.random=initialRandom;assert.equal(Game.level,2);assert.equal(Game.aliensDefeated,3);
