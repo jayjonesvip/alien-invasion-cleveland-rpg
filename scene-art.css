@@ -14,6 +14,21 @@
 .street-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
 .is-interior .street-art, .is-conversation .street-art { object-position: center 25%; }
 .scene-art::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(180deg, #06111ac2, transparent 28%, transparent 60%, #06111aeb); }
+.scene-art.attack-blue::before, .scene-art.attack-green::before, .scene-art.attack-grey::before, .scene-art.attack-red::before { content:''; position:absolute; z-index:5; inset:0; pointer-events:none; }
+.scene-art.attack-blue::before { height:5px; top:47%; left:42%; right:auto; width:72%; background:linear-gradient(90deg,transparent,#8ffcff 35%,#fff 55%,transparent); box-shadow:0 0 12px #47eaff; transform:rotate(-8deg); animation:photon-jab .42s ease-out both; }
+.scene-art.attack-green::before { background:radial-gradient(circle at 35% 58%,#c9ff9c99,transparent 8%,transparent 28%); animation:lunge-impact .5s ease-out both; }
+.scene-art.attack-green .enemy-actor { animation:alien-lunge .5s cubic-bezier(.2,.8,.3,1) both; }
+.scene-art.attack-grey::before { background:repeating-radial-gradient(circle at 65% 45%,transparent 0 18px,#d8c6ff66 20px 23px,transparent 25px 38px); animation:mind-rings .65s ease-out both; }
+#story.attack-grey { transform-origin:center; animation:mind-text-wobble .65s ease-in-out both; }
+.scene-art.attack-red::before { background:linear-gradient(112deg,transparent 0 43%,rgb(255 238 225 / .95) 47%,rgb(255 35 70 / var(--rage-alpha,.55)) 50%,transparent 57%),rgb(173 0 42 / .12); animation:rage-beam .58s ease-out both; }
+.scene-art.attack-red .enemy-art { animation:rage-charge .58s ease-out both; }
+@keyframes photon-jab { 0%{transform:translateX(45%) rotate(-8deg) scaleX(.15);opacity:0} 25%{opacity:1} 100%{transform:translateX(-85%) rotate(-8deg) scaleX(1);opacity:0} }
+@keyframes alien-lunge { 0%,100%{transform:translateX(0) scale(1)} 42%{transform:translateX(-24%) scale(1.12)} 65%{transform:translateX(-17%) scale(1.08)} }
+@keyframes lunge-impact { 0%,35%{opacity:0;transform:scale(.5)} 48%{opacity:1;transform:scale(1.2)} 100%{opacity:0;transform:scale(1.7)} }
+@keyframes mind-rings { 0%{opacity:0;transform:scale(.45)} 30%{opacity:1} 100%{opacity:0;transform:scale(1.35)} }
+@keyframes mind-text-wobble { 0%,100%{transform:none;filter:none} 20%{transform:skewX(-2deg) translateX(-3px);filter:blur(.4px)} 40%{transform:skewX(2deg) translateX(4px)} 60%{transform:skewX(-1deg) translateX(-2px);filter:blur(.7px)} 80%{transform:skewX(1deg) translateX(2px)} }
+@keyframes rage-beam { 0%{opacity:0;transform:translateX(35%) scaleX(.2)} 28%{opacity:1} 100%{opacity:0;transform:translateX(-22%) scaleX(1.15)} }
+@keyframes rage-charge { 0%,100%{filter:drop-shadow(0 4px 8px #031117b3)} 35%{filter:drop-shadow(0 0 18px #ff315f) brightness(1.45)} }
 .scene-heading { position: absolute; z-index: 3; top: 15px; left: 18px; right: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 10px; letter-spacing: .13em; line-height: 1.6; text-shadow: 0 1px 3px #000; }
 .scene-status { border: 1px solid #87d2d87a; background: #0a2129c9; color: #c3eff2; padding: 3px 7px; font-size: 9px; }
 .scene-location { position: absolute; z-index: 3; left: 18px; right: 18px; bottom: 17px; font-size: clamp(16px, 3vw, 23px); font-weight: bold; letter-spacing: -.035em; text-shadow: 0 2px 8px #000; }

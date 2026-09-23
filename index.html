@@ -633,7 +633,7 @@
       apply();
     })();
   </script>
-  <link rel="stylesheet" href="scene-art.css?v=2.3" />
+  <link rel="stylesheet" href="scene-art.css?v=2.4" />
   <link rel="stylesheet" href="retro-skin.css?v=3.8" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
@@ -1864,6 +1864,20 @@
 
     }
 
+    async function playEnemyAttackFX(color) {
+      const scene=$('#sceneArt'), story=$('#story');
+      const classes=['attack-blue','attack-green','attack-grey','attack-red'];
+      classes.forEach(name=>scene.classList.remove(name));story.classList.remove('attack-grey');
+      void scene.offsetWidth;
+      const effect='attack-'+color;
+      scene.classList.add(effect);
+      if(color==='grey')story.classList.add('attack-grey');
+      if(color==='red')scene.style.setProperty('--rage-alpha',Math.min(.9,.48+(Game.turnsThisFight||0)*.06));
+      const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      await sleep(reduced?40:(color==='grey'?650:580));
+      scene.classList.remove(effect);story.classList.remove('attack-grey');
+    }
+
     async function enemyTurnSequence() {
       if (!Game.enemy) return;
       const L = Game.level;
@@ -1875,6 +1889,7 @@ if ((Game.turnsThisFight|0) === 1 && Game.buffs?.enemyFirstTurnMissBonus) {
 }
 
 await appendStoryAsync(`The ${enemyLabel()} uses ${mv.name.toUpperCase()}...`, 'system');
+await playEnemyAttackFX(Game.enemy.color);
 
 if (Math.random() < enemyHit) {
   let base = rand(mv.minDamage, mv.maxDamage);
