@@ -78,3 +78,5 @@ Street one retains its previous health and damage ranges. Each subsequent street
 `node tests/combat.cjs` checks normal opening accuracy, paid accuracy buffs, older checkpoints, and the street difficulty ramp.
 
 The action menu expands to fit all its buttons instead of scrolling independently. On screens too short for a full shop menu, the game panel scrolls so all items and Leave remain reachable.
+
+Settings opens a native modal from the top bar, with How to Play (question-mark icon), theme, and text preferences. Close, Escape, or the backdrop dismiss it and return focus to Settings. The map button at the bottom left of the scene opens the local directory; its existing combat and text locks still apply. No controls strip remains above the action menu.

@@ -200,22 +200,6 @@
       height: auto;
     }
 
-    /* Dock right above the action buttons */
-    .controls-dock {
-      position: relative;
-      /* <-- anchor for the panel */
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      background: var(--panel);
-      border-top: 1px solid var(--border);
-      z-index: 2;
-    }
-
-
-
     /* Theme toggle pill */
     .toggle-switch {
       position: relative;
@@ -246,56 +230,6 @@
     .toggle-label {
       font-size: 12px;
       color: var(--muted);
-    }
-
-    /* SETTINGS PANEL — anchored to the dock */
-    #settingsPanel {
-      position: absolute;
-      /* <-- relative to .controls-dock */
-      right: 12px;
-      bottom: calc(100% + 10px);
-      /* sits ABOVE the dock */
-      width: 260px;
-      max-width: min(280px, calc(100vw - 24px));
-      background: var(--panel);
-      color: var(--fg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
-      z-index: 1002;
-      display: none;
-    }
-
-    #settingsPanel.open {
-      display: block;
-    }
-
-    #settingsPanel h3 {
-      margin: 0 0 8px 0;
-      font-size: 14px;
-    }
-
-    #settingsPanel .row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin: 8px 0;
-    }
-
-    #settingsPanel input[type="range"] {
-      width: 140px;
-    }
-
-    /* tiny screens: let it stretch if needed */
-    @media (max-width: 420px) {
-      #settingsPanel {
-        right: 8px;
-        left: 8px;
-        width: auto;
-        max-width: none;
-      }
     }
 
     /* Buttons */
@@ -741,7 +675,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.2" />
-  <link rel="stylesheet" href="retro-skin.css?v=3.2" />
+  <link rel="stylesheet" href="retro-skin.css?v=3.3" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1305,9 +1239,19 @@
         syncUI();
       }
 
-      btn.onclick = () => panel.classList.toggle('open');
-      document.addEventListener('click', (e) => {
-        if (!panel.contains(e.target) && e.target !== btn) panel.classList.remove('open');
+      btn.onclick = () => {
+        syncUI();
+        if (!panel.open) panel.showModal();
+        btn.setAttribute('aria-expanded', 'true');
+      };
+      $('#settingsClose').onclick = () => panel.close();
+      panel.addEventListener('close', () => {
+        btn.setAttribute('aria-expanded', 'false');
+        btn.focus();
+      });
+      panel.addEventListener('click', (event) => {
+        const bounds = panel.getBoundingClientRect();
+        if (event.target === panel && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) panel.close();
       });
 
       twInstant.onchange = applyFromUI;
@@ -1905,7 +1849,7 @@
       if (!CONFIG.typewriter.allowSkip || StoryType.skipHandlerAttached) return () => { };
       const story = $('#story');
       const onClick = () => { cleanup(); finishFn(); };
-      const onKey = (e) => { if (e.key === ' ' || e.key === 'Enter') { cleanup(); finishFn(); } };
+      const onKey = (e) => { if (!$('#settingsPanel').open && (e.key === ' ' || e.key === 'Enter')) { cleanup(); finishFn(); } };
       function cleanup() {
         story.removeEventListener('click', onClick);
         document.removeEventListener('keydown', onKey);
@@ -2403,6 +2347,7 @@ decayBuffsEndOfRound();
       <a class="wordmark" href="index.html" aria-label="Lake Effect Invasion home">LE<span>/</span>89</a>
       <span class="transmission-city">CLEVELAND, OHIO <span>— SEPTEMBER 1989</span></span>
       <span class="signal"><i aria-hidden="true"></i> EMERGENCY FREQUENCY</span>
+      <button id="settingsBtn" class="header-settings" aria-label="Open settings" aria-haspopup="dialog" aria-controls="settingsPanel" aria-expanded="false"><span aria-hidden="true">⚙</span> SETTINGS</button>
     </header>
     <div id="levelUpToast" class="hidden"></div>
     <div id="startScreen" class="frame">
@@ -2439,6 +2384,10 @@ decayBuffsEndOfRound();
           <img id="enemyArt" class="enemy-art" alt="" decoding="async" hidden />
         </div>
         <div id="sceneLocation" class="scene-location"></div>
+        <button id="directoryBtn" class="scene-map" onclick="showDirectory()" aria-label="City Directory" title="Open the street directory">
+          <svg viewBox="0 0 48 32" aria-hidden="true" focusable="false"><path class="map-paper" d="M2 6 16 2 32 6 46 2v24l-14 4-16-4-14 4Z"/><path class="map-fold" d="M16 2v24M32 6v24"/><path class="map-route" d="m8 20 5-7 11 5 13-7"/><circle class="map-pin" cx="37" cy="11" r="3"/></svg>
+          <span>MAP</span>
+        </button>
       </section>
       <div class="campaign-strip"><span id="campaignProgress"></span><span id="saveStatus">AUTOSAVE READY</span></div>
       <section id="huntMeter" class="hunt-meter" aria-label="Alien search" hidden><label id="huntStatus" for="huntProgress" aria-live="polite">Searching the street...</label><progress id="huntProgress" max="100" value="0">Searching</progress></section>
@@ -2462,42 +2411,29 @@ decayBuffsEndOfRound();
         </div>
         </div>
       </div>
-      <div class="controls-dock">
-        <button id="directoryBtn" class="settings-btn" onclick="showDirectory()">CITY DIRECTORY</button>
-        <a class="help-link" href="how-to-play.html" target="_blank" rel="noopener" aria-label="How to play (opens in a new tab)">HOW TO PLAY</a>
-        <button id="settingsBtn" class="settings-btn" title="Settings">TEXT SETTINGS</button>
-
-        <!-- Panel lives INSIDE the dock so it anchors correctly -->
-        <div id="settingsPanel">
-          <h3>Text Settings</h3>
-          <div class="row">
-            <label for="twInstant">Instant text</label>
-            <input type="checkbox" id="twInstant">
-          </div>
-          <div class="row">
-            <label for="twSpeed">Speed <small id="twSpeedLabel"></small></label>
-            <input type="range" id="twSpeed" min="5" max="60" step="1">
-          </div>
-          <div class="row">
-            <label for="twPauses">Punctuation pauses</label>
-            <input type="checkbox" id="twPauses">
-          </div>
-          <div class="row">
-            <label for="twLock">Lock buttons while typing</label>
-            <input type="checkbox" id="twLock">
-          </div>
-        </div>
-
-        <div class="theme-controls"><span class="toggle-label">PAPER</span>
-        <button id="themeToggle" class="toggle-switch" onclick="toggleTheme()" aria-label="Neon theme" aria-pressed="false">
-          <span class="toggle-handle"></span>
-        </button>
-        <span class="toggle-label">NEON</span></div>
-        <span class="action-prompt">YOUR NEXT MOVE <span aria-hidden="true">↓</span></span>
-      </div>
       <div id="buttons"></div>
     </div>
   </div>
+
+  <dialog id="settingsPanel" aria-labelledby="settingsTitle">
+    <header class="settings-heading">
+      <div><p class="settings-eyebrow">LAKE EFFECT INVASION</p><h2 id="settingsTitle">Settings</h2></div>
+      <button id="settingsClose" aria-label="Close settings" autofocus>✕</button>
+    </header>
+    <a class="settings-help" href="how-to-play.html" target="_blank" rel="noopener"><span class="help-question" aria-hidden="true">?</span>How to Play <span class="help-arrow" aria-hidden="true">↗</span><small>Game guide · opens in a new tab</small></a>
+    <section aria-labelledby="displaySettingsTitle">
+      <h3 id="displaySettingsTitle">Display</h3>
+      <div class="row"><span>Theme</span><div class="theme-controls"><span class="toggle-label">PAPER</span><button id="themeToggle" class="toggle-switch" onclick="toggleTheme()" aria-label="Neon theme" aria-pressed="false"><span class="toggle-handle"></span></button><span class="toggle-label">NEON</span></div></div>
+    </section>
+    <section aria-labelledby="textSettingsTitle">
+      <h3 id="textSettingsTitle">Text settings</h3>
+      <div class="row"><label for="twInstant">Instant text</label><input type="checkbox" id="twInstant"></div>
+      <div class="row settings-speed"><label for="twSpeed">Typing speed <small id="twSpeedLabel"></small></label><input type="range" id="twSpeed" min="5" max="60" step="1"></div>
+      <div class="row"><label for="twPauses">Punctuation pauses</label><input type="checkbox" id="twPauses"></div>
+      <div class="row"><label for="twLock">Lock buttons while typing</label><input type="checkbox" id="twLock"></div>
+    </section>
+    <p class="settings-note">Changes save automatically on this device.</p>
+  </dialog>
 
   <div id="overlay">
     <div class="panel">
