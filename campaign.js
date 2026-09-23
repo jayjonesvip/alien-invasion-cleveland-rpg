@@ -76,6 +76,9 @@ function applyPermanentPurchase(bizId,item) {
 function describeButton(button,text) {
   const detail=document.createElement('small');detail.textContent=text;button.appendChild(detail);button.classList.add('shop-item');
 }
+function describeActionButton(button,text) {
+  const detail=document.createElement('small');detail.className='action-detail';detail.textContent=text;button.appendChild(detail);
+}
 function showDirectory(arrival='') {
   if(Game.scene==='combat'||Game.scene==='victory'||Game.scene==='gameover'||StoryType.holdLock||StoryType.typing) return;
   Game.scene='directory';Game.enemy=null;Game.businessEntered=false;Game.artEncounter=null;
@@ -92,13 +95,17 @@ function showDirectory(arrival='') {
   if(!cleared){
     addButton(Game.aliensThisLevel===2?'Challenge District Boss':'Hunt an Alien',()=>{if(Game.aliensThisLevel===2){$('#story').innerHTML='';startCombat();}else return huntAlien();});
   }
-  addButton(cleared?'Explore Cleared Street':'Explore / Encounters',()=>encounter());
+  const exploreButton=addButton(cleared?'Explore Safely':'Explore Street',()=>encounter());
+  describeActionButton(exploreButton,cleared?'No aliens remain here.':'Random event or alien encounter.');
   for(const id of availableShopIds())addButton(getBusiness(id).name,()=>startBusiness(id));
-  if(here>1)addButton('Walk back: '+getStreet(here-1).name,()=>travelToStreet(here-1)).classList.add('travel-button');
+  if(here>1){
+    const previous=here-1;
+    addButton('← '+getStreet(previous).name+' · '+(previous<Game.level?'Cleared':'Active'),()=>travelToStreet(previous)).classList.add('travel-button');
+  }
   if(here<10){
     const next=here+1, unlocked=next<=Game.highestDistrict;
-    addButton((unlocked?'Walk onward: ':'Locked: ')+getStreet(next).name,()=>travelToStreet(next),!unlocked).classList.add('travel-button');
-    appendStory((unlocked?'ROAD OPEN / ':'CLEAR THIS STREET TO REACH / ')+getStreet(next).name+' — '+streetOfferings(next),'system');
+    if(unlocked)addButton(getStreet(next).name+' · '+(next<Game.level?'Cleared':'Active')+' →',()=>travelToStreet(next)).classList.add('travel-button');
+    appendStory((unlocked?'ROAD OPEN / '+getStreet(next).name:'ROAD LOCKED / Defeat the district boss to reach '+getStreet(next).name)+' — '+streetOfferings(next),'system');
   }
   saveGame();
 }
@@ -119,7 +126,7 @@ async function huntAlien() {
 function addDirectoryReturn() {
   const roaming=['explore','empty','npc'].includes(Game.scene);
   if(roaming || (Game.scene==='business'&&!Game.businessEntered)) {
-    const button=addButton('Back to City Directory',()=>showDirectory());
+    const button=addButton('Return to Street Directory',()=>showDirectory());
     button.classList.add('directory-return');
   }
 }

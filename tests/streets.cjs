@@ -2,6 +2,8 @@ const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`
 newGame();Game.scene='explore';showDirectory();
 assert.equal(el('#buttons').children.find(b=>b.textContent==='Hunt an Alien').disabled,false);
+assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'));
+assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('Locked:')),'Locked roads are status text, not buttons');
 // Exploration must still provide a complete path through the first street.
 const initialRandom=Math.random;Math.random=()=>.4;
 for(let tries=0;tries<30&&Game.level===1;tries++){
@@ -21,6 +23,7 @@ startBusiness('pizza');assert.equal(Game.scene,'directory','Remote shop is inacc
 for(let i=0;i<3;i++){startCombat();Game.enemy.hp=0;winCombat();collectReward();}
 assert.equal(Game.level,2);assert.equal(streetNumber(),1);assert.equal(streetCleared(),true);
 assert.ok(!el('#buttons').children.some(b=>b.textContent==='Hunt an Alien'));
+assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Superior Ave')&&b.textContent.includes('Active')));
 startCombat();assert.equal(Game.enemy,null,'Cleared streets cannot start battles');
 const cash=Game.money, wins=Game.aliensDefeated;
 travelToStreet(2);assert.equal(streetNumber(),2);assert.equal(availableShopIds().join(','),'pizza,thrift,drugstore');

@@ -8,7 +8,7 @@ A browser text adventure game set in 1989 Cleveland during an alien invasion, wi
 
 [Play Online](https://lakeeffectinvasion.com/)
 
-[How to Play](https://lakeeffectinvasion.com/how-to-play.html) explains combat, shopping, saving, and how to return to the City Directory after encounters. Open it from the title screen or in-game controls without leaving your game tab.
+[How to Play](https://lakeeffectinvasion.com/how-to-play.html) explains combat, shopping, saving, and how to return to the Street Directory after encounters. Open it from the title screen or in-game controls without leaving your game tab.
 
 Or download the repository ZIP, extract it, and open `index.html` in a modern web browser. Keep the HTML, CSS, JavaScript, and images together. No installation or build step is needed.
 
@@ -37,9 +37,9 @@ Or download the repository ZIP, extract it, and open `index.html` in a modern we
 You're an ordinary person caught in an alien invasion of Cleveland. Fight your way through downtown streets, from Public Square to the lakefront, gathering strength and allies as you push back the invasion.
 
 - **Fight:** Hunt an Alien is available from level 1, with a 2.5-second search meter before combat. You can also find aliens while exploring. Use punch, kick, tackle, and purchased moves. Read each alien's combat hint; guard halves incoming damage, and Counterattack training lets you hit back.
-- **Shop:** Open CITY DIRECTORY between fights. Visit the Ontario Record Store for basic training; find advanced moves at later local shops. Try new foods for lasting stat upgrades, and collect business loyalty rewards.
+- **Shop:** Open STREET DIRECTORY between fights. Visit the Ontario Record Store for basic training; find advanced moves at later local shops. Try new foods for lasting stat upgrades, and collect business loyalty rewards.
 - **Grow:** Win two patrol fights and a boss fight per district. Advance through ten districts, ending with the Mothership Commander. Level-ups increase your health and heal you fully.
-- **Travel:** Clear a street to open the next road, then choose Walk onward. Walk back one street at a time; cleared streets are safe and your campaign progress stays intact.
+- **Travel:** Clear a street to open the next road, then choose the adjacent destination marked Active. Move one street at a time; cleared streets are safe and your campaign progress stays intact.
 - **Equip:** Buy armor and three-swing weapons. Walk back through cleared streets to revisit earlier shops.
 - **Continue:** Progress saves after completed actions. Defeat lets you recover at a shelter with full health and intact upgrades, losing 25% of your cash, rounded up.
 

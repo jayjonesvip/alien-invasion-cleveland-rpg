@@ -675,7 +675,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.3" />
-  <link rel="stylesheet" href="retro-skin.css?v=3.5" />
+  <link rel="stylesheet" href="retro-skin.css?v=3.6" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1840,7 +1840,7 @@
         updateHealthMeters();
         clearButtons();
         decayBuffsEndOfFight();
-        addButton('Explore', () => encounter());
+        addButton('Keep Exploring', () => encounter());
       });
     }
 
@@ -2233,7 +2233,7 @@ decayBuffsEndOfRound();
       appendStory('[EMPTY STREETS] ' + emptyText, 'system');
 
       clearButtons();
-      addButton('Keep Walking', () => encounter());
+      addButton('Keep Exploring', () => encounter());
       addButton('Look Around', () => {
         clearButtons();
 
@@ -2276,7 +2276,7 @@ decayBuffsEndOfRound();
         }
 
         clearButtons();
-        addButton('Continue', () => encounter());
+        addButton('Keep Exploring', () => encounter());
       });
     }
 
@@ -2287,9 +2287,9 @@ decayBuffsEndOfRound();
       addButton('Watch', () => {
         const newsLine = nextStreetNewsLine(); // <-- use NEXT street teaser
         appendStory('BREAKING NEWS: ' + newsLine, 'news'); clearButtons();
-        addButton('Explore', () => encounter());
+        addButton('Keep Exploring', () => encounter());
       });
-      addButton('Ignore', () => encounter());
+      addButton('Keep Exploring', () => encounter());
     }
 
     function startNews() {
@@ -2301,9 +2301,9 @@ decayBuffsEndOfRound();
         appendStory('[CLEVELAND PRESS]: ' + headline, 'news');
         heal(healAmount, 'Reading the news helps you relax and recover.');
         clearButtons();
-        addButton('Explore', () => encounter());
+        addButton('Keep Exploring', () => encounter());
       });
-      addButton('Ignore', () => encounter());
+      addButton('Keep Exploring', () => encounter());
     }
 
     function startNPC() {
@@ -2312,9 +2312,9 @@ decayBuffsEndOfRound();
       addButton('Talk', () => {
         const dialogue = CONFIG.survivorDialogue[rand(0, CONFIG.survivorDialogue.length - 1)];
         appendStory('They say: "' + dialogue + '"', 'system'); clearButtons();
-        addButton('Explore', () => encounter());
+        addButton('Keep Exploring', () => encounter());
       });
-      addButton('Ignore', () => encounter());
+      addButton('Keep Exploring', () => encounter());
     }
 
     function startPolice() {
@@ -2323,9 +2323,9 @@ decayBuffsEndOfRound();
       addButton('Talk', () => {
         const dialogue = CONFIG.policeDialogue[rand(0, CONFIG.policeDialogue.length - 1)];
         appendStory('Officer says: "' + dialogue + '"', 'system'); clearButtons();
-        addButton('Explore', () => encounter());
+        addButton('Keep Exploring', () => encounter());
       });
-      addButton('Ignore', () => encounter());
+      addButton('Keep Exploring', () => encounter());
     }
 
     function gameOver(trackDefeat=true) {
@@ -2384,9 +2384,9 @@ decayBuffsEndOfRound();
           <img id="enemyArt" class="enemy-art" alt="" decoding="async" hidden />
         </div>
         <div id="sceneLocation" class="scene-location"></div>
-        <button id="directoryBtn" class="scene-map" onclick="showDirectory()" aria-label="City Directory" title="Open the street directory">
+        <button id="directoryBtn" class="scene-map" onclick="showDirectory()" aria-label="Street Directory" title="Open the street directory">
           <svg viewBox="0 0 48 32" aria-hidden="true" focusable="false"><path class="map-paper" d="M2 6 16 2 32 6 46 2v24l-14 4-16-4-14 4Z"/><path class="map-fold" d="M16 2v24M32 6v24"/><path class="map-route" d="m8 20 5-7 11 5 13-7"/><circle class="map-pin" cx="37" cy="11" r="3"/></svg>
-          <span>MAP</span>
+          <span>DIRECTORY</span>
         </button>
       </section>
       <div class="campaign-strip"><span id="campaignProgress"></span><span id="saveStatus">AUTOSAVE READY</span></div>
@@ -2452,7 +2452,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=2.8"></script>
+<script src="campaign.js?v=2.9"></script>
 </body>
 
 </html>
