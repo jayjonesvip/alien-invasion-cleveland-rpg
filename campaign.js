@@ -12,7 +12,7 @@ const TRAINING = [
   {id:'counter', name:'Counterattack VHS', price:20, skill:'counter', description:'Guard returns damage after you block a hit.'},
   ...[1,2,3].map(n=>({id:'conditioning'+n,name:'Conditioning '+n,price:12*n,defense:1,requires:n>1?'conditioning'+(n-1):null,description:'Permanent +1 defense against every hit.'}))
 ];
-const TRAINING_SHOPS = {throwEnemy:'record',counter:'record',conditioning1:'record',superKick:'arcade',conditioning2:'arcade',spinningKick:'chinese',superPunch:'bar',conditioning3:'surplus'};
+const TRAINING_SHOPS = {throwEnemy:'record',counter:'record',conditioning1:'drugstore',superKick:'arcade',conditioning2:'thrift',spinningKick:'pawn',superPunch:'surplus',conditioning3:'church'};
 for (const item of TRAINING) getBusiness(TRAINING_SHOPS[item.id]).items.push({...item,healing:0,message:'Training complete.'});
 const STREET_LANDMARKS = ['Terminal Tower / Public Square','The abandoned bus blockade','The theater marquees','The bank towers','The civic plaza','The warehouse loading docks','The river lift bridge','The neighborhood sanctuary','The railway viaduct','The Lake Erie harbor'];
 CONFIG.abilities.superKick.name='Lake Effect Kick';

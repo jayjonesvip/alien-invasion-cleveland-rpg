@@ -2,6 +2,7 @@ const {context,el,storage,vm,assert}=require('./art-integration.cjs');
 async function main(){
 await vm.runInContext(`(async()=>{
 newGame();assert.equal(Game.money,8);assert.equal(Game.learned.length,0);
+assert.ok(businesses.every(b=>b.items.length<=3),'Every store is capped at three purchasable items');
 // Every non-combat encounter has a visible route back, including after dialogue.
 for(const [start,action] of [[startMisc,'Watch'],[startNews,'Read'],[startNPC,'Talk'],[startPolice,'Talk'],[startEmpty,'Look Around'],[()=>announceBusiness('coffee'),null]]) {
  start();assert.ok(el('#buttons').children.some(b=>b.textContent==='Back to City Directory'));
@@ -20,12 +21,12 @@ const tape=getBusiness('arcade').items.find(x=>x.id==='superKick');
 buyBusinessItem('arcade',tape);assert.ok(Game.learned.includes('superKick'));
 const afterTape=Game.money;buyBusinessItem('arcade',tape);assert.equal(Game.money,afterTape);
 startBusiness('arcade');buyBusinessItem('arcade',tape);assert.equal(Game.money,afterTape,'Owned training cannot be bought twice');
-const training2=getBusiness('arcade').items.find(x=>x.id==='conditioning2');
-buyBusinessItem('arcade',training2);assert.equal(Game.permanent.defense,0,'Prerequisite enforced');
-Game.scene='directory';travelToStreet(2);travelToStreet(1);startBusiness('record');buyBusinessItem('record',getBusiness('record').items.find(x=>x.id==='conditioning1'));
-Game.scene='directory';travelToStreet(2);travelToStreet(3);startBusiness('arcade');
-buyBusinessItem('arcade',training2);assert.equal(Game.permanent.defense,2);
-Game.scene='directory';travelToStreet(2);travelToStreet(1);startBusiness('coffee');const donut=getBusiness('coffee').items.find(x=>x.id==='donut');
+Game.scene='directory';travelToStreet(2);startBusiness('thrift');
+const training2=getBusiness('thrift').items.find(x=>x.id==='conditioning2');
+buyBusinessItem('thrift',training2);assert.equal(Game.permanent.defense,0,'Prerequisite enforced');
+startBusiness('drugstore');buyBusinessItem('drugstore',getBusiness('drugstore').items.find(x=>x.id==='conditioning1'));
+startBusiness('thrift');buyBusinessItem('thrift',training2);assert.equal(Game.permanent.defense,2);
+Game.scene='directory';travelToStreet(1);startBusiness('coffee');const donut=getBusiness('coffee').items.find(x=>x.id==='donut');
 const hp=Game.maxHP;buyBusinessItem('coffee',donut);assert.equal(Game.maxHP,hp+2);
 startBusiness('coffee');buyBusinessItem('coffee',donut);assert.equal(Game.maxHP,hp+2,'First-taste bonus only once');
 startBusiness('pawn');buyBusinessItem('pawn',getBusiness('pawn').items[0]);assert.equal(Game.weaponUses,3);
