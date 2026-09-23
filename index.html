@@ -421,9 +421,12 @@
 
     /* Button lock while typing/turn */
     #buttons.locked {
-      pointer-events: none;
       opacity: .6;
       filter: grayscale(.2);
+    }
+
+    #buttons.locked button:not(.lock-exempt) {
+      pointer-events: none;
     }
 
     #buttons.locked button {
@@ -675,7 +678,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.3" />
-  <link rel="stylesheet" href="retro-skin.css?v=3.6" />
+  <link rel="stylesheet" href="retro-skin.css?v=3.7" />
   <script src="scene-art.js?v=2.1"></script>
 </head>
 
@@ -1504,22 +1507,24 @@
 
     function divider() { let d = document.createElement('div'); d.className = 'divider'; $('#story').appendChild(d); }
     function clearButtons() { $('#buttons').innerHTML = ''; updateSceneArt(); updateCampaignHUD(); addDirectoryReturn(); }
-    function addButton(lbl, fn, dis = false) {
+    function addButton(lbl, fn, dis = false, options = {}) {
       const btnWrap = $('#buttons');
       const isLocked = btnWrap?.classList.contains('locked');
+      const allowWhileLocked = options.allowWhileLocked === true;
 
       const b = document.createElement('button');
       b.textContent = lbl;
       b.dataset.tone = /^(Flee|Leave|Ignore|Keep Exploring)$/.test(lbl) ? 'quiet' : 'action';
+      if (allowWhileLocked) b.classList.add('lock-exempt');
 
       // Respect business rules now, respect lock visually now
       // but remember the ORIGINAL (business) disabled state for unlock restore
-      b.disabled = dis || isLocked;
+      b.disabled = dis || (isLocked && !allowWhileLocked);
       b.dataset.origDisabled = dis ? '1' : '0';   // <-- key line (preserve business rule)
 
       // Safety: ignore clicks while locked or disabled
       b.onclick = (e) => {
-        if ($('#buttons')?.classList.contains('locked')) return;
+        if ($('#buttons')?.classList.contains('locked') && !allowWhileLocked) return;
         if (b.disabled) return;
         const result = fn(e);
         if (result && typeof result.then === 'function') result.then(saveGame);
@@ -2021,7 +2026,7 @@ decayBuffsEndOfRound();
       Game.pendingReward=reward;
       clearButtons();updateHealthMeters();
       appendStory('Threat cleared. Bounty: $'+reward+'.','special');
-      addButton('Collect $'+reward,collectReward);
+      addButton('Collect $'+reward,collectReward,false,{allowWhileLocked:true});
     }
     function collectReward() {
       if(!Game.enemy || Game.enemy.hp>0 || Game.pendingReward<=0)return;
@@ -2452,7 +2457,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=2.9"></script>
+<script src="campaign.js?v=3.0"></script>
 </body>
 
 </html>

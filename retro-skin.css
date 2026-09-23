@@ -201,8 +201,8 @@ input { accent-color: var(--cyan); }
 .transmission-header { flex-basis:54px; padding-bottom:8px; gap:14px; }
 .header-settings { display:flex; align-items:center; gap:7px; min-height:40px; padding:7px 10px; font-size:10px; background:var(--surface); color:var(--fg); }
 .header-settings span { font-size:19px; line-height:1; }
-#gameUI .scene-location { left:110px; bottom:16px; }
-.scene-map { position:absolute; z-index:4; bottom:12px; left:18px; display:flex; flex-direction:column; align-items:center; gap:2px; width:74px; min-height:52px; padding:5px 6px; background:#0a2029eb; color:#e8edcf; border:1px solid #acd8c5; box-shadow:0 3px 10px #0006; }
+#gameUI .scene-location { left:24px; right:110px; bottom:16px; }
+.scene-map { position:absolute; z-index:4; bottom:12px; right:18px; left:auto; display:flex; flex-direction:column; align-items:center; gap:2px; width:74px; min-height:52px; padding:5px 6px; background:#0a2029eb; color:#e8edcf; border:1px solid #acd8c5; box-shadow:0 3px 10px #0006; }
 .scene-map svg { width:40px; height:27px; }
 .scene-map span { font-size:8px; letter-spacing:.15em; }
 .map-paper { fill:#e1d7af; stroke:#f9f1d6; stroke-width:1.2; }
@@ -231,8 +231,8 @@ input { accent-color: var(--cyan); }
 @media(max-width:760px) {
   .transmission-header { flex-basis:50px; padding:5px 12px; gap:10px; }
   .header-settings { min-height:40px; padding:6px 8px; font-size:9px; }
-  .scene-map { left:12px; bottom:12px; width:72px; }
-  #gameUI .scene-location { left:98px; bottom:15px; font-size:22px; }
+  .scene-map { right:12px; left:auto; bottom:12px; width:72px; }
+  #gameUI .scene-location { left:16px; right:98px; bottom:15px; font-size:22px; }
 }
 @media(max-width:360px) { .transmission-city { display:none; } #settingsPanel { padding:18px; } }
 

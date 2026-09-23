@@ -3,6 +3,8 @@ async function main(){
 await vm.runInContext(`(async()=>{
 newGame();assert.equal(Game.money,8);assert.equal(Game.learned.length,0);
 assert.ok(businesses.every(b=>b.items.length<=3),'Every store is capped at three purchasable items');
+beginTurnLock();let rewardTap=false;const rewardButton=addButton('Collect $1',()=>{rewardTap=true;},false,{allowWhileLocked:true});
+assert.equal(rewardButton.disabled,false,'A completed-fight reward remains tappable during the closing text');rewardButton.onclick({});assert.equal(rewardTap,true);endTurnLock();clearButtons();
 // Every non-combat encounter has a visible route back, including after dialogue.
 for(const [start,action] of [[startMisc,'Watch'],[startNews,'Read'],[startNPC,'Talk'],[startPolice,'Talk'],[startEmpty,'Look Around'],[()=>announceBusiness('coffee'),null]]) {
  start();assert.ok(el('#buttons').children.some(b=>b.textContent==='Return to Street Directory'));

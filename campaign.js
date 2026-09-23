@@ -217,7 +217,7 @@ function continueGame() {
   if(Game.hp<=0||Game.scene==='gameover'){gameOver(false);return;}
   if(Game.scene==='combat') {
     appendStory('Resumed your encounter with '+enemyLabel()+'.','system');
-    if(Game.enemy.hp<=0) { clearButtons();addButton('Collect $'+Game.pendingReward,collectReward); }
+    if(Game.enemy.hp<=0) { clearButtons();addButton('Collect $'+Game.pendingReward,collectReward,false,{allowWhileLocked:true}); }
     else updateCombatButtons();
   } else { Game.scene='explore';showDirectory(); }
 }
