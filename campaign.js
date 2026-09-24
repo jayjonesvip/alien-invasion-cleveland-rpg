@@ -28,16 +28,16 @@ function hiddenCachesLeft(street=streetNumber()) {
   return finds.some(find=>!found.includes(find.id));
 }
 const STREET_SIGNS = [
-  'A newspaper seller hands you a rain-soaked Plain Dealer. The headline says the mayor is missing and the crisis began at Terminal Tower.',
-  'The sideways bus still has a passenger list. One name is circled in ballpoint.',
-  'The Palace marquee has been re-lettered by hand: THEY LEARN YOUR GUARD.',
-  'A revolving door turns by itself and spits out a safe-deposit tag from the tower bank.',
-  'A seagull drops a police radio on the civic steps. It is still switched on.',
-  'Steam off a manhole fogs a loading schedule. Tonight\'s dock is already crossed out.',
-  'The lift-bridge horn sounds. The tender\'s shack is empty.',
-  'One candle is still burning in a sanctuary window above Prospect.',
-  'Fresh chalk on the viaduct: RED GETS WORSE IF YOU WAIT.',
-  'The harbormaster\'s binoculars are set on a tripod, aimed back at the city.'
+  'Record Store tapes teach Grappling and Counter. Counter pays only after Guard blocks a hit.',
+  'Buy drugstore Conditioning before the thrift tape. The second one will not take alone.',
+  'The marquee reads: Guard cuts the next hit in half. Lake Effect Kick works once a fight.',
+  'The camera flash makes the alien\'s first swing likelier to miss. The Radio Shack flash makes your first swing hit.',
+  'The police radio says a grey pulse ignores a jacket. Guard and Conditioning still reduce it.',
+  'A loading note says beer and whiskey cost health. Heal at the convenience store.',
+  'Surplus sells the heavy punch tape and a vest. The vest does nothing against grey.',
+  'The sanctuary note says church Conditioning needs both earlier tapes. The blessing heals a little and blocks a little.',
+  'Fresh chalk on the viaduct: red hits harder every round. Eat at the hot dog cart, then finish a red fight quickly.',
+  'The binocular card says two guards, then a red commander. There is nowhere left to shop.'
 ];
 const STREET_VOICES = [
   'Stay under the Tower lights. They hate the square.',
