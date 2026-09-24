@@ -94,14 +94,16 @@ for(const element of elements.values()){
   if(element.srcset) for(const src of element.srcset.split(',')) paths.add(src.trim().split(' ')[0]);
 }
 const assets=fs.readdirSync(path.join(root,'images/art'));
-assert.equal(assets.filter(x=>!x.includes('-small')).length,47);
-assert.equal(assets.filter(x=>x.includes('-small')).length,39);
+assert.equal(assets.filter(x=>!x.includes('-small')).length,48);
+assert.equal(assets.filter(x=>x.includes('-small')).length,40);
 const catalog=vm.runInContext('({...SceneArt.streets,...SceneArt.businesses,...SceneArt.encounters})',context);
 for(const key of ['bus-zapped','rapid-running','rapid-stalled','cab-scared','cab-singing'])assert.ok(vm.runInContext(`Object.hasOwn(SceneArt.encounters,'${key}')`,context),key);
 for(const [asset] of Object.values(catalog)){
   paths.add('images/art/'+asset+'.webp');paths.add('images/art/'+asset+'-small.webp');
 }
 for(const color of ['blue','green','grey','red'])for(const type of ['alien','boss'])paths.add('images/art/'+type+'-'+color+'.webp');
+vm.runInContext("Game.scene='combat';Game.currentStreet=Game.level=10;Game.enemy={name:'MOTHERSHIP COMMANDER',color:'red',hp:147,maxHP:147,isBoss:true,isFinalBoss:true};updateSceneArt();",context);
+assert.equal(el('#streetArt').dataset.asset,'shop-captain-franks');assert.equal(el('#enemyArt').dataset.asset,'boss-red');
 for(const src of paths)assert.ok(fs.existsSync(path.join(root,src)),src);
-console.log('PASS: 10 streets; 4 aliens; 4 bosses; 18 business entry/purchase/exit flows; 10 encounter types; both care-package rewards; transit branches; flee cleanup; level-up; endings; restart; 86 optimized assets.');
+console.log('PASS: 10 streets; 4 aliens; 4 bosses; 18 business entry/purchase/exit flows; 10 encounter types; both care-package rewards; transit branches; final restaurant; flee cleanup; level-up; endings; restart; 88 optimized assets.');
 module.exports={context,el,storage,vm,assert};

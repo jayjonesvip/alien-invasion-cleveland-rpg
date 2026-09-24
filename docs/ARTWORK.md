@@ -11,9 +11,9 @@ The game now includes 42 illustrations in addition to the original splash:
 | Encounter scenes | 5 | Watching TV, reading a newspaper, meeting a survivor or police officer, and finding a care package |
 | Endings | 2 | Victory and defeat |
 
-All artwork was generated with the built-in OpenAI imagegen tool. [First-release prompts and revisions](art-prompts.json) document the original 16 images; [second-release prompts and revisions](art-prompts-phase2.json) document the additional 26. The four bosses were generated using their corresponding regular alien as a visual reference.
+All artwork was generated with the built-in OpenAI imagegen tool. [First-release prompts and revisions](art-prompts.json) document the original 16 images; [second-release prompts and revisions](art-prompts-phase2.json) document the next 26; [the Captain Frank's prompt](art-prompts-phase3.json) documents the final-boss restaurant interior. The four bosses were generated using their corresponding regular alien as a visual reference.
 
-The 42 full-size WebP exports total 7,615,732 bytes, approximately 7.6 MB. Thirty-four smaller exports serve narrow viewports, and all eight alien and boss sprites retain real transparency. Art is requested as scenes change rather than loading the entire collection at startup. No third-party image service is needed at runtime.
+The game ships 48 full-size WebP illustrations and 40 smaller exports for narrow viewports. All eight alien and boss sprites retain real transparency. Art is requested as scenes change rather than loading the entire collection at startup. No third-party image service is needed at runtime.
 
 `SceneArt.render()` selects artwork from game state. Approaching a business retains the current street; entering switches to its interior. Leaving, ignoring an encounter, and starting a new game clear the relevant artwork state. Rations and vest discoveries share the care-package illustration. Bosses use their own sprite and a distinct badge. Interior and conversation framing keeps faces visible in the game banner.
 

@@ -42,7 +42,7 @@ window.SceneArt = (() => {
     rac: ['shop-radio-shack', 'A red-vested clerk stands among batteries, wires, and portable televisions.', 'Radio Shack'],
     record: ['shop-record', 'Vinyl crates and cassette racks surround a record-store counter.', 'Record Store'],
     church: ['shop-st-stanislaus', 'A priest offers shelter in a candlelit sanctuary.', 'St. Stanislaus'],
-    frank: ['street-erieside', 'Fishing nets and empty lobster tanks fill a dark pier restaurant under the mothership.', "Captain Frank's"]
+    frank: ['shop-captain-franks', 'Fishing nets and empty lobster tanks fill a dark pier restaurant under the mothership.', "Captain Frank's"]
   };
   const encounters = {
     tv: ['encounter-tv', 'An old shop-window television carries emergency invasion coverage.', 'Emergency Broadcast', 'LIVE COVERAGE'],
@@ -73,9 +73,10 @@ window.SceneArt = (() => {
     const stage = document.getElementById('sceneArt');
     if (!stage) return;
     const fighting = scene === 'combat' && !!enemy;
+    const finale = fighting && !!enemy.isFinalBoss ? businesses.frank : null;
     const shop = scene === 'business' && Object.hasOwn(businesses, business) ? businesses[business] : null;
     const event = ['intro', 'npc', 'empty'].includes(scene) && Object.hasOwn(encounters, encounter) ? encounters[encounter] : null;
-    const data = shop || event || streets[street.id] || streets.ontario;
+    const data = finale || shop || event || streets[street.id] || streets.ontario;
     setImage(document.getElementById('streetArt'), data[0], data[1]);
     const loc = document.getElementById('sceneLocation');
     loc.innerHTML = '';
@@ -100,7 +101,7 @@ window.SceneArt = (() => {
     const actor = document.getElementById('enemyActor');
     actor.hidden = !hasSprite;
     stage.classList.toggle('is-combat', fighting);
-    stage.classList.toggle('is-interior', !!shop);
+    stage.classList.toggle('is-interior', !!shop || !!finale);
     stage.classList.toggle('is-conversation', !!event && (encounter === 'survivor' || encounter === 'police'));
     stage.classList.toggle('is-boss', hasSprite && !!enemy.isBoss);
     stage.classList.toggle('is-defeated', hasSprite && enemy.hp <= 0);
