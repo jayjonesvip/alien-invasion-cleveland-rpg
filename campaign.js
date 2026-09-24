@@ -366,13 +366,13 @@ function showDepartures() {
   Game.scene='intro';Game.artEncounter=null;clearButtons();
   appendStory('Public Square, 1989. The Rapid runs under Terminal Tower. Buses still roll out Euclid. A cab idles at the curb.','system');
   const walk=addButton('Explore on foot',()=>arriveByTransit(1,'You stay on foot. Public Square is as far as you get. The fight starts on Ontario.'));
-  describeActionButton(walk,'Start on Ontario.');
+  describeActionButton(walk,'Ontario start.');
   const bus=addButton('Take the bus',boardBus);
-  describeActionButton(bus,'Euclid if the bus makes it. Superior if you have to walk.');
+  describeActionButton(bus,'Euclid or Superior.');
   const rapid=addButton('Take the Rapid',boardRapid);
-  describeActionButton(rapid,'Public Square if the train makes it. Prospect or Huron if it stops.');
+  describeActionButton(rapid,'Public Square, Prospect, or Huron.');
   const cab=addButton('Hail a cab',boardCab);
-  describeActionButton(cab,'East 9th if he hears the radio. West 6th if he sings over it.');
+  describeActionButton(cab,'East 9th or West 6th.');
 }
 function boardCab() {
   if(Math.random()<0.5){
