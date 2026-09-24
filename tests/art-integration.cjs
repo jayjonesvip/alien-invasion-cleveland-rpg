@@ -11,7 +11,7 @@ class Element {
     this.classList={add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)};
   }
   set innerHTML(v){this._html=v;this.children=[];} get innerHTML(){return this._html;}
-  appendChild(el){this.children.push(el);} querySelectorAll(){return this.children.filter(x=>x.tag==='button');}
+  appendChild(el){this.children=this.children.filter(child=>child!==el);this.children.push(el);} querySelectorAll(){return this.children.filter(x=>x.tag==='button');}
   setAttribute(k,v){this.attributes[k]=v;} getAttribute(k){return this.attributes[k];}
   addEventListener(){} removeEventListener(){} remove(){} closest(){return null;}
 }

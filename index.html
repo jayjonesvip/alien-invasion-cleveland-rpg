@@ -634,7 +634,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
-  <link rel="stylesheet" href="retro-skin.css?v=3.9" />
+  <link rel="stylesheet" href="retro-skin.css?v=4.0" />
   <script src="scene-art.js?v=2.4"></script>
 </head>
 
@@ -1471,6 +1471,7 @@
       const b = document.createElement('button');
       b.textContent = lbl;
       b.dataset.tone = /^(Flee|Leave|Ignore|Keep Exploring)$/.test(lbl) ? 'quiet' : 'action';
+      if (lbl === 'Keep Exploring') b.classList.add('keep-exploring');
 
       // Respect business rules now, respect lock visually now
       // but remember the ORIGINAL (business) disabled state for unlock restore
@@ -1486,7 +1487,11 @@
         else saveGame();
       };
 
+      const directoryButton = Array.from(btnWrap.children).find(el => el.classList?.contains('directory-return'));
       btnWrap.appendChild(b);
+      const keepExploringButton = Array.from(btnWrap.children).find(el => el.classList?.contains('keep-exploring'));
+      if (keepExploringButton) btnWrap.appendChild(keepExploringButton);
+      if (directoryButton && directoryButton !== b) btnWrap.appendChild(directoryButton);
       return b;
     }
 
@@ -1954,6 +1959,7 @@ decayBuffsEndOfRound();
     function checkLevelUp() {
       if(Game.aliensThisLevel<Game.requiredThisLevel||Game.level>=10)return null;
       Game.aliensThisLevel=0;Game.level++;Game.highestDistrict=Game.level;Game.requiredThisLevel=winsRequiredForStreet(Game.level);
+      Game.newlyUnlockedStreet=activeStreet();
       Game.maxHP+=CONFIG.hpGainPerLevel;Game.hp=Game.maxHP;Game.streetJustChanged=true;
       window.trackGameEvent?.('level_up', {level:Game.level});
       return {level:Game.level,hpGain:CONFIG.hpGainPerLevel};
@@ -2200,7 +2206,7 @@ decayBuffsEndOfRound();
       Game.scene = 'npc';
       Game.artEncounter = null;
       clearButtons();
-      appendStory('ONLY ON THIS STREET / ' + STREET_SIGNS[streetNumber() - 1], 'special');
+      appendStory('STREET CLUE / ' + STREET_SIGNS[streetNumber() - 1], 'special');
       addButton('Keep Exploring', () => encounter());
     }
 
@@ -2342,6 +2348,7 @@ decayBuffsEndOfRound();
       <a class="wordmark" href="index.html" aria-label="Lake Effect Invasion home">LE<span>/</span>89</a>
       <span class="transmission-city">CLEVELAND, OHIO <span>— SEPTEMBER 1989</span></span>
       <span class="signal"><i aria-hidden="true"></i> EMERGENCY FREQUENCY</span>
+      <button id="buildBtn" class="header-settings header-icon" onclick="openBuild()" aria-label="Open your build" title="Your Build" aria-haspopup="dialog" aria-controls="buildPanel"><span aria-hidden="true">▦</span></button>
       <button id="settingsBtn" class="header-settings" aria-label="Open settings" aria-haspopup="dialog" aria-controls="settingsPanel" aria-expanded="false"><span aria-hidden="true">⚙</span> SETTINGS</button>
     </header>
     <div id="startScreen" class="frame">
@@ -2457,7 +2464,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=4.1"></script>
+<script src="campaign.js?v=4.2"></script>
 </body>
 
 </html>

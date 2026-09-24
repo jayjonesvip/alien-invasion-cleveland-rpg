@@ -22,7 +22,7 @@ const STREET_SIGHTS = [
   ['sign','npc','hidden'], ['sign','hidden'], ['sign','npc','news'], ['sign','hidden'], ['sign','npc','hidden']
 ];
 const STREET_SIGNS = [
-  'A hawker shoves a wet Plain Dealer at you. The mayor is missing, and Terminal Tower is the dateline.',
+  'A newspaper seller hands you a rain-soaked Plain Dealer. The headline says the mayor is missing and the crisis began at Terminal Tower.',
   'The sideways bus still has a passenger list. One name is circled in ballpoint.',
   'The Palace marquee has been re-lettered by hand: THEY LEARN YOUR GUARD.',
   'A revolving door turns by itself and spits out a safe-deposit tag from the tower bank.',
@@ -78,7 +78,7 @@ function activeStreet() { return (Game.route||defaultRoute())[Game.level-1]; }
 function routeIndex(street) { return (Game.route||defaultRoute()).indexOf(street); }
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,route:defaultRoute(),secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
@@ -144,6 +144,7 @@ function travelToStreet(destination) {
   const from=getStreet(streetNumber());
   window.trackGameEvent?.('street_travel', {from_street:streetNumber(),to_street:destination});
   Game.currentStreet=destination;Game.scene='explore';Game.currentBiz=null;Game.businessEntered=false;Game.artEncounter=null;
+  if(Game.newlyUnlockedStreet===destination)Game.newlyUnlockedStreet=null;
   Game.lastEncounters=[];Game.lastBusiness=null;Game.streetJustChanged=false;
   showDirectory('You walk from '+from.name+' to '+getStreet(destination).name+'. '+(toIndex<Game.level-1?getStreet(destination).cleared:getStreet(destination).enter));
 }
@@ -211,10 +212,13 @@ function showDirectory(arrival='') {
   const index=routeIndex(here);
   if(index>=0&&index<9){
     const next=Game.route[index+1], unlocked=routeIndex(next)<=Game.level-1;
-    if(unlocked)addButton(getStreet(next).name+' · '+(routeIndex(next)<Game.level-1?'Cleared':'Active')+' →',()=>travelToStreet(next)).classList.add('travel-button');
+    if(unlocked){
+      const travelButton=addButton(getStreet(next).name+' · '+(routeIndex(next)<Game.level-1?'Cleared':'Active')+' →',()=>travelToStreet(next));
+      travelButton.classList.add('travel-button');
+      if(Game.newlyUnlockedStreet===next){travelButton.classList.add('new-street');travelButton.setAttribute('aria-label','New street unlocked: '+getStreet(next).name);}
+    }
     else appendStory(getStreet(next).name+' is locked until you beat the boss.','system');
   }
-  addButton('Your build',openBuild);
   saveGame();
 }
 async function huntAlien() {
@@ -234,7 +238,7 @@ async function huntAlien() {
 function addDirectoryReturn() {
   const roaming=['explore','empty','npc'].includes(Game.scene);
   if(roaming || (Game.scene==='business'&&!Game.businessEntered)) {
-    const button=addButton('Return to Street Directory',()=>showDirectory());
+    const button=addButton('Back to Directory',()=>showDirectory());
     button.classList.add('directory-return');
   }
 }

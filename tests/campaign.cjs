@@ -5,14 +5,19 @@ newGame();assert.equal(Game.money,8);assert.equal(Game.learned.length,0);
 assert.ok(businesses.every(b=>b.items.length<=3),'Every store is capped at three purchasable items');
 // Every non-combat encounter has a visible route back, including after dialogue.
 for(const [start,action] of [[startMisc,'Watch'],[startNews,'Read'],[startNPC,'Talk'],[startPolice,'Talk'],[startEmpty,'Look Around'],[()=>announceBusiness('coffee'),null]]) {
- start();assert.ok(el('#buttons').children.some(b=>b.textContent==='Return to Street Directory'));
+ start();assert.ok(el('#buttons').children.some(b=>b.textContent==='Back to Directory'));
+ if(el('#buttons').children.some(b=>b.textContent==='Keep Exploring')){
+  if(action)assert.equal(el('#buttons').children[0].textContent,action);
+  assert.equal(el('#buttons').children.at(-2).textContent,'Keep Exploring');
+  assert.equal(el('#buttons').children.at(-1).textContent,'Back to Directory');
+ }
  if(action)el('#buttons').children.find(b=>b.textContent===action).onclick({});
- el('#buttons').children.find(b=>b.textContent==='Return to Street Directory').onclick({});
+ el('#buttons').children.find(b=>b.textContent==='Back to Directory').onclick({});
  assert.equal(Game.scene,'directory');assert.equal(Game.enemy,null);
 }
-startCombat();assert.ok(!el('#buttons').children.some(b=>b.textContent==='Return to Street Directory'));assert.equal(el('#directoryBtn').disabled,true);
+startCombat();assert.ok(!el('#buttons').children.some(b=>b.textContent==='Back to Directory'));assert.equal(el('#directoryBtn').disabled,true);
 el('#buttons').children.find(b=>b.textContent==='Flee').onclick({});
-el('#buttons').children.find(b=>b.textContent==='Return to Street Directory').onclick({});assert.equal(Game.scene,'directory');
+el('#buttons').children.find(b=>b.textContent==='Back to Directory').onclick({});assert.equal(Game.scene,'directory');
 StoryType.typing=true;updateCampaignHUD();assert.equal(el('#directoryBtn').disabled,true);StoryType.typing=false;updateCampaignHUD();assert.equal(el('#directoryBtn').disabled,false);
 newGame();
 assert.equal(availableShopIds().join(','),'coffee,pawn,record');

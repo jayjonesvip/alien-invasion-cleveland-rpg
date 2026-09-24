@@ -17,7 +17,9 @@ for(let tries=0;tries<30&&Game.level===1;tries++){
  }
 }
 Math.random=initialRandom;assert.equal(Game.level,2);assert.equal(Game.aliensDefeated,3);
+assert.equal(Game.newlyUnlockedStreet,2);assert.ok(el('#buttons').children.some(b=>b.classList.contains('new-street')));
 travelToStreet(2);assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'&&!b.disabled));
+assert.equal(Game.newlyUnlockedStreet,null);
 newGame();Game.scene='explore';showDirectory();
 assert.equal(streetNumber(),1);travelToStreet(2);assert.equal(streetNumber(),1,'Uncleared exit remains locked');
 startBusiness('pizza');assert.equal(Game.scene,'directory','Remote shop is inaccessible');
@@ -26,6 +28,7 @@ for(let i=0;i<3;i++){startCombat();Game.enemy.hp=0;winCombat();collectReward();}
 assert.equal(Game.level,2);assert.equal(streetNumber(),1);assert.equal(streetCleared(),true);
 assert.ok(!el('#buttons').children.some(b=>b.textContent==='Hunt an Alien'));
 assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Superior Ave')&&b.textContent.includes('Active')));
+assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Superior Ave')&&b.classList.contains('new-street')));
 startCombat();assert.equal(Game.enemy,null,'Cleared streets cannot start battles');
 const cash=Game.money, wins=Game.aliensDefeated;
 travelToStreet(2);assert.equal(streetNumber(),2);assert.equal(availableShopIds().join(','),'pizza,thrift,drugstore');
