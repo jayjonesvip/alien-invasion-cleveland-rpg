@@ -363,7 +363,7 @@ function openBuild() {
   $('#buildPanel').showModal();
 }
 function showDepartures() {
-  Game.scene='intro';clearButtons();
+  Game.scene='intro';Game.artEncounter=null;clearButtons();
   appendStory('Public Square, 1989. The Rapid runs under Terminal Tower. Buses still roll out Euclid. A cab idles at the curb.','system');
   const walk=addButton('Explore on foot',()=>arriveByTransit(1,'You stay on foot. Public Square is as far as you get. The fight starts on Ontario.'));
   describeActionButton(walk,'Start on Ontario.');
@@ -375,16 +375,19 @@ function showDepartures() {
   describeActionButton(cab,'East 9th if he hears the radio. West 6th if he sings over it.');
 }
 function boardCab() {
-  clearButtons();
   if(Math.random()<0.5){
-    arriveByTransit(4,'The driver catches the radio. Aliens on East 9th. He stops the meter and puts you out.');
+    Game.scene='intro';Game.artEncounter='cab-scared';clearButtons();
+    appendStory('The driver catches the radio. Aliens on East 9th. He stops the meter and looks back at you.','special');
+    addButton('Get out on East 9th',()=>arriveByTransit(4,'The cab disappears into the rain. Your fight starts on East 9th.'));
     return;
   }
-  arriveByTransit(6,'The driver sings over the radio and misses the report. The fare you named was West 6th. He leaves you at the docks.');
+  Game.scene='intro';Game.artEncounter='cab-singing';clearButtons();
+  appendStory('The driver sings over the radio and misses the emergency bulletin.','special');
+  addButton('Ride to West 6th',()=>arriveByTransit(6,'The cab leaves you by the warehouses on West 6th.'));
 }
 function boardBus() {
-  clearButtons();
   if(Math.random()<0.5){
+    Game.scene='intro';Game.artEncounter='bus-zapped';clearButtons();
     appendStory('An alien zap blows a tire before Euclid.','special');
     addButton('Wait for the next bus',()=>arriveByTransit(3,'You wait in the rain. The next bus leaves you on Euclid. Lost 8 HP.',8));
     addButton('Walk',()=>arriveByTransit(2,'You leave the bus and walk. Superior is where the fight starts.'));
@@ -393,20 +396,22 @@ function boardBus() {
   arriveByTransit(3,'The bus makes it. You step off on Euclid.');
 }
 function boardRapid() {
-  clearButtons();
   if(Math.random()<0.5){
+    Game.scene='intro';Game.artEncounter='rapid-stalled';clearButtons();
     appendStory('The Rapid dies in the trench under Terminal Tower.','special');
     addButton('Square doors',()=>arriveByTransit(1,'You wait, then take the Public Square doors. Lost 8 HP. The fight starts on Ontario.',8));
     addButton('Prospect doors',()=>arriveByTransit(8,'Staff open the south doors. You come out on Prospect.'));
     addButton('Climb out of the trench',()=>arriveByTransit(9,'You climb out of the trench by the Huron viaduct.'));
     return;
   }
-  arriveByTransit(1,'The Rapid pulls into Tower City. You come up into Public Square.');
+  Game.scene='intro';Game.artEncounter='rapid-running';clearButtons();
+  appendStory('The Rapid keeps moving through the trench while passengers watch the sky.','system');
+  addButton('Ride to Public Square',()=>arriveByTransit(1,'The Rapid pulls into Tower City. You come up into Public Square.'));
 }
 function arriveByTransit(street,text,hpLoss=0) {
   Game.route=buildRoute(street);
   Game.currentStreet=street;Game.level=1;Game.highestDistrict=1;Game.aliensThisLevel=0;Game.requiredThisLevel=winsRequiredForStreet(1);
-  Game.hp=Math.max(1,Game.hp-(hpLoss||0));Game.scene='explore';Game.streetJustChanged=false;
+  Game.hp=Math.max(1,Game.hp-(hpLoss||0));Game.scene='explore';Game.streetJustChanged=false;Game.artEncounter=null;
   showDirectory(text);
 }
 function startNewRun() { if(readSave()&&!confirm('Start a new run? This replaces your saved campaign.'))return;newGame(); }

@@ -48,7 +48,12 @@ window.SceneArt = (() => {
     newspaper: ['encounter-newspaper', 'Rain beads on a newspaper box holding an invasion front page.', 'News Stand', 'LATEST EDITION'],
     survivor: ['encounter-survivor', 'A frightened local shelters in a shadowy doorway.', 'Survivor', 'YOU ARE NOT ALONE'],
     police: ['encounter-police', 'A weary officer stands beside a patrol car and barricade.', 'Police Officer', 'EMERGENCY RESPONSE'],
-    'care-package': ['encounter-care-package', 'An open military supply crate rests beneath a weathered tarp.', 'Care Package', 'SUPPLIES FOUND']
+    'care-package': ['encounter-care-package', 'An open military supply crate rests beneath a weathered tarp.', 'Care Package', 'SUPPLIES FOUND'],
+    'bus-zapped': ['transit-bus-zapped', 'An alien energy blast blows a city bus tire as frightened passengers brace inside.', 'City Bus', 'TIRE DESTROYED'],
+    'rapid-running': ['transit-rapid-running', 'A 1989 Cleveland Rapid train carries wary passengers toward Public Square.', 'The Rapid', 'TRAIN MOVING'],
+    'rapid-stalled': ['transit-rapid-stalled', 'A stalled Rapid train sits aligned in the rain-soaked trench while staff inspect it.', 'The Rapid', 'TRAIN STOPPED'],
+    'cab-scared': ['transit-cab-scared', 'A frightened cab driver hears the invasion warning over his dashboard radio.', 'Cleveland Cab', 'RADIO WARNING'],
+    'cab-singing': ['transit-cab-singing', 'A singing cab driver misses the emergency bulletin as saucers glow outside.', 'Cleveland Cab', 'RADIO MISSED']
   };
   function setImage(img, asset, alt, responsive = true) {
     if (!img) return;
@@ -68,7 +73,7 @@ window.SceneArt = (() => {
     if (!stage) return;
     const fighting = scene === 'combat' && !!enemy;
     const shop = scene === 'business' && Object.hasOwn(businesses, business) ? businesses[business] : null;
-    const event = ['npc', 'empty'].includes(scene) && Object.hasOwn(encounters, encounter) ? encounters[encounter] : null;
+    const event = ['intro', 'npc', 'empty'].includes(scene) && Object.hasOwn(encounters, encounter) ? encounters[encounter] : null;
     const data = shop || event || streets[street.id] || streets.ontario;
     setImage(document.getElementById('streetArt'), data[0], data[1]);
     const loc = document.getElementById('sceneLocation');
