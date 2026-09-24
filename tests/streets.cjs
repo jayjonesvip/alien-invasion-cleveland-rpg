@@ -94,8 +94,10 @@ Game.level=Game.highestDistrict=Game.currentStreet=10;Game.aliensThisLevel=0;Gam
 const harbor=buildStreetDeck(10);
 assert.ok(harbor.includes('shop:frank')&&!harbor.includes('news'));
 assert.ok(harbor.includes('sign')&&harbor.includes('npc')&&harbor.includes('hidden')&&harbor.includes('combat'));
-Game.aliensThisLevel=2;Game.knownShops=['frank'];Game.streetSeen={10:{sign:true,npc:true,hidden:true}};Game.streetDecks[10]=['combat'];Game.scene='directory';
+Game.aliensThisLevel=2;Game.knownShops=['frank'];Game.secretsFound=[];Game.streetSeen={10:{sign:true,npc:true,hidden:true}};Game.streetDecks[10]=['combat'];Game.scene='directory';
 assert.notEqual(drawExploreCard(),'combat','The commander is not found by walking the pier');
+startBusiness('frank');assert.equal(Game.scene,'directory',"Captain Frank's stays locked without its key");assert.equal(Game.enemy,null);
+assert.equal(HIDDEN_FINDS[10][0].id,'franks-key');revealHidden(HIDDEN_FINDS[10][0]);assert.equal(hasFranksKey(),true);
 startBusiness('frank');assert.equal(Game.scene,'combat');assert.equal(Game.enemy.isFinalBoss,true);
 Game.enemy=null;Game.aliensThisLevel=1;Game.scene='directory';startBusiness('frank');
 assert.notEqual(Game.scene,'combat');assert.ok(el('#buttons').children.some(b=>b.textContent==='Leave'));

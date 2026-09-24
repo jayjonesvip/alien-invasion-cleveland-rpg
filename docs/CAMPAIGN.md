@@ -6,7 +6,7 @@ The campaign uses the existing 1989 Cleveland setting and artwork. Start with 50
 
 Hunt an Alien is available from level 1. Every street offers two regular fights, followed by a direct district boss challenge. Exploration can also lead to these encounters. Hunt an Alien fills a search meter over 2.5 seconds, locking other actions until the encounter starts. Boss challenges start directly. Reloading during a hunt resumes the last completed checkpoint.
 
-Each of ten districts requires two regular victories and one boss victory. Reaching district ten begins the final chapter; its third victory defeats the Mothership Commander and ends the thirty-win campaign. Fleeing and losing do not advance the counter. Advancing a district grants +10 maximum HP and a full heal.
+Each of ten districts requires two regular victories and one boss victory. Reaching district ten begins the final chapter; the player must find Captain Frank's Key on the harbor, defeat two pier guards, and enter the restaurant for the Mothership Commander fight. That victory ends the thirty-win campaign. Fleeing and losing do not advance the counter. Advancing a district grants +10 maximum HP and a full heal.
 
 Regular bounties are $4 plus district number; bosses add $6. Rewards are independent of combat duration and are collected once. Existing encounter cash and loyalty rewards remain available.
 

@@ -59,6 +59,7 @@ const originalRandom=Math.random;
 Math.random=()=>0;
 for(const business of businesses){
   Game.currentStreet=DISTRICT_SHOPS.findIndex(ids=>ids.includes(business.id))+1;Game.level=Game.highestDistrict=Game.currentStreet;
+  if(business.id==='frank')Game.secretsFound.push('franks-key');
   announceBusiness(business.id);
   assert.equal(el('#streetArt').dataset.asset,SceneArt.streets[getStreet(streetNumber()).id][0],'Approaching retains the street');
   startBusiness(business.id);

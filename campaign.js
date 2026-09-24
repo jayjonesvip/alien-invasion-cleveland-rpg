@@ -115,6 +115,7 @@ function buildStreetDeck(street=streetNumber()) {
 function harborBossWaiting(street=streetNumber()) {
   return street===10&&street===activeStreet()&&!streetCleared()&&Game.aliensThisLevel===regularWinsRequired(Game.level);
 }
+function hasFranksKey() { return (Game.secretsFound||[]).includes('franks-key'); }
 function streetSights(street=streetNumber()) {
   return [...(STREET_SIGHTS[street-1]||[]),(DISTRICT_SHOPS[street-1]||[]).map(id=>'shop:'+id)].flat();
 }
@@ -379,6 +380,7 @@ function openBuild() {
   if(Game.permanent.kick)bonus.push('Kick damage +'+Game.permanent.kick);
   if(Game.permanent.defense)bonus.push('Defense +'+Game.permanent.defense);
   if(Game.permanent.accuracy)bonus.push('Accuracy +'+Math.round(Game.permanent.accuracy*100)+'%');
+  if(hasFranksKey())bonus.push("Captain Frank's Key");
   $('#buildStats').hidden=!bonus.length;
   $('#buildStats').textContent=bonus.join(' · ');
   const hereTrain=names(streetNumber()), nextIndex=routeIndex(streetNumber())+1, nextTrain=nextIndex<10?names(Game.route[nextIndex]):[];

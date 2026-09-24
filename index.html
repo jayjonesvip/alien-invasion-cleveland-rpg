@@ -2072,6 +2072,12 @@ decayBuffsEndOfRound();
       noteShop('frank');
       const place=getBusiness('frank');
       Game.currentBiz='frank';
+      if(!hasFranksKey()){
+        Game.currentBiz=null;
+        Game.businessEntered=false;
+        showDirectory("LOCKED / Captain Frank's went under before the invasion. The front door is chained. Find the restaurant key somewhere on the harbor.");
+        return;
+      }
       Game.businessEntered=true;
       Game.artEncounter=null;
       Game.scene='business';
@@ -2219,7 +2225,7 @@ decayBuffsEndOfRound();
       7: [{id:'river-toll', cash:4, text:'The bridge tender left the toll cup. $4.'}, {id:'river-glove', cash:2, text:'A work glove on the rail holds $2.'}],
       8: [{id:'prospect-poorbox', cash:5, text:'The church poor box was pried, then abandoned. $5 left.'}, {id:'prospect-candle', cash:2, text:'A candle stand hides $2 in the wax cup.'}],
       9: [{id:'huron-chalk', cash:4, text:'Under the viaduct chalk, a coffee can. $4.'}, {id:'huron-spike', cash:3, text:'A rail spike tin holds $3.'}],
-      10: [{id:'erie-radio', cash:6, text:'The harbormaster shack radio sits on $6.'}, {id:'erie-net', cash:3, text:'A dry net bag holds $3 in damp bills.'}]
+      10: [{id:'franks-key', cash:0, text:"A brass key tagged CAPTAIN FRANK'S hangs inside the harbormaster shack. You take it."}, {id:'erie-radio', cash:6, text:'The harbormaster shack radio sits on $6.'}, {id:'erie-net', cash:3, text:'A dry net bag holds $3 in damp bills.'}]
     };
     function takeHiddenFind() {
       Game.secretsFound = Game.secretsFound || [];
@@ -2501,7 +2507,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=4.6"></script>
+<script src="campaign.js?v=4.7"></script>
 </body>
 
 </html>
