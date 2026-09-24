@@ -2,7 +2,7 @@
 const SAVE_KEY = 'alienRPGCampaignV1';
 const DISTRICT_SHOPS = [
   ['coffee','pawn','record'], ['pizza','thrift','drugstore'], ['diner','arcade'],
-  ['rac','camera'], ['chinese','deli'], ['convenience','bar'], ['surplus'], ['church'], ['hotdog'], []
+  ['rac','camera'], ['chinese','deli'], ['convenience','bar'], ['surplus'], ['church'], ['hotdog'], ['frank']
 ];
 const TRAINING = [
   {id:'throwEnemy', name:'Grappling VHS', price:18, skill:'throwEnemy', description:'Learn Throw Enemy: reliable, repeatable damage.'},
@@ -37,7 +37,7 @@ const STREET_SIGNS = [
   'Surplus sells the heavy punch tape and a vest. The vest does nothing against grey.',
   'The sanctuary note says church Conditioning needs both earlier tapes. The blessing heals a little and blocks a little.',
   'Fresh chalk on the viaduct: red hits harder every round. Eat at the hot dog cart, then finish a red fight quickly.',
-  'The binocular card says two guards, then a red commander. There is nowhere left to shop.'
+  'The binocular card says two guards on the pier, then the red commander inside Captain Frank\'s.'
 ];
 const STREET_VOICES = [
   'Stay under the Tower lights. They hate the square.',
@@ -106,11 +106,14 @@ function buildStreetDeck(street=streetNumber()) {
     if(card==='hidden'&&!hiddenCachesLeft(street)) return false;
     return true;
   });
-  if(!streetCleared()) cards.push('combat');
+  if(!streetCleared()&&!harborBossWaiting(street)) cards.push('combat');
   for(const id of (DISTRICT_SHOPS[street-1]||[])) if(!(Game.knownShops||[]).includes(id)) cards.push('shop:'+id);
   const random=exploreRandom((Game.exploreSeed||1)^(street*997)^(built*131));
   for(let i=cards.length-1;i>0;i--){ const j=Math.floor(random()*(i+1)); const swap=cards[i]; cards[i]=cards[j]; cards[j]=swap; }
   return cards;
+}
+function harborBossWaiting(street=streetNumber()) {
+  return street===10&&street===activeStreet()&&!streetCleared()&&Game.aliensThisLevel===regularWinsRequired(Game.level);
 }
 function streetSights(street=streetNumber()) {
   return [...(STREET_SIGHTS[street-1]||[]),(DISTRICT_SHOPS[street-1]||[]).map(id=>'shop:'+id)].flat();
@@ -143,7 +146,7 @@ function drawExploreCard() {
   let card=deck.shift();
   let skipped=0;
   if(card==='hidden'&&!hiddenCachesLeft(street)) card='quiet';
-  while((card==='combat'&&streetCleared())||(ONE_TIME_SIGHTS.has(card)&&Game.streetSeen[street]?.[card])){
+  while((card==='combat'&&(streetCleared()||harborBossWaiting(street)))||(ONE_TIME_SIGHTS.has(card)&&Game.streetSeen[street]?.[card])){
     if(!deck.length) deck=Game.streetDecks[street]=buildStreetDeck(street);
     if(!deck.length){card='quiet';break;}
     card=deck.shift();
@@ -217,11 +220,11 @@ function showDirectory(arrival='') {
   appendStory('You are on '+getStreet(here).name+'.','special');
   appendStory(STREET_LANDMARKS[here-1]+'.','system');
   const required=winsRequiredForStreet(Game.level), regularRequired=required-1;
-  appendStory(cleared?'This street is clear. The fight is on '+getStreet(activeStreet()).name+'.':Game.aliensThisLevel+' of '+required+' fights won. '+(Game.aliensThisLevel===regularRequired?'The boss is hiding here.':(regularRequired-Game.aliensThisLevel)+' more before the boss.'),'system');
-  if(here===10&&!cleared)appendStory('Two guards, then the Mothership Commander. No shops on the harbor.','special');
+  appendStory(cleared?'This street is clear. The fight is on '+getStreet(activeStreet()).name+'.':Game.aliensThisLevel+' of '+required+' fights won. '+(Game.aliensThisLevel===regularRequired?(here===10?'The commander is waiting inside Captain Frank\'s.':'The boss is hiding here.'):(regularRequired-Game.aliensThisLevel)+' more before the boss.'),'system');
+  if(here===10&&!cleared)appendStory(Game.aliensThisLevel===regularRequired?'The pier guards are down. Step into Captain Frank\'s.':'Two guards on the pier, then the red commander inside Captain Frank\'s.','special');
   const bossReady=!cleared&&Game.aliensThisLevel===regularWinsRequired(Game.level);
   const exploreButton=addButton(cleared?'Explore Safely':'Explore Street',()=>encounter());
-  describeActionButton(exploreButton,cleared?'Shops, rumors, and anything still hidden. No aliens.':bossReady?'The district boss is hiding on this street.':'Aliens, rumors, and hidden caches.');
+  describeActionButton(exploreButton,cleared?'Shops, rumors, and anything still hidden. No aliens.':here===10&&bossReady?'The commander is inside Captain Frank\'s, not out on the pier.':bossReady?'The district boss is hiding on this street.':'Aliens, rumors, and hidden caches.');
   for(const id of availableShopIds()){
     if((Game.knownShops||[]).includes(id)) addButton(getBusiness(id).name,()=>startBusiness(id));
     else addButton('Unknown stop',()=>{},true);

@@ -71,7 +71,7 @@ for(let win=1;win<=36;win++){
  if(win<36)assert.notEqual(Game.scene,'victory');
 }
 assert.equal(bosses,10);assert.equal(Game.scene,'victory');assert.equal(Game.aliensDefeated,36);assert.equal(Game.level,10);
-assert.equal(availableShopIds().length,0);assert.equal(Game.finalBossDefeated,true);
+assert.deepEqual(availableShopIds(),['frank']);assert.equal(Game.finalBossDefeated,true);
 saveGame();continueGame();assert.equal(Game.scene,'victory');
 newGame();assert.equal(Game.weaponUses,0);assert.equal(Game.training.length,0);assert.equal(Game.tasted.length,0);assert.equal(Game.finalBossDefeated,false);
 const goodSave=localStorage.getItem(SAVE_KEY);

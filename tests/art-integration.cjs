@@ -103,5 +103,5 @@ for(const [asset] of Object.values(catalog)){
 }
 for(const color of ['blue','green','grey','red'])for(const type of ['alien','boss'])paths.add('images/art/'+type+'-'+color+'.webp');
 for(const src of paths)assert.ok(fs.existsSync(path.join(root,src)),src);
-console.log('PASS: 10 streets; 4 aliens; 4 bosses; 17 business entry/purchase/exit flows; 10 encounter types; both care-package rewards; transit branches; flee cleanup; level-up; endings; restart; 86 optimized assets.');
+console.log('PASS: 10 streets; 4 aliens; 4 bosses; 18 business entry/purchase/exit flows; 10 encounter types; both care-package rewards; transit branches; flee cleanup; level-up; endings; restart; 86 optimized assets.');
 module.exports={context,el,storage,vm,assert};

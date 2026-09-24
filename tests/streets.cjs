@@ -61,7 +61,7 @@ localStorage.setItem(SAVE_KEY,JSON.stringify(stored));continueGame();assert.equa
 const invalid=JSON.parse(localStorage.getItem(SAVE_KEY));invalid.state.currentStreet=5;localStorage.setItem(SAVE_KEY,JSON.stringify(invalid));assert.equal(readSave(),null);
 // A one-shop street cannot exhaust random shop selection; the harbor has no shops.
 Game.level=Game.highestDistrict=Game.currentStreet=9;Game.scene='directory';Game.lastBusiness='hotdog';announceRandomBusiness();assert.equal(Game.currentBiz,'hotdog');
-Game.level=Game.highestDistrict=Game.currentStreet=10;Game.scene='directory';announceRandomBusiness();assert.equal(Game.scene,'empty');
+Game.level=Game.highestDistrict=Game.currentStreet=10;Game.scene='directory';announceRandomBusiness();assert.equal(Game.currentBiz,'frank');
 newGame();showDirectory();
 assert.equal(el('#buttons').children.filter(b=>b.textContent==='Unknown stop'&&b.disabled).length,3);
 announceBusiness('coffee');showDirectory();
@@ -90,10 +90,15 @@ assert.equal(drawExploreCard(),'combat');
 Game.level=Game.highestDistrict=Game.currentStreet=4;Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];
 const banks=buildStreetDeck(4);
 assert.deepEqual(banks.filter(card=>!card.startsWith('shop:')).sort(),['combat','hidden','sign']);
-Game.level=Game.highestDistrict=Game.currentStreet=10;Game.streetDecks={};Game.deckBuilds={};
+Game.level=Game.highestDistrict=Game.currentStreet=10;Game.aliensThisLevel=0;Game.streetDecks={};Game.deckBuilds={};
 const harbor=buildStreetDeck(10);
-assert.ok(!harbor.some(card=>card.startsWith('shop:')||card==='news'));
+assert.ok(harbor.includes('shop:frank')&&!harbor.includes('news'));
 assert.ok(harbor.includes('sign')&&harbor.includes('npc')&&harbor.includes('hidden')&&harbor.includes('combat'));
+Game.aliensThisLevel=2;Game.knownShops=['frank'];Game.streetSeen={10:{sign:true,npc:true,hidden:true}};Game.streetDecks[10]=['combat'];Game.scene='directory';
+assert.notEqual(drawExploreCard(),'combat','The commander is not found by walking the pier');
+startBusiness('frank');assert.equal(Game.scene,'combat');assert.equal(Game.enemy.isFinalBoss,true);
+Game.enemy=null;Game.aliensThisLevel=1;Game.scene='directory';startBusiness('frank');
+assert.notEqual(Game.scene,'combat');assert.ok(el('#buttons').children.some(b=>b.textContent==='Leave'));
 assert.notEqual(STREET_SIGNS[0],STREET_SIGNS[9]);
 assert.equal(new Set(STREET_SIGNS).size,10);
 assert.match(STREET_SIGNS[0],/Counter/);assert.match(STREET_SIGNS[1],/drugstore/);

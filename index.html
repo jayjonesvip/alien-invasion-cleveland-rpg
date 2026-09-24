@@ -635,7 +635,7 @@
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
   <link rel="stylesheet" href="retro-skin.css?v=4.1" />
-  <script src="scene-art.js?v=2.4"></script>
+  <script src="scene-art.js?v=2.5"></script>
 </head>
 
 <body>
@@ -923,6 +923,14 @@
         items: [
           { id: 'blessing', name: 'Blessing', price: 1, healing: 10, message: 'You feel protected. (+1 armor DR for 5 hits)', armor: { name: 'Blessing Ward', dr: 1, durabilityHits: 5 } }
         ]
+      },
+      {
+        id: 'frank',
+        name: "Captain Frank's",
+        loyaltyVisits: 0,
+        intro: 'The East 9th Street Pier ends at a dark seafood house. Nets cover the windows.',
+        enter: 'Fishing nets hang over empty lobster tanks. The dining room smells like the lake.',
+        items: []
       }
 
 
@@ -2060,8 +2068,28 @@ decayBuffsEndOfRound();
       addButton('Keep Exploring', () => { $('#story').innerHTML = ''; encounter(); });
     }
 
+    function enterFranks() {
+      noteShop('frank');
+      const place=getBusiness('frank');
+      Game.currentBiz='frank';
+      Game.businessEntered=true;
+      Game.artEncounter=null;
+      Game.scene='business';
+      $('#story').innerHTML='';
+      if(streetCleared()||!harborBossWaiting()){
+        appendStory(streetCleared()?'Captain Frank\'s is empty. The nets are still.':place.enter+' The pier guards are still outside.','system');
+        clearButtons();
+        addButton('Leave',()=>{ Game.businessEntered=false; showDirectory(); });
+        return;
+      }
+      appendStory('The nets shift. The red commander was waiting in the dining room.','special');
+      clearButtons();
+      startCombat();
+    }
+
     function startBusiness(id) {
       if(!canVisitShop(id))return;
+      if(id==='frank'){ enterFranks(); return; }
       noteShop(id);
       const b = getBusiness(id);
       Game.currentBiz = id;
@@ -2107,7 +2135,7 @@ decayBuffsEndOfRound();
     }
 
     function buyBusinessItem(id, it) {
-      if(!canVisitShop(id))return;
+      if(!it||!canVisitShop(id))return;
       if (!Game.purchasedThisVisit[id]) Game.purchasedThisVisit[id] = new Set();
       if (Game.purchasedThisVisit[id].has(it.id) || gearOwned(it) || (it.requires&&!Game.training.includes(it.requires))) return;
 
@@ -2473,7 +2501,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=4.5"></script>
+<script src="campaign.js?v=4.6"></script>
 </body>
 
 </html>
