@@ -22,6 +22,11 @@ const STREET_SIGHTS = [
   ['sign','npc','hidden'], ['sign','hidden'], ['sign','npc','news'], ['sign','hidden'], ['sign','npc','hidden']
 ];
 const ONE_TIME_SIGHTS = new Set(['sign','npc','news']);
+function hiddenCachesLeft(street=streetNumber()) {
+  const finds=(typeof HIDDEN_FINDS==='undefined'?[]:HIDDEN_FINDS[street])||[];
+  const found=Game.secretsFound||[];
+  return finds.some(find=>!found.includes(find.id));
+}
 const STREET_SIGNS = [
   'A newspaper seller hands you a rain-soaked Plain Dealer. The headline says the mayor is missing and the crisis began at Terminal Tower.',
   'The sideways bus still has a passenger list. One name is circled in ballpoint.',
@@ -47,14 +52,14 @@ const STREET_VOICES = [
   'The commander watches for the second guard to fall.'
 ];
 const STREET_PAPERS = [
-  'CLEVELAND PRESS: Troops at Public Square. The Rapid is still running.',
+  'Troops at Public Square. The Rapid is still running.',
   null,
-  'CLEVELAND PRESS: Euclid marquees to go dark. Do not trust a quiet lobby.',
+  'Euclid marquees to go dark. Do not trust a quiet lobby.',
   null,
-  'CLEVELAND PRESS: Lakeside plaza held through the night. Bring nothing that shines.',
+  'Lakeside plaza held through the night. Bring nothing that shines.',
   null,
   null,
-  'CLEVELAND PRESS: St. Stanislaus is housing anyone who saw the boss land.',
+  'St. Stanislaus is housing anyone who saw the boss land.',
   null,
   null
 ];
@@ -96,7 +101,11 @@ function buildStreetDeck(street=streetNumber()) {
   Game.deckBuilds=Game.deckBuilds||{};
   const built=(Game.deckBuilds[street]||0)+1; Game.deckBuilds[street]=built;
   const seen=Game.streetSeen?.[street]||{};
-  const cards=[...(STREET_SIGHTS[street-1]||[])].filter(card=>!ONE_TIME_SIGHTS.has(card)||!seen[card]);
+  const cards=[...(STREET_SIGHTS[street-1]||[])].filter(card=>{
+    if(ONE_TIME_SIGHTS.has(card)&&seen[card]) return false;
+    if(card==='hidden'&&!hiddenCachesLeft(street)) return false;
+    return true;
+  });
   if(!streetCleared()) cards.push('combat');
   for(const id of (DISTRICT_SHOPS[street-1]||[])) if(!(Game.knownShops||[]).includes(id)) cards.push('shop:'+id);
   const random=exploreRandom((Game.exploreSeed||1)^(street*997)^(built*131));
@@ -133,11 +142,15 @@ function drawExploreCard() {
   deck=Game.streetDecks[street];
   let card=deck.shift();
   let skipped=0;
+  if(card==='hidden'&&!hiddenCachesLeft(street)) card='quiet';
   while((card==='combat'&&streetCleared())||(ONE_TIME_SIGHTS.has(card)&&Game.streetSeen[street]?.[card])){
     if(!deck.length) deck=Game.streetDecks[street]=buildStreetDeck(street);
+    if(!deck.length){card='quiet';break;}
     card=deck.shift();
-    if(++skipped>30){card='hidden';break;}
+    if(card==='hidden'&&!hiddenCachesLeft(street)){card='quiet';break;}
+    if(++skipped>30){card='quiet';break;}
   }
+  if(!card) card='quiet';
   if(card==='sign'||card==='npc'||card==='hidden'||card==='news'){ Game.streetSeen[street]=Game.streetSeen[street]||{}; Game.streetSeen[street][card]=true; }
   return card;
 }

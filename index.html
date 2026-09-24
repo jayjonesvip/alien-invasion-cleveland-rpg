@@ -733,7 +733,7 @@
         id: 'coffee',
         name: 'Coffee Shop',
         loyaltyVisits: 3, // get card on 3rd visit
-        intro: 'A warm light spills from a corner coffee shop on Euclid Ave.',
+        intro: 'A warm light spills from a corner coffee shop on Public Square.',
         enter: 'You step into the coffee shop. A handwritten menu hangs behind the counter.',
         items: [
           { id: 'coffee', name: 'Coffee', price: 2, healing: 8, message: 'You sip a hot coffee. Caffeine kicks in.' },
@@ -766,7 +766,7 @@
         id: 'diner',
         name: 'Diner',
         loyaltyVisits: 0,
-        intro: 'A neon-lit diner hums; the Flats skyline glints in chrome.',
+        intro: 'A neon-lit diner hums beneath the Euclid marquees.',
         enter: 'A waitress slides a laminated menu your way.',
         items: [
           { id: 'burger', name: 'Burger', price: 4, healing: 30, message: 'A classic diner burger.' },
@@ -937,7 +937,7 @@
         name: 'Ontario St — Public Square',
         enter: 'Public Square is gridlocked. Newspaper boxes overturned, buses idling, Terminal Tower looming.',
         ambient: [
-          'A Plain Dealer front page skitters past your boots.',
+          'Pigeons lift off the Soldiers\' and Sailors\' Monument.',
           'Someone shouts from a kiosk, “Over here!” then ducks back down.',
           'Wind whips dust around the statues; sirens bounce off the buildings.'
         ],
@@ -951,7 +951,7 @@
         ambient: [
           'Paper cups tumble along the curb like tumbleweeds.',
           'Office lights flicker, one window at a time.',
-          'A bus is parked sideways, doors hanging open.'
+          'A paper timetable is pasted over a boarded shop window.'
         ],
         cleared: 'Superior is clear. A shopkeeper gives you a grateful nod and locks the gate behind you.'
       },
@@ -973,7 +973,7 @@
         name: 'East 9th Street',
         enter: 'Towering banks and mirrored facades reflect your every move.',
         ambient: [
-          'A set of revolving doors spins slowly on its own.',
+          'A loose pane ticks against a stone column.',
           'The wind howls like a siren between the buildings.',
           'A briefcase lies open, papers stuck to a grate.'
         ],
@@ -986,7 +986,7 @@
         enter: 'Civic steps, flagpoles, and empty benches. The lake air tastes like metal.',
         ambient: [
           'A seagull wheels overhead, unbothered by the chaos.',
-          'A police radio hisses with half-words and static.',
+          'Flag ropes knock against an empty pole.',
           'Footprints lead across the plaza, then stop.'
         ],
         cleared: 'A roar from the plaza—Lakeside stands free. The wind shifts in your favor.'
@@ -997,8 +997,8 @@
         name: 'West 6th',
         enter: 'Brick, iron, and loading docks. The street smells like oil and rain.',
         ambient: [
-          'Steam curls from a manhole cover.',
-          'A loading bay door bangs open and shut.',
+          'A chain swings against a warehouse door.',
+          'Rain ticks on a stack of empty pallets.',
           'Glass crunches under your shoes.'
         ],
         cleared: 'Dock lights blink alive one by one, like a salute. West 6th is clear.'
@@ -1656,6 +1656,7 @@
         case 'hidden': startHidden(); break;
         case 'news': startNews(); break;
         case 'npc': startNPC(); break;
+        case 'quiet': startQuiet(); break;
         default: startHidden();
       }
     }
@@ -2216,7 +2217,15 @@ decayBuffsEndOfRound();
       const find = takeHiddenFind();
       clearButtons();
       if (find) revealHidden(find);
-      else { Game.money += 2; appendStory('You already turned this block over. A stranger still presses $2 into your hand.', 'system'); updateStats(); }
+      else { startQuiet(); return; }
+      addButton('Keep Exploring', () => encounter());
+    }
+
+    function startQuiet() {
+      Game.scene = 'npc';
+      Game.artEncounter = null;
+      clearButtons();
+      appendStory('Nothing else is left on this block.', 'system');
       addButton('Keep Exploring', () => encounter());
     }
 
@@ -2284,7 +2293,7 @@ decayBuffsEndOfRound();
 
     function startMisc() {
       Game.artEncounter = 'tv';
-      Game.scene = 'npc'; appendStory('[TV] you see a television in a shop window', 'system'); clearButtons();
+      Game.scene = 'npc'; appendStory('[TV] You see a television in a shop window.', 'system'); clearButtons();
       addButton('Watch', () => {
         const newsLine = nextStreetNewsLine(); // <-- use NEXT street teaser
         appendStory('BREAKING NEWS: ' + newsLine, 'news'); clearButtons();
@@ -2295,7 +2304,7 @@ decayBuffsEndOfRound();
 
     function startNews() {
       Game.artEncounter = 'newspaper';
-      Game.scene = 'npc'; appendStory('[NEWS STAND] you see todays paper.', 'system'); clearButtons();
+      Game.scene = 'npc'; appendStory('[NEWS STAND] You see today\'s paper.', 'system'); clearButtons();
       addButton('Read', () => {
         const headline = STREET_PAPERS[streetNumber() - 1] || CONFIG.newspaperHeadlines[rand(0, CONFIG.newspaperHeadlines.length - 1)];
         const healAmount = rand(1, 5);
@@ -2464,7 +2473,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=4.3"></script>
+<script src="campaign.js?v=4.4"></script>
 </body>
 
 </html>

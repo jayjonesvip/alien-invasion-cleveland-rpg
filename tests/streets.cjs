@@ -77,6 +77,12 @@ assert.ok(['shop:coffee','shop:pawn','shop:record'].every(card=>dealt.includes(c
 Game.streetSeen={1:{sign:true,npc:true,news:true}};Game.streetDecks[1]=['sign','npc','news','hidden'];
 const repeatGuard=[];for(let i=0;i<6;i++)repeatGuard.push(drawExploreCard());
 assert.ok(!repeatGuard.some(card=>ONE_TIME_SIGHTS.has(card)),'Fixed street text is never repeated, including stale saved decks');
+Game.secretsFound=HIDDEN_FINDS[1].map(find=>find.id);Game.knownShops=['coffee','pawn','record'];
+Game.streetSeen={1:{sign:true,npc:true,news:true,hidden:true}};Game.streetDecks={};Game.deckBuilds={};Game.level=2;Game.currentStreet=1;
+assert.ok(!buildStreetDeck(1).includes('hidden'),'A block with both caches found does not deal another hidden card');
+const beforeCash=Game.money;Game.streetDecks[1]=['hidden'];encounter();
+assert.equal(Game.money,beforeCash,'An exhausted cache does not pay again');
+assert.equal(drawExploreCard(),'quiet');
 Game.level=1;Game.currentStreet=1;Game.aliensThisLevel=2;Game.knownShops=[];Game.streetSeen={};Game.streetDecks[1]=['combat'];
 assert.notEqual(drawExploreCard(),'combat','The boss waits until the block has been seen');
 Game.knownShops=['coffee','pawn','record'];Game.streetSeen={1:{sign:true,npc:true,hidden:true,news:true}};Game.streetDecks[1]=['combat'];
