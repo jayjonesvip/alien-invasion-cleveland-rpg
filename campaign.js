@@ -21,6 +21,7 @@ const STREET_SIGHTS = [
   ['sign','npc','news','hidden'], ['sign','npc','hidden'], ['sign','news','hidden'], ['sign','hidden'], ['sign','npc','news'],
   ['sign','npc','hidden'], ['sign','hidden'], ['sign','npc','news'], ['sign','hidden'], ['sign','npc','hidden']
 ];
+const ONE_TIME_SIGHTS = new Set(['sign','npc','news']);
 const STREET_SIGNS = [
   'A newspaper seller hands you a rain-soaked Plain Dealer. The headline says the mayor is missing and the crisis began at Terminal Tower.',
   'The sideways bus still has a passenger list. One name is circled in ballpoint.',
@@ -94,7 +95,8 @@ function exploreRandom(seed) {
 function buildStreetDeck(street=streetNumber()) {
   Game.deckBuilds=Game.deckBuilds||{};
   const built=(Game.deckBuilds[street]||0)+1; Game.deckBuilds[street]=built;
-  const cards=[...(STREET_SIGHTS[street-1]||[])];
+  const seen=Game.streetSeen?.[street]||{};
+  const cards=[...(STREET_SIGHTS[street-1]||[])].filter(card=>!ONE_TIME_SIGHTS.has(card)||!seen[card]);
   if(!streetCleared()) cards.push('combat');
   for(const id of (DISTRICT_SHOPS[street-1]||[])) if(!(Game.knownShops||[]).includes(id)) cards.push('shop:'+id);
   const random=exploreRandom((Game.exploreSeed||1)^(street*997)^(built*131));
@@ -130,9 +132,11 @@ function drawExploreCard() {
   holdBossForSights(street);
   deck=Game.streetDecks[street];
   let card=deck.shift();
-  while(card==='combat'&&streetCleared()){
+  let skipped=0;
+  while((card==='combat'&&streetCleared())||(ONE_TIME_SIGHTS.has(card)&&Game.streetSeen[street]?.[card])){
     if(!deck.length) deck=Game.streetDecks[street]=buildStreetDeck(street);
     card=deck.shift();
+    if(++skipped>30){card='hidden';break;}
   }
   if(card==='sign'||card==='npc'||card==='hidden'||card==='news'){ Game.streetSeen[street]=Game.streetSeen[street]||{}; Game.streetSeen[street][card]=true; }
   return card;

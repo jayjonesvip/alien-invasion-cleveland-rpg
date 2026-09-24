@@ -69,11 +69,14 @@ assert.ok(el('#buttons').children.some(b=>b.textContent==='Coffee Shop'&&!b.disa
 assert.equal(el('#buttons').children.filter(b=>b.textContent==='Unknown stop').length,2);
 const seeded=Game.exploreSeed;Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];
 const dealt=[];for(let i=0;i<STREET_SIGHTS[0].length+4;i++)dealt.push(drawExploreCard());
-Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];Game.exploreSeed=seeded;
+Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];Game.streetSeen={};Game.exploreSeed=seeded;
 const redealt=[];for(let i=0;i<STREET_SIGHTS[0].length+4;i++)redealt.push(drawExploreCard());
 assert.deepEqual(redealt,dealt,'A street deals the same cards after a reload');
 assert.ok(dealt.includes('combat')&&dealt.includes('sign')&&dealt.includes('npc')&&dealt.includes('hidden')&&dealt.includes('news'));
 assert.ok(['shop:coffee','shop:pawn','shop:record'].every(card=>dealt.includes(card)));
+Game.streetSeen={1:{sign:true,npc:true,news:true}};Game.streetDecks[1]=['sign','npc','news','hidden'];
+const repeatGuard=[];for(let i=0;i<6;i++)repeatGuard.push(drawExploreCard());
+assert.ok(!repeatGuard.some(card=>ONE_TIME_SIGHTS.has(card)),'Fixed street text is never repeated, including stale saved decks');
 Game.level=1;Game.currentStreet=1;Game.aliensThisLevel=2;Game.knownShops=[];Game.streetSeen={};Game.streetDecks[1]=['combat'];
 assert.notEqual(drawExploreCard(),'combat','The boss waits until the block has been seen');
 Game.knownShops=['coffee','pawn','record'];Game.streetSeen={1:{sign:true,npc:true,hidden:true,news:true}};Game.streetDecks[1]=['combat'];
