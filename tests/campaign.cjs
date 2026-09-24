@@ -43,7 +43,10 @@ useWeaponCharge();useWeaponCharge();decayBuffsEndOfFight();assert.equal(Game.tem
 Game.scene='directory';travelToStreet(2);travelToStreet(3);startCombat();assert.equal(Game.enemy.isBoss,false);
 Game.enemy.hp=0;Game.turnsThisFight=1;const beforeBounty=Game.money;winCombat();const quick=Game.money-beforeBounty;
 assert.ok(quick>0);assert.equal(Game.pendingReward,0);assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('Collect $')),'Bounties progress automatically');
-Game.turnsThisFight=20;winCombat();collectReward();assert.equal(Game.money,beforeBounty+quick,'Rewards collected only once');
+assert.ok(el('#buttons').children.length>0,'Winning a fight restores directory actions');
+Game.buffs={fights:1,firstHitGuaranteed:false,damageTakenMult:1,enemyFirstTurnMissBonus:0};Game.scene='combat';Game.enemy=makeEnemy(false);Game.enemy.hp=0;
+winCombat();assert.equal(Game.scene,'directory');assert.ok(el('#buttons').children.length>0,'Expiring fight buffs cannot swallow post-fight buttons');
+const afterBuffWin=Game.money;Game.turnsThisFight=20;winCombat();collectReward();assert.equal(Game.money,afterBuffWin,'Rewards collected only once');
 Game.scene='explore';saveGame();const savedMoney=Game.money;const savedMax=Game.maxHP;
 Game.money=0;Game.learned=[];continueGame();assert.equal(Game.money,savedMoney);assert.ok(Game.learned.includes('superKick'));assert.equal(Game.maxHP,savedMax);
 startCombat();Game.enemy.hp-=3;Game.hp-=4;saveGame();const enemyHP=Game.enemy.hp,playerHP=Game.hp;

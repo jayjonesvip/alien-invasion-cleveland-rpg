@@ -1960,10 +1960,14 @@ decayBuffsEndOfRound();
       window.trackGameEvent?.('earn_virtual_currency', {virtual_currency_name:'Cleveland cash',value:reward});
       Game.money+=reward;Game.pendingReward=0;
       Game.aliensDefeated++;Game.aliensThisLevel++;
-      Game.enemy=null;Game.scene='explore';decayBuffsEndOfFight();
-      if(final) {Game.finalBossDefeated=true;window.trackGameEvent?.('campaign_complete', {aliens_defeated:Game.aliensDefeated});updateStats();updateHealthMeters();gameVictory();saveGame();return;}
+      Game.enemy=null;Game.scene='explore';
+      if(final) {decayBuffsEndOfFight();Game.finalBossDefeated=true;window.trackGameEvent?.('campaign_complete', {aliens_defeated:Game.aliensDefeated});updateStats();updateHealthMeters();gameVictory();saveGame();return;}
       const levelUp=checkLevelUp();updateStats();updateHealthMeters();
-      showDirectory('BOUNTY COLLECTED / $'+reward+(levelUp?' · LEVEL '+levelUp.level+' · MAX HP +'+levelUp.hpGain+' · FULLY HEALED':''));saveGame();
+      // Build the post-fight screen before queuing expiration copy. Starting that
+      // typewriter line first makes showDirectory() reject the transition as busy,
+      // leaving the player with an empty action area after a win.
+      showDirectory('BOUNTY COLLECTED / $'+reward+(levelUp?' · LEVEL '+levelUp.level+' · MAX HP +'+levelUp.hpGain+' · FULLY HEALED':''));
+      decayBuffsEndOfFight();saveGame();
     }
     function checkLevelUp() {
       if(Game.aliensThisLevel<Game.requiredThisLevel||Game.level>=10)return null;
