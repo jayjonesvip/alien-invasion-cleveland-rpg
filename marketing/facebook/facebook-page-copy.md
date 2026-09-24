@@ -65,13 +65,13 @@ Can you reach the harbor? https://lakeeffectinvasion.com/
 
 ## Image alt text
 
-- **Profile image:** Mint-green LE initials over a dark teal square, with an amber wave beneath them.
+- **Profile image:** Mint-green CLE initials with a grey alien sneaking between the letters, over a dark navy square with an amber wave beneath them.
 - **Cover image:** Alien saucers descend over rain-soaked Public Square and Terminal Tower beneath the title Lake Effect Invasion.
 - **Launch image:** Lake Effect Invasion title over a stormy 1989 Cleveland Public Square as alien beams strike the city.
 
 ## Files
 
-- `lake-effect-invasion-facebook-profile.png` — 1024 × 1024
+- `lake-effect-invasion-profile-cle-alien-dark-bg.png` — square master profile image
 - `lake-effect-invasion-facebook-cover.jpg` — 1640 × 624
 - `lake-effect-invasion-facebook-post.jpg` — 1200 × 630
 
