@@ -2,7 +2,7 @@
 const SAVE_KEY = 'alienRPGCampaignV1';
 const DISTRICT_SHOPS = [
   ['coffee','pawn','record'], ['pizza','thrift','drugstore'], ['diner','arcade'],
-  ['rac','camera'], ['chinese','deli'], ['convenience','bar'], ['surplus'], ['church'], ['hotdog'], []
+  ['rac','camera'], ['chinese','deli'], ['convenience','bar'], ['surplus'], ['church'], ['hotdog'], ['frank']
 ];
 const TRAINING = [
   {id:'throwEnemy', name:'Grappling VHS', price:18, skill:'throwEnemy', description:'Learn Throw Enemy: reliable, repeatable damage.'},
@@ -22,17 +22,22 @@ const STREET_SIGHTS = [
   ['sign','npc','hidden'], ['sign','hidden'], ['sign','npc','news'], ['sign','hidden'], ['sign','npc','hidden']
 ];
 const ONE_TIME_SIGHTS = new Set(['sign','npc','news']);
+function hiddenCachesLeft(street=streetNumber()) {
+  const finds=(typeof HIDDEN_FINDS==='undefined'?[]:HIDDEN_FINDS[street])||[];
+  const found=Game.secretsFound||[];
+  return finds.some(find=>!found.includes(find.id));
+}
 const STREET_SIGNS = [
-  'A newspaper seller hands you a rain-soaked Plain Dealer. The headline says the mayor is missing and the crisis began at Terminal Tower.',
-  'The sideways bus still has a passenger list. One name is circled in ballpoint.',
-  'The Palace marquee has been re-lettered by hand: THEY LEARN YOUR GUARD.',
-  'A revolving door turns by itself and spits out a safe-deposit tag from the tower bank.',
-  'A seagull drops a police radio on the civic steps. It is still switched on.',
-  'Steam off a manhole fogs a loading schedule. Tonight\'s dock is already crossed out.',
-  'The lift-bridge horn sounds. The tender\'s shack is empty.',
-  'One candle is still burning in a sanctuary window above Prospect.',
-  'Fresh chalk on the viaduct: RED GETS WORSE IF YOU WAIT.',
-  'The harbormaster\'s binoculars are set on a tripod, aimed back at the city.'
+  'Record Store tapes teach Grappling and Counter. Counter pays only after Guard blocks a hit.',
+  'Buy drugstore Conditioning before the thrift tape. The second one will not take alone.',
+  'The marquee reads: Guard cuts the next hit in half. Lake Effect Kick works once a fight.',
+  'The camera flash makes the alien\'s first swing likelier to miss. The Radio Shack flash makes your first swing hit.',
+  'The police radio says a grey pulse ignores a jacket. Guard and Conditioning still reduce it.',
+  'A loading note says beer and whiskey cost health. Heal at the convenience store.',
+  'Surplus sells the heavy punch tape and a vest. The vest does nothing against grey.',
+  'The sanctuary note says church Conditioning needs both earlier tapes. The blessing heals a little and blocks a little.',
+  'Fresh chalk on the viaduct: red hits harder every round. Eat at the hot dog cart, then finish a red fight quickly.',
+  'The binocular card says two guards on the pier, then the red commander inside Captain Frank\'s.'
 ];
 const STREET_VOICES = [
   'Stay under the Tower lights. They hate the square.',
@@ -47,14 +52,14 @@ const STREET_VOICES = [
   'The commander watches for the second guard to fall.'
 ];
 const STREET_PAPERS = [
-  'CLEVELAND PRESS: Troops at Public Square. The Rapid is still running.',
+  'Troops at Public Square. The Rapid is still running.',
   null,
-  'CLEVELAND PRESS: Euclid marquees to go dark. Do not trust a quiet lobby.',
+  'Euclid marquees to go dark. Do not trust a quiet lobby.',
   null,
-  'CLEVELAND PRESS: Lakeside plaza held through the night. Bring nothing that shines.',
+  'Lakeside plaza held through the night. Bring nothing that shines.',
   null,
   null,
-  'CLEVELAND PRESS: St. Stanislaus is housing anyone who saw the boss land.',
+  'St. Stanislaus is housing anyone who saw the boss land.',
   null,
   null
 ];
@@ -96,12 +101,19 @@ function buildStreetDeck(street=streetNumber()) {
   Game.deckBuilds=Game.deckBuilds||{};
   const built=(Game.deckBuilds[street]||0)+1; Game.deckBuilds[street]=built;
   const seen=Game.streetSeen?.[street]||{};
-  const cards=[...(STREET_SIGHTS[street-1]||[])].filter(card=>!ONE_TIME_SIGHTS.has(card)||!seen[card]);
-  if(!streetCleared()) cards.push('combat');
+  const cards=[...(STREET_SIGHTS[street-1]||[])].filter(card=>{
+    if(ONE_TIME_SIGHTS.has(card)&&seen[card]) return false;
+    if(card==='hidden'&&!hiddenCachesLeft(street)) return false;
+    return true;
+  });
+  if(!streetCleared()&&!harborBossWaiting(street)) cards.push('combat');
   for(const id of (DISTRICT_SHOPS[street-1]||[])) if(!(Game.knownShops||[]).includes(id)) cards.push('shop:'+id);
   const random=exploreRandom((Game.exploreSeed||1)^(street*997)^(built*131));
   for(let i=cards.length-1;i>0;i--){ const j=Math.floor(random()*(i+1)); const swap=cards[i]; cards[i]=cards[j]; cards[j]=swap; }
   return cards;
+}
+function harborBossWaiting(street=streetNumber()) {
+  return street===10&&street===activeStreet()&&!streetCleared()&&Game.aliensThisLevel===regularWinsRequired(Game.level);
 }
 function streetSights(street=streetNumber()) {
   return [...(STREET_SIGHTS[street-1]||[]),(DISTRICT_SHOPS[street-1]||[]).map(id=>'shop:'+id)].flat();
@@ -133,11 +145,15 @@ function drawExploreCard() {
   deck=Game.streetDecks[street];
   let card=deck.shift();
   let skipped=0;
-  while((card==='combat'&&streetCleared())||(ONE_TIME_SIGHTS.has(card)&&Game.streetSeen[street]?.[card])){
+  if(card==='hidden'&&!hiddenCachesLeft(street)) card='quiet';
+  while((card==='combat'&&(streetCleared()||harborBossWaiting(street)))||(ONE_TIME_SIGHTS.has(card)&&Game.streetSeen[street]?.[card])){
     if(!deck.length) deck=Game.streetDecks[street]=buildStreetDeck(street);
+    if(!deck.length){card='quiet';break;}
     card=deck.shift();
-    if(++skipped>30){card='hidden';break;}
+    if(card==='hidden'&&!hiddenCachesLeft(street)){card='quiet';break;}
+    if(++skipped>30){card='quiet';break;}
   }
+  if(!card) card='quiet';
   if(card==='sign'||card==='npc'||card==='hidden'||card==='news'){ Game.streetSeen[street]=Game.streetSeen[street]||{}; Game.streetSeen[street][card]=true; }
   return card;
 }
@@ -204,11 +220,11 @@ function showDirectory(arrival='') {
   appendStory('You are on '+getStreet(here).name+'.','special');
   appendStory(STREET_LANDMARKS[here-1]+'.','system');
   const required=winsRequiredForStreet(Game.level), regularRequired=required-1;
-  appendStory(cleared?'This street is clear. The fight is on '+getStreet(activeStreet()).name+'.':Game.aliensThisLevel+' of '+required+' fights won. '+(Game.aliensThisLevel===regularRequired?'The boss is hiding here.':(regularRequired-Game.aliensThisLevel)+' more before the boss.'),'system');
-  if(here===10&&!cleared)appendStory('Two guards, then the Mothership Commander. No shops on the harbor.','special');
+  appendStory(cleared?'This street is clear. The fight is on '+getStreet(activeStreet()).name+'.':Game.aliensThisLevel+' of '+required+' fights won. '+(Game.aliensThisLevel===regularRequired?(here===10?'The commander is waiting inside Captain Frank\'s.':'The boss is hiding here.'):(regularRequired-Game.aliensThisLevel)+' more before the boss.'),'system');
+  if(here===10&&!cleared)appendStory(Game.aliensThisLevel===regularRequired?'The pier guards are down. Step into Captain Frank\'s.':'Two guards on the pier, then the red commander inside Captain Frank\'s.','special');
   const bossReady=!cleared&&Game.aliensThisLevel===regularWinsRequired(Game.level);
   const exploreButton=addButton(cleared?'Explore Safely':'Explore Street',()=>encounter());
-  describeActionButton(exploreButton,cleared?'Shops, rumors, and anything still hidden. No aliens.':bossReady?'The district boss is hiding on this street.':'Aliens, rumors, and hidden caches.');
+  describeActionButton(exploreButton,cleared?'Shops, rumors, and anything still hidden. No aliens.':here===10&&bossReady?'The commander is inside Captain Frank\'s, not out on the pier.':bossReady?'The district boss is hiding on this street.':'Aliens, rumors, and hidden caches.');
   for(const id of availableShopIds()){
     if((Game.knownShops||[]).includes(id)) addButton(getBusiness(id).name,()=>startBusiness(id));
     else addButton('Unknown stop',()=>{},true);

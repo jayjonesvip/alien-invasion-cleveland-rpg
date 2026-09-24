@@ -41,7 +41,8 @@ window.SceneArt = (() => {
     camera: ['shop-camera', 'Instant cameras, flash equipment, and film boxes fill a camera shop.', 'Camera Shop'],
     rac: ['shop-radio-shack', 'A red-vested clerk stands among batteries, wires, and portable televisions.', 'Radio Shack'],
     record: ['shop-record', 'Vinyl crates and cassette racks surround a record-store counter.', 'Record Store'],
-    church: ['shop-st-stanislaus', 'A priest offers shelter in a candlelit sanctuary.', 'St. Stanislaus']
+    church: ['shop-st-stanislaus', 'A priest offers shelter in a candlelit sanctuary.', 'St. Stanislaus'],
+    frank: ['street-erieside', 'Fishing nets and empty lobster tanks fill a dark pier restaurant under the mothership.', "Captain Frank's"]
   };
   const encounters = {
     tv: ['encounter-tv', 'An old shop-window television carries emergency invasion coverage.', 'Emergency Broadcast', 'LIVE COVERAGE'],

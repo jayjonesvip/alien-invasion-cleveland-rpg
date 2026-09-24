@@ -66,7 +66,7 @@ Defeating a boss unlocks the next street but leaves the player in place. Walking
 | Old River | Army Surplus | Lift bridge |
 | Prospect | St. Stanislaus | Neighborhood sanctuary |
 | Huron | Hot Dog Cart | Railway viaduct |
-| Erieside | No shops; stock up before arrival | Lake Erie harbor |
+| Erieside | Captain Frank's is the ambush, not a store. Stock up before arrival | East 9th Street Pier |
 
 
 ## Combat and difficulty ramp
