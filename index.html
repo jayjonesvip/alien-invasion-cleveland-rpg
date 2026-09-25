@@ -1977,7 +1977,7 @@ decayBuffsEndOfRound();
       // typewriter line first makes showDirectory() reject the transition as busy,
       // leaving the player with an empty action area after a win.
       const rewardLine='BOUNTY COLLECTED / $'+reward+(levelUp?' · LEVEL '+Math.max(0,levelUp.level-1)+' · MAX HP +'+levelUp.hpGain+' · FULLY HEALED':'');
-      if(levelUp)showDispatch(rewardLine);else showDirectory(rewardLine);
+      if(levelUp)showCabPickup(rewardLine);else showDirectory(rewardLine);
       decayBuffsEndOfFight();saveGame();
     }
     function checkLevelUp() {
