@@ -19,7 +19,7 @@ Or download the repository ZIP, extract it, and open `index.html` in a modern we
 - Turn-based combat with purchasable martial-arts VHS moves, guarding, and counterattacks
 - A local directory for each street, with landmarks, local shops, and visible item effects
 - Food that heals now and grants a permanent first-taste upgrade for the current run
-- A cab-dispatch campaign with a Public Square prologue, eight freely ordered districts, and a blockaded lakefront finale
+- A single-action Public Square onboarding, cab-dispatch campaign, eight freely ordered districts, and a blockaded lakefront finale
 - Automatic local checkpoints, Continue, and shelter recovery after defeat
 - Business loyalty card system
 - Armor and equipment mechanics

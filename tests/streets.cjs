@@ -2,11 +2,19 @@ const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`
 function clearCurrentStreet(){
   const needed=winsRequiredForStreet(Game.level);
-  for(let i=0;i<needed;i++){startCombat();assert.ok(Game.enemy);Game.enemy.hp=0;winCombat();collectReward();}
+  for(let i=Game.aliensThisLevel;i<needed;i++){startCombat();assert.ok(Game.enemy);Game.enemy.hp=0;winCombat();collectReward();}
 }
 
 newGame();assert.equal(streetNumber(),1);assert.equal(Game.level,1);assert.equal(Game.mayorState,'pending');
 assert.equal(el('#statLevel').textContent,0);
+assert.equal(Game.onboardingStep,'start');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Explore');
+advanceOnboarding('stranger');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Talk to Him');
+advanceOnboarding('warning');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Explore');
+Game.hp=7;advanceOnboarding('zapped');assert.equal(Game.hp,7);assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Keep Moving');
+advanceOnboarding('hotdog');assert.equal(el('#streetArt').dataset.asset,'shop-hotdog');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Eat Hot Dog');
+Game.hp=Game.maxHP;advanceOnboarding('recovered');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Explore Again');
+startOnboardingFight();assert.equal(Game.enemy.maxHP,6);assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Tackle');
+Game.enemy.hp=0;winCombat();collectReward();assert.equal(Game.onboardingStep,'complete');assert.equal(Game.aliensThisLevel,1);assert.equal(Game.money,13);
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'));
 assert.ok(!el('#buttons').children.some(b=>/Take the bus|Take the Rapid|Hail a cab/.test(b.textContent)),'Opening transit lottery is retired');
 
@@ -25,7 +33,7 @@ goToDispatchStreet(5);assert.equal(streetNumber(),5);assert.equal(activeStreet()
 assert.equal(el('#streetArt').dataset.asset,'street-lakeside');
 assert.equal(Game.route[1],5);assert.match(televisionReport(),/City Hall/i);assert.match(newspaperReport(),/CITY HALL HOLDS/);
 
-newGame();clearCurrentStreet();showDispatch();chooseDispatchStreet(3);goToDispatchStreet(3);
+newGame();Game.onboardingStep='complete';clearCurrentStreet();showDispatch();chooseDispatchStreet(3);goToDispatchStreet(3);
 assert.equal(Game.mayorState,'controlled');assert.equal(streetNumber(),3);assert.equal(Game.route[1],3);
 Game.streetSeen={};Game.streetDecks={};Game.deckBuilds={};
 assert.ok(buildStreetDeck(3).includes('police'),'Controlled police can appear on occupied streets');
@@ -50,6 +58,7 @@ Game.secretsFound=[];revealHidden(HIDDEN_FINDS[7][0]);assert.equal(hasFranksKey(
 Game.scene='dispatch';Game.currentStreet=9;saveGame();Game.mayorState='pending';continueGame();
 assert.equal(Game.scene,'dispatch');assert.equal(Game.mayorState,'rescued');
 const stored=JSON.parse(localStorage.getItem(SAVE_KEY));assert.equal(stored.version,2);
+newGame();advanceOnboarding('zapped');saveGame();Game.onboardingStep='complete';continueGame();assert.equal(Game.onboardingStep,'zapped');assert.equal(Game.scene,'onboarding');
 const invalid=JSON.parse(localStorage.getItem(SAVE_KEY));invalid.state.mayorState='alien';localStorage.setItem(SAVE_KEY,JSON.stringify(invalid));assert.equal(readSave(),null);
 `,context);
 console.log('PASS: Public Square prologue; cab dispatch; free street order; Lakeside-first and controlled-mayor branches; safe revisits; harbor blockade; pre-harbor key; dispatch saves.');

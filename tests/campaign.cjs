@@ -1,7 +1,7 @@
 const {context,el,storage,vm,assert}=require('./art-integration.cjs');
 async function main(){
 await vm.runInContext(`(async()=>{
-newGame();assert.equal(Game.money,8);assert.equal(Game.learned.length,0);
+newGame();Game.onboardingStep='complete';assert.equal(Game.money,8);assert.equal(Game.learned.length,0);
 assert.ok(businesses.every(b=>b.items.length<=3),'Every store is capped at three purchasable items');
 // Every non-combat encounter has a visible route back, including after dialogue.
 for(const [start,action] of [[startMisc,'Watch'],[startNews,'Read'],[startNPC,'Talk'],[startPolice,'Talk'],[startEmpty,'Look Around'],[()=>announceBusiness('coffee'),null]]) {
@@ -19,7 +19,7 @@ startCombat();assert.ok(!el('#buttons').children.some(b=>b.textContent==='Back t
 el('#buttons').children.find(b=>b.textContent==='Flee').onclick({});
 el('#buttons').children.find(b=>b.textContent==='Back to Directory').onclick({});assert.equal(Game.scene,'directory');
 StoryType.typing=true;updateCampaignHUD();assert.equal(el('#directoryBtn').disabled,true);StoryType.typing=false;updateCampaignHUD();assert.equal(el('#directoryBtn').disabled,false);
-newGame();
+newGame();Game.onboardingStep='complete';
 assert.equal(availableShopIds().join(','),'coffee,pawn,record');
 Game.money=200;Game.currentStreet=Game.level=Game.highestDistrict=3;startBusiness('arcade');
 const tape=getBusiness('arcade').items.find(x=>x.id==='superKick');

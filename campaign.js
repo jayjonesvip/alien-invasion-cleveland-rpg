@@ -84,7 +84,7 @@ function activeStreet() { return (Game.route||defaultRoute())[Game.level-1]; }
 function routeIndex(street) { return (Game.route||defaultRoute()).indexOf(street); }
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,mayorState:'pending',cabMet:false,dispatchSelection:null,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,mayorState:'pending',cabMet:false,dispatchSelection:null,onboardingStep:'start',onboardingFight:false,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
@@ -92,6 +92,50 @@ function streetNumber() { return Game.currentStreet; }
 function streetCleared() { const index=routeIndex(streetNumber()); return index<0 || index<Game.level-1 || Game.finalBossDefeated; }
 function availableShopIds() { return DISTRICT_SHOPS[streetNumber()-1] || []; }
 function canVisitShop(id) { return availableShopIds().includes(id) && !['combat','victory','gameover'].includes(Game.scene); }
+
+function advanceOnboarding(step) { Game.onboardingStep=step;showOnboardingStep(); }
+function showOnboardingStep() {
+  if(Game.onboardingStep==='complete')return showDirectory('PUBLIC SQUARE / LEVEL 0 · The real fight begins now.');
+  Game.enemy=null;Game.businessEntered=false;Game.currentBiz=null;Game.artEncounter=null;Game.scene='onboarding';
+  $('#story').innerHTML='';clearButtons();updateStats();updateHealthMeters();
+  switch(Game.onboardingStep){
+    case 'start':
+      appendStory('PUBLIC SQUARE / SEPTEMBER 1989 · Strange lights circle Terminal Tower. The streets have gone quiet.','special');
+      addButton('Explore',()=>advanceOnboarding('stranger'));break;
+    case 'stranger':
+      Game.scene='npc';Game.artEncounter='survivor';updateStats();
+      appendStory('A battered man waves you into a doorway. He has seen the creatures up close.','system');
+      addButton('Talk to Him',()=>advanceOnboarding('warning'));break;
+    case 'warning':
+      Game.scene='npc';Game.artEncounter='survivor';updateStats();
+      appendStory('“Aliens. They bleed. Get close and punch or tackle them before they can use those beams.”','news');
+      addButton('Explore',()=>{Game.hp=Math.max(5,Math.floor(Game.maxHP*.14));advanceOnboarding('zapped');});break;
+    case 'zapped':
+      appendStory('A blue flash catches you from behind. An alien leaves you crumpled in the rain, certain you are dead.','miss');
+      appendStory('You are hurt badly—but you are tougher than it thought.','special');
+      addButton('Keep Moving',()=>advanceOnboarding('hotdog'));break;
+    case 'hotdog':
+      Game.scene='business';Game.currentBiz='hotdog';Game.businessEntered=true;updateStats();
+      appendStory('Steam rises from a hot-dog cart. The vendor takes one look at you and loads a dog with stadium mustard.','system');
+      appendStory('“Eat up if you want revenge.”','news');
+      addButton('Eat Hot Dog',()=>{Game.hp=Game.maxHP;advanceOnboarding('recovered');});break;
+    case 'recovered':
+      Game.scene='business';Game.currentBiz='hotdog';Game.businessEntered=true;updateStats();
+      appendStory('The hot dog hits the spot. Your strength comes roaring back.','hit');
+      appendStory('Somewhere across Public Square, the alien that zapped you is still hunting.','system');
+      addButton('Explore Again',startOnboardingFight);break;
+  }
+  saveGame();
+}
+function startOnboardingFight(){
+  Game.onboardingStep='fight';Game.onboardingFight=true;Game.scene='combat';Game.currentBiz=null;Game.businessEntered=false;Game.artEncounter=null;
+  Game.enemy={name:'blue',color:'blue',hp:6,maxHP:6,attackMin:1,attackMax:2,isBoss:false};
+  Game.pendingReward=0;Game.guarding=false;Game.abilitiesUsed={};Game.turnsThisFight=0;Game.buffs={firstHitGuaranteed:true,enemyFirstTurnMissBonus:1};
+  $('#story').innerHTML='';clearButtons();updateStats();updateHealthMeters();
+  appendStory('The same blue alien steps from behind the buses. This time, you are ready.','special');
+  window.trackGameEvent?.('fight_start',{enemy_type:'blue',is_boss:false,onboarding:true});
+  updateCombatButtons();saveGame();
+}
 function noteShop(id) { Game.knownShops=Game.knownShops||[]; if(id&&!Game.knownShops.includes(id)) Game.knownShops.push(id); }
 function exploreRandom(seed) {
   let value=seed>>>0;
@@ -353,8 +397,9 @@ function addDirectoryReturn() {
 }
 function updateCampaignHUD() {
   const directory=$('#directoryBtn');
-  directory.disabled=['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
-  directory.title=Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight for an automatic bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
+  const onboarding=Game.onboardingStep&&Game.onboardingStep!=='complete';
+  directory.disabled=onboarding||['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
+  directory.title=onboarding?'Finish the Public Square opening first.':Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight for an automatic bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
   $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/'+winsRequiredForStreet(Game.level)+' WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';
@@ -429,6 +474,10 @@ function readSave() {
     if(s.mayorState!=null&&!['pending','saved','controlled','rescued'].includes(s.mayorState))return null;
     if(s.cabMet!=null&&typeof s.cabMet!=='boolean')return null;
     if(s.dispatchSelection!=null&&(!Number.isInteger(s.dispatchSelection)||s.dispatchSelection<2||s.dispatchSelection>10))return null;
+    if(s.onboardingStep!=null&&!['start','stranger','warning','zapped','hotdog','recovered','fight','complete'].includes(s.onboardingStep))return null;
+    if(s.onboardingFight!=null&&typeof s.onboardingFight!=='boolean')return null;
+    if(s.onboardingStep==null)s.onboardingStep='complete';
+    if(s.onboardingFight==null)s.onboardingFight=false;
     if(s.keySold!=null&&typeof s.keySold!=='boolean')return null;
     if(s.raidCoverUsed!=null&&typeof s.raidCoverUsed!=='boolean')return null;
     if(s.secretsFound!=null&&(!Array.isArray(s.secretsFound)||s.secretsFound.some(id=>typeof id!=='string')))return null;
@@ -440,7 +489,7 @@ function readSave() {
     if(s.tempWeapon!==null&&!Object.hasOwn(TEMP_WEAPONS,s.tempWeapon))return null;
     if(s.armor!==null&&(!object(s.armor)||typeof s.armor.name!=='string'||!Number.isFinite(s.armor.dr)||!Number.isFinite(s.armor.durabilityHits)))return null;
     if(s.buffs!==null&&!object(s.buffs))return null;
-    if(!['intro','dispatch','cab-pickup','explore','directory','business','npc','empty','combat','victory','gameover'].includes(s.scene))return null;
+    if(!['intro','onboarding','dispatch','cab-pickup','explore','directory','business','npc','empty','combat','victory','gameover'].includes(s.scene))return null;
     if(s.scene==='combat'&&(!s.enemy||!CONFIG.enemyTypes.includes(s.enemy.color)||!Number.isFinite(s.enemy.hp)||s.enemy.hp<0||!Number.isFinite(s.enemy.maxHP)||s.enemy.maxHP<=0||s.enemy.hp>s.enemy.maxHP||!Number.isFinite(s.pendingReward)||s.pendingReward<0))return null;
     return s;
   } catch { return null; }
@@ -453,10 +502,12 @@ function continueGame() {
   Game.guarding=false;Game.secretsFound=Array.isArray(Game.secretsFound)?Game.secretsFound:[];Game.knownShops=Array.isArray(Game.knownShops)?Game.knownShops:[];
   if(!['pending','saved','controlled','rescued'].includes(Game.mayorState))Game.mayorState='pending';Game.cabMet=!!Game.cabMet;
   if(!Number.isInteger(Game.dispatchSelection)||Game.dispatchSelection<2||Game.dispatchSelection>10)Game.dispatchSelection=null;
+  if(!Game.onboardingStep)Game.onboardingStep='complete';Game.onboardingFight=!!Game.onboardingFight;
   if(Game.ally!=='raid'&&Game.ally!=='kitchen')Game.ally=null;Game.keySold=!!Game.keySold;Game.raidCoverUsed=!!Game.raidCoverUsed;
   if(!Number.isInteger(Game.exploreSeed))Game.exploreSeed=1;Game.streetDecks=Game.streetDecks||{};Game.deckBuilds=Game.deckBuilds||{};Game.streetSeen=Game.streetSeen||{};showGameUI();$('#story').innerHTML='';updateStats();updateHealthMeters();
   if(Game.scene==='victory'){gameVictory();return;}
   if(Game.hp<=0||Game.scene==='gameover'){gameOver(false);return;}
+  if(Game.onboardingStep!=='complete'&&Game.scene!=='combat'){showOnboardingStep();return;}
   if(Game.scene==='combat') {
     if(Game.enemy.hp<=0)collectReward();
     else {appendStory('Resumed your encounter with '+enemyLabel()+'.','system');updateCombatButtons();}
