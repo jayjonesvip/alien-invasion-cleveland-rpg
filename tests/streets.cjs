@@ -10,7 +10,7 @@ assert.equal(el('#statLevel').textContent,0);
 assert.equal(Game.onboardingStep,'start');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Explore');
 advanceOnboarding('stranger');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Talk to Him');
 advanceOnboarding('warning');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Explore');
-Game.hp=7;advanceOnboarding('zapped');assert.equal(Game.hp,7);assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Keep Moving');
+onboardingZap();assert.equal(Game.hp,7);assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Keep Moving');
 advanceOnboarding('hotdog');assert.equal(el('#streetArt').dataset.asset,'shop-hotdog');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Eat Hot Dog');
 Game.hp=Game.maxHP;advanceOnboarding('recovered');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Explore Again');
 startOnboardingFight();assert.equal(Game.enemy.maxHP,6);assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Tackle');

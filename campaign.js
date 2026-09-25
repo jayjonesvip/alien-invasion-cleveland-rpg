@@ -101,6 +101,15 @@ function availableShopIds() { return DISTRICT_SHOPS[streetNumber()-1] || []; }
 function canVisitShop(id) { return availableShopIds().includes(id) && !['combat','victory','gameover'].includes(Game.scene); }
 
 function advanceOnboarding(step) { Game.onboardingStep=step;showOnboardingStep(); }
+function onboardingZap() {
+  Game.hp=Math.max(5,Math.floor(Game.maxHP*.14));
+  advanceOnboarding('zapped');
+  const ui=$('#gameUI'), scene=$('#sceneArt');
+  ui.classList.remove('shake');scene.classList.remove('attack-blue');
+  void ui.offsetWidth;
+  ui.classList.add('shake');scene.classList.add('attack-blue');
+  setTimeout(()=>{ui.classList.remove('shake');scene.classList.remove('attack-blue');},650);
+}
 function showOnboardingStep() {
   if(Game.onboardingStep==='complete')return showDirectory('PUBLIC SQUARE / LEVEL 0 · The real fight begins now.');
   Game.enemy=null;Game.businessEntered=false;Game.currentBiz=null;Game.artEncounter=null;Game.scene='onboarding';
@@ -116,7 +125,7 @@ function showOnboardingStep() {
     case 'warning':
       Game.scene='npc';Game.artEncounter='survivor';updateStats();
       appendStory('“Aliens. They bleed. Get close and punch or tackle them before they can use those beams.”','news');
-      addButton('Explore',()=>{Game.hp=Math.max(5,Math.floor(Game.maxHP*.14));advanceOnboarding('zapped');});break;
+      addButton('Explore',onboardingZap);break;
     case 'zapped':
       appendStory('A blue flash catches you from behind. An alien leaves you crumpled in the rain, certain you are dead.','miss');
       appendStory('You are hurt badly—but you are tougher than it thought.','special');
