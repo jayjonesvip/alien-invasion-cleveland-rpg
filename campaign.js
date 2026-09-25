@@ -299,7 +299,8 @@ function showDispatch(arrival='') {
   appendStory(worldLine,Game.mayorState==='controlled'?'miss':'system');
   for(let street=2;street<=10;street++){
     const button=addButton(getStreet(street).name,()=>chooseDispatchStreet(street));
-    if(dispatchStatus(street)==='SAFE')button.classList.add('dispatch-safe');
+    const status=dispatchStatus(street);
+    button.classList.add(status==='SAFE'?'dispatch-safe':status==='BLOCKADED'?'dispatch-blocked':'dispatch-target');
   }
   saveGame();
 }
