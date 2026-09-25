@@ -117,6 +117,8 @@ assert.match(STREET_SIGNS[8],/red hits harder/);assert.match(STREET_SIGNS[9],/re
 newGame();assert.equal(streetNumber(),1);
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore on foot'));
 assert.ok(!el('#buttons').children.some(b=>b.textContent==='Start Adventure'));
+const departureCopy=el('#buttons').children.map(b=>b.textContent).join(' ');
+assert.ok(!/Ontario start|Euclid or Superior|Prospect, or Huron|East 9th or West 6th/.test(departureCopy),'Departure buttons do not spoil their possible destinations');
 const transitRandom=Math.random;Math.random=()=>0;
 el('#buttons').children.find(b=>b.textContent==='Take the bus').onclick({});
 assert.equal(el('#streetArt').dataset.asset,'transit-bus-zapped');
