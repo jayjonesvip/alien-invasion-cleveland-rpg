@@ -20,7 +20,7 @@ assert.ok(!el('#buttons').children.some(b=>/Take the bus|Take the Rapid|Hail a c
 
 clearCurrentStreet();
 assert.equal(Game.level,2);assert.equal(Game.scene,'cab-pickup');
-assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Get in Cab');
+assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Get in Cab');assert.equal(Game.cabMet,true,'Cabby introduces himself after Public Square');
 showDispatch();assert.equal(Game.scene,'dispatch');assert.equal(Game.cabMet,true);
 assert.equal(el('#streetArt').dataset.asset,'transit-cab-scared');
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Lakeside Ave'));

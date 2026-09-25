@@ -320,7 +320,11 @@ function showCabPickup(arrival='') {
   Game.scene='cab-pickup';Game.dispatchSelection=null;Game.enemy=null;Game.businessEntered=false;Game.artEncounter=null;
   $('#story').innerHTML='';updateStats();updateHealthMeters();clearButtons();
   if(arrival)appendStory(arrival,'news');
-  appendStory('Street clear. The cab waits at the curb for your next dispatch call.','special');
+  const firstMeeting=!Game.cabMet&&streetNumber()===1;
+  if(firstMeeting){
+    appendStory('An old Cleveland cab rolls to the curb. The cabby watched you clear Public Square from behind the wheel. His dispatch radio still works, and he has been waiting for someone tough enough to answer its calls.','special');
+    Game.cabMet=true;
+  } else appendStory('Street clear. Your cabby pulls to the curb, dispatch radio already crackling with the next calls.','special');
   addButton('Get in Cab',()=>showDispatch());
   saveGame();
 }
