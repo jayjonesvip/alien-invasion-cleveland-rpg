@@ -635,7 +635,7 @@
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
   <link rel="stylesheet" href="retro-skin.css?v=4.8" />
-<script src="scene-art.js?v=2.8"></script>
+<script src="scene-art.js?v=2.9"></script>
 </head>
 
 <body>
@@ -669,8 +669,8 @@
         { name: "mind control pulse", hit: 0.25, minDamage: 10, maxDamage: 16 }
       ],
 
-      survivorDialogue: ["We have to keep fighting!", "Never Surrender to these alien thugs!", "I hate these little bastards", "They are everywhere, run!"],
-      policeDialogue: ["Save yourself", "Don't be a hero. Go home!", "Seek shelter immediately", "There's nothing to see here"],
+      survivorDialogue: ["Every street you clear gives somebody room to breathe.", "The cab radio knows which blocks are still occupied.", "Those little bastards are still hunting in the rain.", "If a street is marked SAFE, your work there held."],
+      policeDialogue: ["Keep moving and watch the rooftops.", "Dispatch is counting contacts street by street.", "Use the cab. Do not cross an occupied block alone.", "If our radios repeat themselves, do not obey them."],
       bartenderTips: ["I heard you get super powers if you defeat enough aliens", "Keep eating or die fighting", "There is nothing wrong with fleeing a fight you can't win.", "How about them Browns?!"],
       tvNews: ["Aliens are coming from every direction", "There are 4 different aliens species in Cleveland", "Mothership spotted above Lake Erie", "The aliens can harm you with mind control, photon zaps and energy beams."],
       newspaperHeadlines: ["Bush Deploys Troops to Cleveland", "Aliens Invade Earth", "Mayor Voinovich Is Missing"],
@@ -1560,6 +1560,19 @@
       if(Game.mayorState==='rescued')return 'CITY HALL LIBERATED: The mayor says, “Ignore every order my voice gave before the signal cleared.”';
       return nextStreetNewsLine();
     }
+    function survivorReport() {
+      const local=STREET_VOICES[streetNumber()-1];
+      if(local)return local;
+      if(Game.mayorState==='controlled')return 'The mayor gave the same order three times without blinking. The police radios changed right after.';
+      if(Game.mayorState==='rescued')return 'The City Hall signal is clean now, but old alien orders are still circulating.';
+      if(Game.mayorState==='saved')return 'City Hall is answering again. The patrol radios sound human.';
+      return CONFIG.survivorDialogue[rand(0,CONFIG.survivorDialogue.length-1)];
+    }
+    function policeReport() {
+      if(Game.mayorState==='rescued')return 'City Hall is free. Ignore any recording made before the signal cleared.';
+      if(Game.mayorState==='saved')return 'The mayor held City Hall. We can trust dispatch—for now.';
+      return CONFIG.policeDialogue[rand(0,CONFIG.policeDialogue.length-1)];
+    }
     function newspaperReport() {
       if(Game.mayorState==='saved')return 'CITY HALL HOLDS — MAYOR CALLS FOR NEIGHBORHOOD DEFENSE';
       if(Game.mayorState==='controlled')return 'POLICE CHECKPOINTS EXPAND — WITNESSES SAY OFFICERS MOVE IN UNISON';
@@ -2284,6 +2297,7 @@ decayBuffsEndOfRound();
       clearButtons();addButton('Keep Exploring', () => encounter());saveGame();
     }
     function offerHidden(find) {
+      if(find.id==='franks-key'){Game.artEncounter='franks-key';updateStats();}
       appendStory('HIDDEN / ' + find.text, 'special');
       clearButtons();
       addButton(find.cash?'Take $'+find.cash:'Take Key',()=>claimHidden(find));
@@ -2370,7 +2384,7 @@ decayBuffsEndOfRound();
 
 
     function startMisc() {
-      Game.artEncounter = 'tv';
+      Game.artEncounter = Game.mayorState==='controlled'?'mayor-controlled':'tv';
       Game.scene = 'npc'; appendStory('[TV] You see a television in a shop window.', 'system'); clearButtons();
       addButton('Watch', () => {
         const newsLine = televisionReport();
@@ -2398,15 +2412,16 @@ decayBuffsEndOfRound();
       Game.artEncounter = 'survivor';
       Game.scene = 'npc'; appendStory('[SURVIVOR] a local bystander hiding in the shadows.', 'system'); clearButtons();
       addButton('Talk', () => {
-        const dialogue = STREET_VOICES[streetNumber() - 1] || CONFIG.survivorDialogue[rand(0, CONFIG.survivorDialogue.length - 1)];
+        const dialogue = survivorReport();
         appendStory('They say: "' + dialogue + '"', 'system'); clearButtons();
-        if(!Game.ally&&!Game.keySold) addButton('Ask about the kitchen door', () => {
+        if(!Game.ally&&!Game.keySold&&!hasFranksKey()&&!Game.finalBossDefeated) addButton('Ask about the kitchen door', () => {
           pledgeAlly('kitchen');
           appendStory('They tell you the kitchen door at Captain Frank\'s. One pier guard never watches it.','special');
           clearButtons();
           addButton('Keep Exploring', () => encounter());
         });
-        else if(Game.ally==='raid') appendStory('You already promised the East 9th cop a raid. The kitchen stays shut.','system');
+        else if(Game.ally==='raid') appendStory('The East 9th officer already has the dining-room approach covered. The kitchen stays out of the plan.','system');
+        else if(hasFranksKey()) appendStory('The brass harbor key you found is already your way into Captain Frank\'s.','system');
         addButton('Keep Exploring', () => encounter());
       });
       addButton('Keep Exploring', () => encounter());
@@ -2424,7 +2439,7 @@ decayBuffsEndOfRound();
       }
       appendStory(Game.mayorState==='saved'?'[POLICE OFFICER] City Hall sent a patrol to help clear the street.':'[POLICE OFFICER] A cop watches the streets cautiously.', 'system'); clearButtons();
       addButton('Talk', () => {
-        const dialogue = CONFIG.policeDialogue[rand(0, CONFIG.policeDialogue.length - 1)];
+        const dialogue = policeReport();
         appendStory('Officer says: "' + dialogue + '"', 'system'); clearButtons();
         if(streetNumber()===4&&!Game.ally&&!Game.keySold) addButton('Ask for the raid', () => {
           pledgeAlly('raid');

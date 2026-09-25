@@ -40,23 +40,23 @@ const STREET_SIGNS = [
   'The binocular card says two guards on the pier, then the red commander inside Captain Frank\'s.'
 ];
 const STREET_VOICES = [
-  'Stay under the Tower lights. They hate the square.',
-  'I saw it zap the tire. I am not driving that bus.',
+  'The Tower lights make the little ones keep their distance.',
+  'That bus tire did not blow. Something in the sky zapped it.',
   null,
   null,
-  'The plaza is the only open ground. Do not bring anything that shines.',
+  'City Hall is on Lakeside. Whatever happened there changed the police radios.',
   'Pop the flare if the bay door bangs twice.',
   null,
   'The side door of the church still opens.',
   null,
-  'The commander watches for the second guard to fall.'
+  'The commander is using Captain Frank\'s as a nest. The pier will stay blockaded until the other streets are safe.'
 ];
 const STREET_PAPERS = [
-  'Troops at Public Square. The Rapid is still running.',
+  'PUBLIC SQUARE ATTACKED — WITNESSES REPORT LIGHTS ABOVE TERMINAL TOWER',
   null,
-  'Euclid marquees to go dark. Do not trust a quiet lobby.',
+  'EUCLID MARQUEES DARK — THEATER DISTRICT SHELTERS IN PLACE',
   null,
-  'Lakeside plaza held through the night. Bring nothing that shines.',
+  'CITY HALL SIGNAL UNCERTAIN — LAKESIDE PLAZA CUT OFF',
   null,
   null,
   'St. Stanislaus is housing anyone who saw the boss land.',
@@ -127,6 +127,7 @@ function showOnboardingStep() {
       appendStory('“Aliens. They bleed. Get close and punch or tackle them before they can use those beams.”','news');
       addButton('Explore',onboardingZap);break;
     case 'zapped':
+      Game.artEncounter='onboarding-zap';updateStats();
       appendStory('A blue flash catches you from behind. An alien leaves you crumpled in the rain, certain you are dead.','miss');
       appendStory('You are hurt badly—but you are tougher than it thought.','special');
       addButton('Keep Moving',()=>advanceOnboarding('hotdog'));break;
@@ -295,7 +296,7 @@ function showDispatchStreet(street) {
 }
 function showDispatch(arrival='') {
   if(Game.scene==='combat'||Game.scene==='victory'||Game.scene==='gameover'||StoryType.holdLock||StoryType.typing)return;
-  Game.scene='dispatch';Game.dispatchSelection=null;Game.enemy=null;Game.businessEntered=false;Game.artEncounter='cab-scared';
+  Game.scene='dispatch';Game.dispatchSelection=null;Game.enemy=null;Game.businessEntered=false;Game.artEncounter=['saved','rescued'].includes(Game.mayorState)?'cab-secure':'cab-scared';
   $('#story').innerHTML='';updateStats();updateHealthMeters();clearButtons();
   if(arrival)appendStory(arrival,'news');
   appendStory(Game.cabMet?'The cab radio crackles with a fresh dispatch report.':'A cab rolls beside the cleared square. The driver saw the fight and offers to carry you wherever dispatch needs help.','special');
