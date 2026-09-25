@@ -89,7 +89,7 @@ Game.knownShops=['coffee','pawn','record'];Game.streetSeen={1:{sign:true,npc:tru
 assert.equal(drawExploreCard(),'combat');
 Game.level=Game.highestDistrict=Game.currentStreet=4;Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];
 const banks=buildStreetDeck(4);
-assert.deepEqual(banks.filter(card=>!card.startsWith('shop:')).sort(),['combat','hidden','sign']);
+assert.deepEqual(banks.filter(card=>!card.startsWith('shop:')).sort(),['combat','hidden','police','sign']);
 Game.level=Game.highestDistrict=Game.currentStreet=10;Game.aliensThisLevel=0;Game.streetDecks={};Game.deckBuilds={};
 const harbor=buildStreetDeck(10);
 assert.ok(harbor.includes('shop:frank')&&!harbor.includes('news'));
@@ -99,7 +99,13 @@ assert.notEqual(drawExploreCard(),'combat','The commander is not found by walkin
 startBusiness('frank');assert.equal(Game.scene,'directory',"Captain Frank's stays locked without its key");assert.equal(Game.enemy,null);
 assert.equal(HIDDEN_FINDS[10][0].id,'franks-key');revealHidden(HIDDEN_FINDS[10][0]);assert.equal(hasFranksKey(),true);
 startBusiness('frank');assert.equal(Game.scene,'combat');assert.equal(Game.enemy.isFinalBoss,true);
-Game.enemy=null;Game.aliensThisLevel=1;Game.scene='directory';startBusiness('frank');
+Game.enemy=null;Game.scene='directory';Game.businessEntered=false;Game.ally='kitchen';Game.aliensThisLevel=0;Game.secretsFound=['franks-key'];
+startBusiness('frank');assert.equal(Game.aliensThisLevel,1);assert.notEqual(Game.scene,'combat');
+Game.ally='raid';Game.enemy={isFinalBoss:true};Game.raidCoverUsed=false;assert.equal(raidSpoilsShot(),true);assert.equal(raidSpoilsShot(),false);
+Game.hp=20;Game.money=0;Game.keySold=false;Game.secretsFound=['franks-key'];sellHarborKey();
+assert.equal(Game.money,80);assert.equal(hasFranksKey(),false);assert.equal(Game.scene,'gameover');assert.equal(el('#recoverBtn').hidden,true);
+assert.equal(el('#gameOverTitle').textContent,'THE PIER IS LOST');
+Game.keySold=false;Game.enemy=null;Game.aliensThisLevel=1;Game.scene='directory';startBusiness('frank');
 assert.notEqual(Game.scene,'combat');assert.ok(el('#buttons').children.some(b=>b.textContent==='Leave'));
 assert.notEqual(STREET_SIGNS[0],STREET_SIGNS[9]);
 assert.equal(new Set(STREET_SIGNS).size,10);

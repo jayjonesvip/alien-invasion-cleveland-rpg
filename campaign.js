@@ -18,10 +18,10 @@ function winsRequiredForStreet(number=Game.level) { return number>=4&&number<=9?
 function regularWinsRequired(number=Game.level) { return winsRequiredForStreet(number)-1; }
 const STREET_LANDMARKS = ['Terminal Tower / Public Square','The abandoned bus blockade','The theater marquees','The bank towers','The civic plaza','The warehouse loading docks','The river lift bridge','The neighborhood sanctuary','The railway viaduct','The Lake Erie harbor'];
 const STREET_SIGHTS = [
-  ['sign','npc','news','hidden'], ['sign','npc','hidden'], ['sign','news','hidden'], ['sign','hidden'], ['sign','npc','news'],
+  ['sign','npc','news','hidden'], ['sign','npc','hidden'], ['sign','news','hidden'], ['sign','police','hidden'], ['sign','npc','news'],
   ['sign','npc','hidden'], ['sign','hidden'], ['sign','npc','news'], ['sign','hidden'], ['sign','npc','hidden']
 ];
-const ONE_TIME_SIGHTS = new Set(['sign','npc','news']);
+const ONE_TIME_SIGHTS = new Set(['sign','npc','news','police']);
 function hiddenCachesLeft(street=streetNumber()) {
   const finds=(typeof HIDDEN_FINDS==='undefined'?[]:HIDDEN_FINDS[street])||[];
   const found=Game.secretsFound||[];
@@ -84,7 +84,7 @@ function activeStreet() { return (Game.route||defaultRoute())[Game.level-1]; }
 function routeIndex(street) { return (Game.route||defaultRoute()).indexOf(street); }
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
@@ -115,7 +115,24 @@ function buildStreetDeck(street=streetNumber()) {
 function harborBossWaiting(street=streetNumber()) {
   return street===10&&street===activeStreet()&&!streetCleared()&&Game.aliensThisLevel===regularWinsRequired(Game.level);
 }
-function hasFranksKey() { return (Game.secretsFound||[]).includes('franks-key'); }
+function hasFranksKey() { return (Game.secretsFound||[]).includes('franks-key') && !Game.keySold; }
+function pledgeAlly(kind) {
+  if(Game.keySold||(Game.ally&&Game.ally!==kind)) return false;
+  Game.ally=kind;
+  return true;
+}
+function sellHarborKey() {
+  if(!hasFranksKey()) return;
+  Game.money+=80;
+  Game.keySold=true;
+  updateStats();
+  gameOver();
+}
+function raidSpoilsShot() {
+  if(Game.ally!=='raid'||!Game.enemy?.isFinalBoss||Game.raidCoverUsed) return false;
+  Game.raidCoverUsed=true;
+  return true;
+}
 function streetSights(street=streetNumber()) {
   return [...(STREET_SIGHTS[street-1]||[]),(DISTRICT_SHOPS[street-1]||[]).map(id=>'shop:'+id)].flat();
 }
@@ -222,7 +239,13 @@ function showDirectory(arrival='') {
   appendStory(STREET_LANDMARKS[here-1]+'.','system');
   const required=winsRequiredForStreet(Game.level), regularRequired=required-1;
   appendStory(cleared?'This street is clear. The fight is on '+getStreet(activeStreet()).name+'.':Game.aliensThisLevel+' of '+required+' fights won. '+(Game.aliensThisLevel===regularRequired?(here===10?'The commander is waiting inside Captain Frank\'s.':'The boss is hiding here.'):(regularRequired-Game.aliensThisLevel)+' more before the boss.'),'system');
-  if(here===10&&!cleared)appendStory(Game.aliensThisLevel===regularRequired?'The pier guards are down. Step into Captain Frank\'s.':'Two guards on the pier, then the red commander inside Captain Frank\'s.','special');
+  if(here===10&&!cleared){
+    let line=Game.aliensThisLevel===regularRequired
+      ?(Game.ally==='kitchen'?'The pier guard is down. The kitchen door leads to the commander.':'The pier guards are down. Step into Captain Frank\'s.')
+      :(Game.ally==='kitchen'?'One guard still watches the pier. The kitchen door at Captain Frank\'s skips the other.':'Two guards on the pier, then the red commander inside Captain Frank\'s.');
+    if(Game.ally==='raid') line+=' The East 9th cop will spoil the commander\'s first shot.';
+    appendStory(line,'special');
+  }
   const bossReady=!cleared&&Game.aliensThisLevel===regularWinsRequired(Game.level);
   const exploreButton=addButton(cleared?'Explore Safely':'Explore Street',()=>encounter());
   describeActionButton(exploreButton,cleared?'Shops, rumors, and anything still hidden. No aliens.':here===10&&bossReady?'The commander is inside Captain Frank\'s, not out on the pier.':bossReady?'The district boss is hiding on this street.':'Aliens, rumors, and hidden caches.');
@@ -337,6 +360,9 @@ function readSave() {
     const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
     if(!['loyalty','visitPaidCounts','visitFreeDollarUsed','purchasedThisVisit','abilitiesUsed'].every(k=>object(s[k])))return null;
     if(!Array.isArray(s.lastEncounters)||!Number.isInteger(s.aliensDefeated)||s.aliensDefeated<0||!Number.isInteger(s.turnsThisFight)||s.turnsThisFight<0||!Number.isInteger(s.weaponUses)||s.weaponUses<0||s.weaponUses>3)return null;
+    if(s.ally!=null&&s.ally!=='raid'&&s.ally!=='kitchen')return null;
+    if(s.keySold!=null&&typeof s.keySold!=='boolean')return null;
+    if(s.raidCoverUsed!=null&&typeof s.raidCoverUsed!=='boolean')return null;
     if(s.secretsFound!=null&&(!Array.isArray(s.secretsFound)||s.secretsFound.some(id=>typeof id!=='string')))return null;
     if(s.knownShops!=null&&(!Array.isArray(s.knownShops)||s.knownShops.some(id=>typeof id!=='string')))return null;
     if(s.exploreSeed!=null&&(!Number.isInteger(s.exploreSeed)||s.exploreSeed<1))return null;
@@ -357,6 +383,7 @@ function continueGame() {
   Game.purchasedThisVisit={};for(const [id,value]of Object.entries(state.purchasedThisVisit||{}))if(getBusiness(id))Game.purchasedThisVisit[id]=new Set(Array.isArray(value?.setValues)?value.setValues:[]);
   window.trackGameEvent?.('game_resume', {saved_scene:Game.scene});
   Game.guarding=false;Game.secretsFound=Array.isArray(Game.secretsFound)?Game.secretsFound:[];Game.knownShops=Array.isArray(Game.knownShops)?Game.knownShops:[];
+  if(Game.ally!=='raid'&&Game.ally!=='kitchen')Game.ally=null;Game.keySold=!!Game.keySold;Game.raidCoverUsed=!!Game.raidCoverUsed;
   if(!Number.isInteger(Game.exploreSeed))Game.exploreSeed=1;Game.streetDecks=Game.streetDecks||{};Game.deckBuilds=Game.deckBuilds||{};Game.streetSeen=Game.streetSeen||{};showGameUI();$('#story').innerHTML='';updateStats();updateHealthMeters();
   if(Game.scene==='victory'){gameVictory();return;}
   if(Game.hp<=0||Game.scene==='gameover'){gameOver(false);return;}
@@ -381,6 +408,8 @@ function openBuild() {
   if(Game.permanent.defense)bonus.push('Defense +'+Game.permanent.defense);
   if(Game.permanent.accuracy)bonus.push('Accuracy +'+Math.round(Game.permanent.accuracy*100)+'%');
   if(hasFranksKey())bonus.push("Captain Frank's Key");
+  if(Game.ally==='raid')bonus.push('East 9th raid');
+  if(Game.ally==='kitchen')bonus.push("Captain Frank's kitchen");
   $('#buildStats').hidden=!bonus.length;
   $('#buildStats').textContent=bonus.join(' · ');
   const hereTrain=names(streetNumber()), nextIndex=routeIndex(streetNumber())+1, nextTrain=nextIndex<10?names(Game.route[nextIndex]):[];

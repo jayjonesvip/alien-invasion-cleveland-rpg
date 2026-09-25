@@ -1664,6 +1664,7 @@
         case 'hidden': startHidden(); break;
         case 'news': startNews(); break;
         case 'npc': startNPC(); break;
+        case 'police': startPolice(); break;
         case 'quiet': startQuiet(); break;
         default: startHidden();
       }
@@ -1894,6 +1895,8 @@ if (Math.random() < enemyHit) {
   let base = rand(mv.minDamage, mv.maxDamage);
   base=Math.max(0,base-Game.permanent.defense);
   if(Game.guarding) {base=Math.floor(base/2);Game.blockedHit=true;}
+  const covered=raidSpoilsShot();
+  if(covered){ base=0; await appendStoryAsync('The East 9th cop fires across the dining room and spoils the shot.','system'); }
 
   // damage taken multiplier (e.g., Arcade Power Token)
   if (Game.buffs?.damageTakenMult) {
@@ -1902,7 +1905,7 @@ if (Math.random() < enemyHit) {
 
   // Armor soak
   let soaked = 0;
-  if (!mv.pierce && Game.armor && Game.armor.durabilityHits > 0) {
+  if (!covered && !mv.pierce && Game.armor && Game.armor.durabilityHits > 0) {
     soaked = Math.min(Game.armor.dr || 0, base);
     base = Math.max(0, base - (Game.armor.dr || 0));
     Game.armor.durabilityHits--;
@@ -1980,7 +1983,7 @@ decayBuffsEndOfRound();
     function checkVictory() { if(Game.finalBossDefeated)gameVictory(); }
     function gameVictory() {
       Game.scene='victory';SceneArt.ending('victory');
-      appendStory('VICTORY! The Mothership Commander falls. Cleveland stands.','special');
+      appendStory(Game.ally==='raid'?'VICTORY! The East 9th cop holds the pier. Cleveland stands.':Game.ally==='kitchen'?'VICTORY! The commander falls in the dining room. The pier outside is still occupied.':'VICTORY! The Mothership Commander falls. Cleveland stands.','special');
       clearButtons();$('#gameOverTitle').textContent='VICTORY!';
       $('#ovLevel').textContent=Game.level;$('#ovDefeated').textContent=Game.aliensDefeated;$('#ovMoney').textContent=Game.money;
       $('#recoverBtn').hidden=true;$('#overlay').style.display='flex';saveGame();
@@ -2079,20 +2082,28 @@ decayBuffsEndOfRound();
       if(!hasFranksKey()){
         Game.currentBiz=null;
         Game.businessEntered=false;
-        showDirectory("LOCKED / Captain Frank's went under before the invasion. The front door is chained. Find the restaurant key somewhere on the harbor.");
+        showDirectory(Game.keySold?"LOST / The harbor key is gone. Captain Frank's stays chained, and the pier is already lost.":"LOCKED / Captain Frank's went under before the invasion. The front door is chained. Find the restaurant key somewhere on the harbor.");
         return;
       }
       Game.businessEntered=true;
       Game.artEncounter=null;
       Game.scene='business';
       $('#story').innerHTML='';
+      if(Game.ally==='kitchen'&&streetNumber()===10&&!streetCleared()&&Game.aliensThisLevel===0){
+        Game.aliensThisLevel=1;
+        appendStory('You take the kitchen door and slip past the first pier guard. One guard is still outside.','special');
+        clearButtons();
+        addButton('Leave',()=>{ Game.businessEntered=false; showDirectory(); });
+        saveGame();
+        return;
+      }
       if(streetCleared()||!harborBossWaiting()){
         appendStory(streetCleared()?'Captain Frank\'s is empty. The nets are still.':place.enter+' The pier guards are still outside.','system');
         clearButtons();
         addButton('Leave',()=>{ Game.businessEntered=false; showDirectory(); });
         return;
       }
-      appendStory('The nets shift. The red commander was waiting in the dining room.','special');
+      appendStory(Game.ally==='kitchen'?'You come through the kitchen. The red commander is in the dining room.':Game.ally==='raid'?'The East 9th cop takes the side door. The red commander was waiting in the dining room.':'The nets shift. The red commander was waiting in the dining room.','special');
       clearButtons();
       startCombat();
     }
@@ -2141,6 +2152,7 @@ decayBuffsEndOfRound();
         describeButton(button,itemDescription(id,it));
         
       });
+      if((id==='pawn'||id==='bar')&&hasFranksKey()) addButton('Sell the harbor key ($80)', sellHarborKey);
       addButton('Leave', () => { Game.businessEntered=false;showDirectory(); });
     }
 
@@ -2360,6 +2372,13 @@ decayBuffsEndOfRound();
       addButton('Talk', () => {
         const dialogue = STREET_VOICES[streetNumber() - 1] || CONFIG.survivorDialogue[rand(0, CONFIG.survivorDialogue.length - 1)];
         appendStory('They say: "' + dialogue + '"', 'system'); clearButtons();
+        if(!Game.ally&&!Game.keySold) addButton('Ask about the kitchen door', () => {
+          pledgeAlly('kitchen');
+          appendStory('They tell you the kitchen door at Captain Frank\'s. One pier guard never watches it.','special');
+          clearButtons();
+          addButton('Keep Exploring', () => encounter());
+        });
+        else if(Game.ally==='raid') appendStory('You already promised the East 9th cop a raid. The kitchen stays shut.','system');
         addButton('Keep Exploring', () => encounter());
       });
       addButton('Keep Exploring', () => encounter());
@@ -2371,6 +2390,13 @@ decayBuffsEndOfRound();
       addButton('Talk', () => {
         const dialogue = CONFIG.policeDialogue[rand(0, CONFIG.policeDialogue.length - 1)];
         appendStory('Officer says: "' + dialogue + '"', 'system'); clearButtons();
+        if(streetNumber()===4&&!Game.ally&&!Game.keySold) addButton('Ask for the raid', () => {
+          pledgeAlly('raid');
+          appendStory('The cop will cover the dining room at Captain Frank\'s and spoil the commander\'s first shot.','special');
+          clearButtons();
+          addButton('Keep Exploring', () => encounter());
+        });
+        else if(streetNumber()===4&&Game.ally==='kitchen') appendStory('You already took the kitchen door. The cop will not join a raid.','system');
         addButton('Keep Exploring', () => encounter());
       });
       addButton('Keep Exploring', () => encounter());
@@ -2378,12 +2404,13 @@ decayBuffsEndOfRound();
 
     function gameOver(trackDefeat=true) {
       if(trackDefeat && Game.scene!=='gameover')window.trackGameEvent?.('player_defeated', {enemy_type:Game.scene==='combat'?Game.enemy?.color:'environment',turns:Game.scene==='combat'?Game.turnsThisFight:0});
+      const soldOut=Game.keySold&&Game.hp>0;
       Game.scene = 'gameover';
       SceneArt.ending('defeat');
-      appendStory('You fall as Cleveland fades...', 'system'); clearButtons();
-      $('#gameOverTitle').textContent = 'GAME OVER'; $('#ovLevel').textContent = Game.level;
+      appendStory(soldOut?'The red commander lifts off the pier. The key is gone, and so is the harbor.':'You fall as Cleveland fades...', 'system'); clearButtons();
+      $('#gameOverTitle').textContent = soldOut?'THE PIER IS LOST':'GAME OVER'; $('#ovLevel').textContent = Game.level;
       $('#ovDefeated').textContent = Game.aliensDefeated; $('#ovMoney').textContent = Game.money;
-      $('#recoverBtn').hidden=false;
+      $('#recoverBtn').hidden=soldOut;
       $('#overlay').style.display = 'flex';saveGame();
     }
 
@@ -2511,7 +2538,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=4.7"></script>
+<script src="campaign.js?v=4.8"></script>
 </body>
 
 </html>
