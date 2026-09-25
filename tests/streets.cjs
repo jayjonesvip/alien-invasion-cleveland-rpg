@@ -43,7 +43,7 @@ Game.scene='directory';startPolice();assert.ok(el('#buttons').children.some(b=>b
 Game.scene='directory';Game.aliensThisLevel=winsRequiredForStreet(Game.level);checkLevelUp();showDispatch();chooseDispatchStreet(5);goToDispatchStreet(5);
 Game.aliensThisLevel=winsRequiredForStreet(Game.level);checkLevelUp();assert.equal(Game.mayorState,'rescued');
 showDispatch();const safeButton=el('#buttons').children.find(b=>b.textContent==='Euclid Ave');assert.ok(safeButton);assert.equal(safeButton.classList.contains('dispatch-safe'),true);assert.equal(el('#directoryBtn').hidden,true);
-chooseDispatchStreet(3);assert.equal(dispatchStatus(3),'SAFE');goToDispatchStreet(3);assert.equal(streetNumber(),3);assert.equal(streetCleared(),true);assert.equal(el('#sceneLocation').children.length,1);assert.equal(el('#directoryLabel').textContent,'HAIL CAB');assert.equal(el('#directoryBtn').hidden,false);startCombat();assert.equal(Game.enemy,null);
+chooseDispatchStreet(3);assert.equal(dispatchStatus(3),'SAFE');goToDispatchStreet(3);assert.equal(streetNumber(),3);assert.equal(streetCleared(),true);assert.equal(el('#sceneLocation').children.length,1);assert.equal(el('#directoryLabel').textContent,'HAIL CAB');assert.equal(el('#directoryBtn').hidden,false);el('#directoryBtn').onclick();assert.equal(Game.scene,'dispatch');chooseDispatchStreet(3);goToDispatchStreet(3);startCombat();assert.equal(Game.enemy,null);
 assert.match(televisionReport(),/LIBERATED/);assert.match(newspaperReport(),/CITY HALL FREED/);
 
 Game.route=defaultRoute();Game.level=Game.highestDistrict=9;Game.currentStreet=9;Game.scene='directory';showDispatch();
@@ -59,6 +59,7 @@ Game.scene='dispatch';Game.currentStreet=9;saveGame();Game.mayorState='pending';
 assert.equal(Game.scene,'dispatch');assert.equal(Game.mayorState,'rescued');
 const stored=JSON.parse(localStorage.getItem(SAVE_KEY));assert.equal(stored.version,2);
 newGame();advanceOnboarding('zapped');saveGame();Game.onboardingStep='complete';continueGame();assert.equal(Game.onboardingStep,'zapped');assert.equal(Game.scene,'onboarding');
+Game.currentStreet='';Game.level=1;Game.route=defaultRoute();assert.equal(streetNumber(),1);updateCampaignHUD();assert.ok(el('#campaignProgress').textContent.includes('STREET 1/10'));
 const invalid=JSON.parse(localStorage.getItem(SAVE_KEY));invalid.state.mayorState='alien';localStorage.setItem(SAVE_KEY,JSON.stringify(invalid));assert.equal(readSave(),null);
 `,context);
 console.log('PASS: Public Square prologue; cab dispatch; free street order; Lakeside-first and controlled-mayor branches; safe revisits; harbor blockade; pre-harbor key; dispatch saves.');

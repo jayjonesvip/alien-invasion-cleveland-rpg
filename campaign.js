@@ -88,7 +88,14 @@ function initCampaign() {
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
-function streetNumber() { return Game.currentStreet; }
+function streetNumber() {
+  const current=Number(Game.currentStreet);
+  if(Number.isInteger(current)&&current>=1&&current<=10)return current;
+  const stage=Math.max(0,Math.min(9,(Number(Game.level)||1)-1));
+  const routed=Number(Game.route?.[stage]);
+  Game.currentStreet=Number.isInteger(routed)&&routed>=1&&routed<=10?routed:1;
+  return Game.currentStreet;
+}
 function streetCleared() { const index=routeIndex(streetNumber()); return index<0 || index<Game.level-1 || Game.finalBossDefeated; }
 function availableShopIds() { return DISTRICT_SHOPS[streetNumber()-1] || []; }
 function canVisitShop(id) { return availableShopIds().includes(id) && !['combat','victory','gameover'].includes(Game.scene); }
