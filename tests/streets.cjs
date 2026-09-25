@@ -53,7 +53,7 @@ chooseDispatchStreet(10);assert.ok(el('#buttons').children.some(b=>b.textContent
 goToDispatchStreet(10);assert.equal(streetNumber(),10);assert.equal(activeStreet(),10);
 
 assert.equal(HIDDEN_FINDS[7][0].id,'franks-key');assert.ok(!HIDDEN_FINDS[10].some(find=>find.id==='franks-key'));
-Game.secretsFound=[];revealHidden(HIDDEN_FINDS[7][0]);assert.equal(hasFranksKey(),true);
+Game.secretsFound=[];offerHidden(HIDDEN_FINDS[7][0]);assert.equal(hasFranksKey(),false);assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Take Key');claimHidden(HIDDEN_FINDS[7][0]);assert.equal(hasFranksKey(),true);
 
 Game.scene='dispatch';Game.currentStreet=9;saveGame();Game.mayorState='pending';continueGame();
 assert.equal(Game.scene,'dispatch');assert.equal(Game.mayorState,'rescued');

@@ -22,6 +22,7 @@ for(let seed=1;seed<=50;seed++){
    usable.sort((a,b)=>{const score=k=>{const x=CONFIG.abilities[k];return Math.min(1,x.hit+Game.permanent.accuracy)*((x.minDamage+x.maxDamage)/2+Game.level);};return score(b)-score(a);});
    await playerAttack(usable[0]);rounds++;
   }
+   if(Game.pendingReward>0)collectReward();
    if(Game.hp<=0){deaths++;recoverAtShelter();}else if(!Game.enemy){/* Reward and progression resolve automatically. */}else throw new Error('Stalled battle');
  }
  if(Game.scene!=='victory')throw new Error('Campaign did not finish for seed '+seed);

@@ -446,7 +446,7 @@ async function guardTurn() {
   }
   const won=Game.hp>0&&Game.enemy&&Game.enemy.hp<=0;
   if(Game.hp>0&&Game.enemy) { updateStats();updateHealthMeters();if(won)winCombat();else updateCombatButtons(); }
-  endTurnLock();if(won)collectReward();
+  endTurnLock();
 }
 function recoverAtShelter() {
   window.trackGameEvent?.('shelter_recovery');
@@ -524,7 +524,7 @@ function continueGame() {
   if(Game.hp<=0||Game.scene==='gameover'){gameOver(false);return;}
   if(Game.onboardingStep!=='complete'&&Game.scene!=='combat'){showOnboardingStep();return;}
   if(Game.scene==='combat') {
-    if(Game.enemy.hp<=0)collectReward();
+    if(Game.enemy.hp<=0)showBountyButton();
     else {appendStory('Resumed your encounter with '+enemyLabel()+'.','system');updateCombatButtons();}
   } else if(Game.scene==='dispatch') Game.dispatchSelection?showDispatchStreet(Game.dispatchSelection):showDispatch();
   else if(Game.scene==='cab-pickup')showCabPickup();

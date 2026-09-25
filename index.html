@@ -1164,17 +1164,18 @@
 
     // 25% chance to throw a weapon once per fight if you're losing
     function maybeThrowWeapon() {
-      if (Game.scene !== 'combat') return;
-      if (Game.tempWeapon || Game.tempWeaponUsed) return; // already have or used one
-      if (!isLosing()) return;
+      if (Game.scene !== 'combat') return false;
+      if (Game.tempWeapon || Game.tempWeaponUsed) return false; // already have or used one
+      if (!isLosing()) return false;
 
       if (Math.random() < 0.25) {
-        Game.tempWeapon = Math.random() < 0.5 ? 'leadPipe' : 'baseballBat';
-        Game.weaponUses = 3;
-        const w = TEMP_WEAPONS[Game.tempWeapon];
-        appendStory('A bystander hurls a ' + w.name + ' to you! (3 swings)', 'system');
-        updateCombatButtons();
+        const weapon = Math.random() < 0.5 ? 'leadPipe' : 'baseballBat';
+        const w = TEMP_WEAPONS[weapon];
+        appendStory('A bystander hurls a ' + w.name + ' toward you!', 'system');
+        clearButtons();addButton('Catch '+w.name,()=>{Game.tempWeapon=weapon;Game.weaponUses=3;Game.tempWeaponUsed=false;appendStory('CAUGHT / '+w.name+' · 3 swings','hit');updateCombatButtons();saveGame();});
+        return true;
       }
+      return false;
     }
 
     function initSettingsUI() {
@@ -1752,14 +1753,13 @@
       addButton('Flee', () => {
         window.trackGameEvent?.('fight_flee', {enemy_type:Game.enemy?.color,turns:Game.turnsThisFight});
         const wasBroke = Game.money <= 0;
+        let tip = 0;
 
         if (wasBroke) {
-          const tip = rand(2, 4);
+          tip = rand(2, 4);
           appendStory('You back away from the fight.', 'system');
           appendStory(`A couple locals steady you: "Thanks for trying—heal up, we still need you."`, 'system');
-          appendStory(`They press $${tip} into your hand.`, 'system');
-          Game.money += tip;
-          updateStats();
+          appendStory(`They offer you $${tip} for food and bandages.`, 'system');
         } else {
           appendStory('You run from the ' + enemyNoun() + '.', 'system');
         }
@@ -1770,7 +1770,8 @@
         updateHealthMeters();
         clearButtons();
         decayBuffsEndOfFight();
-        addButton('Keep Exploring', () => encounter());
+        if(wasBroke)addButton('Take $'+tip,()=>{Game.money+=tip;updateStats();clearButtons();addButton('Keep Exploring',()=>encounter());saveGame();});
+        else addButton('Keep Exploring', () => encounter());
       });
     }
 
@@ -1850,7 +1851,6 @@
 
           winCombat();
           endTurnLock();
-          collectReward();
           return;
         }
       } else {
@@ -1866,12 +1866,12 @@
       await new Promise(r => setTimeout(r, CONFIG.combatPacing.betweenTurnsMs));
       await enemyTurnSequence();
 
-      maybeThrowWeapon();
+      const weaponOffered=maybeThrowWeapon();
 
       // End of round → re-enable buttons if still in combat
       if (Game.scene === 'combat' && Game.enemy && Game.hp > 0) {
         updateStats();
-        updateCombatButtons();
+        if(!weaponOffered)updateCombatButtons();
       }
       endTurnLock();
 
@@ -1958,16 +1958,22 @@ decayBuffsEndOfRound();
     }
 
 
+    function showBountyButton() {
+      if(!Game.enemy||Game.enemy.hp>0||Game.pendingReward<=0)return;
+      clearButtons();updateHealthMeters();
+      addButton('Take Bounty · $'+Game.pendingReward,collectReward);
+    }
     function winCombat() {
-      if(!Game.enemy||Game.enemy.hp>0||Game.pendingReward>0)return;
+      if(!Game.enemy||Game.enemy.hp>0)return;
+      if(Game.pendingReward>0){showBountyButton();return;}
       if(Game.enemy && !Game.enemy.defeatTracked){
         Game.enemy.defeatTracked=true;
         window.trackGameEvent?.('alien_defeated', {enemy_type:Game.enemy.color,is_boss:!!Game.enemy.isBoss,is_final_boss:!!Game.enemy.isFinalBoss,turns:Game.turnsThisFight});
       }
       const reward=4+Game.level+(Game.enemy?.isBoss?6:0);
       Game.pendingReward=reward;
-      clearButtons();updateHealthMeters();
-      if(!StoryType.holdLock)collectReward();
+      appendStory('BOUNTY / $'+reward+' waits on this alien.','news');
+      showBountyButton();saveGame();
     }
     function collectReward() {
       if(!Game.enemy || Game.enemy.hp>0 || Game.pendingReward<=0)return;
@@ -2254,13 +2260,13 @@ decayBuffsEndOfRound();
     }
 
     const HIDDEN_FINDS = {
-      1: [{id:'ontario-locker', cash:6, text:'A locker under the Terminal Tower steps clicks open. $6 inside.'}, {id:'ontario-token', cash:3, text:'A Rapid token is stuck in the grate. You pocket $3.'}],
+      1: [{id:'ontario-locker', cash:6, text:'A locker under the Terminal Tower steps clicks open. $6 inside.'}, {id:'ontario-token', cash:3, text:'A Rapid token is stuck in the grate beside $3.'}],
       2: [{id:'superior-fare', cash:4, text:'The blown-tire bus still has a fare box ajar. $4.'}, {id:'superior-note', cash:2, text:'A driver left a route card and $2 under the visor.'}],
       3: [{id:'euclid-marquee', cash:5, text:'The Palace box office drawer was never locked. $5.'}, {id:'euclid-stub', cash:2, text:'A ticket stub marks $2 tucked in the marquee letters.'}],
       4: [{id:'ninth-drop', cash:8, text:'The night-drop at the bank spits a forgotten deposit. $8.'}, {id:'ninth-coin', cash:3, text:'A teller window holds a roll of coins. $3.'}],
       5: [{id:'lakeside-megaphone', cash:4, text:'The plaza megaphone case has $4 and fresh batteries.'}, {id:'lakeside-bench', cash:2, text:'Someone wedged $2 under a plaza bench slat.'}],
       6: [{id:'sixth-flare', cash:5, text:'The dock flare box has $5 under the flares.'}, {id:'sixth-manifest', cash:3, text:'A loading manifest wraps $3.'}],
-      7: [{id:'franks-key', cash:0, text:"A brass key tagged CAPTAIN FRANK'S hangs in the bridge tender's cabinet. You take it."}, {id:'river-toll', cash:4, text:'The bridge tender left the toll cup. $4.'}],
+      7: [{id:'franks-key', cash:0, text:"A brass key tagged CAPTAIN FRANK'S hangs in the bridge tender's cabinet."}, {id:'river-toll', cash:4, text:'The bridge tender left the toll cup. $4.'}],
       8: [{id:'prospect-poorbox', cash:5, text:'The church poor box was pried, then abandoned. $5 left.'}, {id:'prospect-candle', cash:2, text:'A candle stand hides $2 in the wax cup.'}],
       9: [{id:'huron-chalk', cash:4, text:'Under the viaduct chalk, a coffee can. $4.'}, {id:'huron-spike', cash:3, text:'A rail spike tin holds $3.'}],
       10: [{id:'erie-radio', cash:6, text:'The harbormaster shack radio sits on $6.'}, {id:'erie-net', cash:3, text:'A dry net bag holds $3 in damp bills.'}]
@@ -2269,11 +2275,22 @@ decayBuffsEndOfRound();
       Game.secretsFound = Game.secretsFound || [];
       return (HIDDEN_FINDS[streetNumber()] || []).find(find => !Game.secretsFound.includes(find.id)) || null;
     }
-    function revealHidden(find) {
+    function claimHidden(find) {
+      if (!find || Game.secretsFound.includes(find.id)) return;
       Game.secretsFound.push(find.id);
       Game.money += find.cash;
-      appendStory('HIDDEN / ' + find.text, 'special');
+      appendStory(find.cash?'TAKEN / $'+find.cash:"TAKEN / CAPTAIN FRANK'S KEY", 'hit');
       updateStats();
+      clearButtons();addButton('Keep Exploring', () => encounter());saveGame();
+    }
+    function offerHidden(find) {
+      appendStory('HIDDEN / ' + find.text, 'special');
+      clearButtons();
+      addButton(find.cash?'Take $'+find.cash:'Take Key',()=>claimHidden(find));
+    }
+    function offerLooseCash(amount,text) {
+      appendStory('HIDDEN / '+text,'special');clearButtons();
+      addButton('Take $'+amount,()=>{Game.money+=amount;appendStory('TAKEN / $'+amount,'hit');updateStats();clearButtons();addButton('Keep Exploring',()=>encounter());saveGame();});
     }
     function startStreetSign() {
       Game.scene = 'npc';
@@ -2288,9 +2305,8 @@ decayBuffsEndOfRound();
       Game.artEncounter = null;
       const find = takeHiddenFind();
       clearButtons();
-      if (find) revealHidden(find);
+      if (find) offerHidden(find);
       else { startQuiet(); return; }
-      addButton('Keep Exploring', () => encounter());
     }
 
     function startQuiet() {
@@ -2325,26 +2341,16 @@ decayBuffsEndOfRound();
           Game.artEncounter = 'care-package';
           appendStory('[CARE PACKAGE] You find a military box of field rations.', 'special');
           const need = Math.max(0, Game.maxHP - Game.hp);
-          if (need > 0) {
-            heal(need, 'You eat the rations and feel fully restored.');
-          } else {
-            appendStory('You are already at full health.', 'system');
-          }
+          clearButtons();addButton('Eat Rations',()=>{if(need>0)heal(need,'You eat the rations and feel fully restored.');else appendStory('You are already at full health.','system');clearButtons();addButton('Keep Exploring',()=>encounter());saveGame();});return;
         } else if (roll < 0.45) {
           Game.artEncounter = 'care-package';
           appendStory('[CARE PACKAGE] Under a tarp: a Kevlar Vest.', 'special');
-          if (Game.armor && Game.armor.name === 'Kevlar Vest') {
-            Game.armor.durabilityHits = 25;
-            appendStory('You discard your damaged vest for this Kevlar Vest (-3 dmg for 25 hits).', 'system');
-          } else {
-            Game.armor = { name: 'Kevlar Vest', dr: 3, durabilityHits: 25 };
-            appendStory('You equip the Kevlar Vest (-3 dmg for 25 hits).', 'system');
-          }
-          updateStats();
+          clearButtons();addButton('Take Kevlar Vest',()=>{if(Game.armor&&Game.armor.name==='Kevlar Vest'){Game.armor.durabilityHits=25;appendStory('You replace your damaged vest with the fresh Kevlar Vest (-3 dmg for 25 hits).','system');}else{Game.armor={name:'Kevlar Vest',dr:3,durabilityHits:25};appendStory('You equip the Kevlar Vest (-3 dmg for 25 hits).','system');}updateStats();clearButtons();addButton('Keep Exploring',()=>encounter());saveGame();});return;
         } else if (roll < 0.8) {
           const find = takeHiddenFind();
-          if (find) revealHidden(find);
-          else { Game.money += 3; appendStory('HIDDEN / A folded $3 in a payphone coin return.', 'special'); updateStats(); }
+          if (find) offerHidden(find);
+          else offerLooseCash(3,'A folded $3 sits in a payphone coin return.');
+          return;
         } else {
           const lookTexts = [
             'You search but find nothing of interest.', 'The area seems completely abandoned.',
@@ -2568,7 +2574,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=5.4"></script>
+<script src="campaign.js?v=5.5"></script>
 </body>
 
 </html>

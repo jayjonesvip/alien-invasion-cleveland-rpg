@@ -84,6 +84,7 @@ for(const roll of [0.2,0.35]){
   startEmpty();Math.random=()=>roll;
   el('#buttons').children.find(b=>b.textContent==='Look Around').onclick({});
   assert.equal(el('#streetArt').dataset.asset,'encounter-care-package');
+  assert.ok(el('#buttons').children.some(b=>/^Eat Rations|^Take Kevlar Vest/.test(b.textContent)),'Care package waits for an explicit pickup');
   Game.streetDecks[streetNumber()]=['hidden'];encounter();assert.equal(Game.artEncounter,null);
 }
 newGame();assert.equal(Game.currentBiz,null);assert.equal(Game.businessEntered,false);assert.equal(Game.artEncounter,null);

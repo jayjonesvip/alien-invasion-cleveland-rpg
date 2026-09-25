@@ -42,20 +42,22 @@ useWeaponCharge();decayBuffsEndOfFight();assert.ok(Game.tempWeapon);assert.equal
 useWeaponCharge();useWeaponCharge();decayBuffsEndOfFight();assert.equal(Game.tempWeapon,null);
 Game.scene='directory';travelToStreet(2);travelToStreet(3);startCombat();assert.equal(Game.enemy.isBoss,false);
 Game.enemy.hp=0;Game.turnsThisFight=1;const beforeBounty=Game.money;winCombat();const quick=Game.money-beforeBounty;
-assert.ok(quick>0);assert.equal(Game.pendingReward,0);assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('Collect $')),'Bounties progress automatically');
-assert.ok(el('#buttons').children.length>0,'Winning a fight restores directory actions');
+assert.equal(quick,0);assert.ok(Game.pendingReward>0);assert.ok(el('#buttons').children.some(b=>b.textContent.startsWith('Take Bounty')),'Bounty waits for one explicit pickup');
+collectReward();assert.ok(Game.money>beforeBounty);assert.equal(Game.pendingReward,0);assert.ok(el('#buttons').children.length>0,'Taking a bounty restores directory actions');
 Game.buffs={fights:1,firstHitGuaranteed:false,damageTakenMult:1,enemyFirstTurnMissBonus:0};Game.scene='combat';Game.enemy=makeEnemy(false);Game.enemy.hp=0;
-winCombat();assert.equal(Game.scene,'directory');assert.ok(el('#buttons').children.length>0,'Expiring fight buffs cannot swallow post-fight buttons');
+winCombat();assert.equal(Game.scene,'combat');assert.ok(el('#buttons').children.some(b=>b.textContent.startsWith('Take Bounty')),'Expiring fight buffs cannot swallow the bounty button');collectReward();
 const afterBuffWin=Game.money;Game.turnsThisFight=20;winCombat();collectReward();assert.equal(Game.money,afterBuffWin,'Rewards collected only once');
 Game.scene='explore';saveGame();const savedMoney=Game.money;const savedMax=Game.maxHP;
 Game.money=0;Game.learned=[];continueGame();assert.equal(Game.money,savedMoney);assert.ok(Game.learned.includes('superKick'));assert.equal(Game.maxHP,savedMax);
 startCombat();Game.enemy.hp-=3;Game.hp-=4;saveGame();const enemyHP=Game.enemy.hp,playerHP=Game.hp;
 Game.enemy=null;continueGame();assert.equal(Game.enemy.hp,enemyHP);assert.equal(Game.hp,playerHP);
-Game.enemy.hp=0;Game.pendingReward=9;saveGame();const legacyMoney=Game.money;continueGame();assert.equal(Game.pendingReward,0);assert.equal(Game.money,legacyMoney+9,'Saved unclaimed bounties resolve on resume');
+Game.enemy.hp=0;Game.pendingReward=9;saveGame();const legacyMoney=Game.money;continueGame();assert.equal(Game.pendingReward,9);assert.equal(Game.money,legacyMoney);assert.ok(el('#buttons').children.some(b=>b.textContent==='Take Bounty · $9'),'Saved unclaimed bounty waits on resume');collectReward();
 saveGame();continueGame();assert.equal(Game.pendingReward,0);assert.notEqual(Game.scene,'combat');
 Game.money=40;Game.hp=0;gameOver();assert.equal(el('#recoverBtn').hidden,false);recoverAtShelter();assert.equal(Game.money,30);assert.equal(Game.hp,Game.maxHP);assert.ok(Game.learned.includes('superKick'));
 // Exhausting a weapon on a losing turn cannot restore it at the next battle.
-Game.tempWeapon='leadPipe';Game.weaponUses=0;Game.tempWeaponUsed=true;Game.hp=0;gameOver();recoverAtShelter();startCombat();assert.equal(Game.tempWeapon,null);
+Game.tempWeapon='leadPipe';Game.weaponUses=0;Game.tempWeaponUsed=true;Game.hp=0;gameOver();recoverAtShelter();assert.equal(Game.tempWeapon,null);
+Game.scene='combat';Game.enemy=makeEnemy(false);Game.abilitiesUsed={};Game.money=0;updateCombatButtons();el('#buttons').children.find(b=>b.textContent==='Flee').onclick({});assert.equal(Game.money,0);const aid=el('#buttons').children.find(b=>b.textContent.startsWith('Take $'));assert.ok(aid);aid.onclick({});assert.ok(Game.money>0,'Emergency cash waits for Take');
+Game.scene='combat';Game.enemy=makeEnemy(false);Game.hp=1;Game.tempWeapon=null;Game.tempWeaponUsed=false;const savedRandom=Math.random;Math.random=()=>0;assert.equal(maybeThrowWeapon(),true);Math.random=savedRandom;assert.equal(Game.tempWeapon,null);const catchWeapon=el('#buttons').children.find(b=>b.textContent.startsWith('Catch '));assert.ok(catchWeapon);catchWeapon.onclick({});assert.equal(Game.tempWeapon,'leadPipe');
 // Checkpoints remain at the start of an in-flight turn.
 startCombat();saveGame();const before=localStorage.getItem(SAVE_KEY);beginTurnLock();Game.hp-=1;saveGame();assert.equal(localStorage.getItem(SAVE_KEY),before);endTurnLock();assert.notEqual(localStorage.getItem(SAVE_KEY),before);
 // Guard, defense, species behavior, and a purchased counter actually affect combat.
