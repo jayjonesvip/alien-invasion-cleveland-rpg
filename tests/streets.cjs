@@ -14,6 +14,7 @@ clearCurrentStreet();
 assert.equal(Game.level,2);assert.equal(Game.scene,'cab-pickup');
 assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Get in Cab');
 showDispatch();assert.equal(Game.scene,'dispatch');assert.equal(Game.cabMet,true);
+assert.equal(el('#streetArt').dataset.asset,'transit-cab-scared');
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Lakeside Ave'));
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Erieside Ave'));
 assert.equal(clearedStreetNumbers().join(','),'1');
@@ -21,6 +22,7 @@ assert.equal(clearedStreetNumbers().join(','),'1');
 chooseDispatchStreet(5);assert.equal(Game.dispatchSelection,5);assert.equal(streetNumber(),1);assert.equal(dispatchStatus(5),'URGENT');
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Go to Lakeside Ave'));
 goToDispatchStreet(5);assert.equal(streetNumber(),5);assert.equal(activeStreet(),5);assert.equal(Game.mayorState,'saved');
+assert.equal(el('#streetArt').dataset.asset,'street-lakeside');
 assert.equal(Game.route[1],5);assert.match(televisionReport(),/City Hall/i);assert.match(newspaperReport(),/CITY HALL HOLDS/);
 
 newGame();clearCurrentStreet();showDispatch();chooseDispatchStreet(3);goToDispatchStreet(3);

@@ -233,7 +233,7 @@ function showDispatchStreet(street) {
 }
 function showDispatch(arrival='') {
   if(Game.scene==='combat'||Game.scene==='victory'||Game.scene==='gameover'||StoryType.holdLock||StoryType.typing)return;
-  Game.scene='dispatch';Game.dispatchSelection=null;Game.enemy=null;Game.businessEntered=false;Game.artEncounter=null;
+  Game.scene='dispatch';Game.dispatchSelection=null;Game.enemy=null;Game.businessEntered=false;Game.artEncounter='cab-scared';
   $('#story').innerHTML='';updateStats();updateHealthMeters();clearButtons();
   if(arrival)appendStory(arrival,'news');
   appendStory(Game.cabMet?'The cab radio crackles with a fresh dispatch report.':'A cab rolls beside the cleared square. The driver saw the fight and offers to carry you wherever dispatch needs help.','special');

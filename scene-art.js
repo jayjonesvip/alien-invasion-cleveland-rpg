@@ -75,7 +75,7 @@ window.SceneArt = (() => {
     const fighting = scene === 'combat' && !!enemy;
     const finale = fighting && !!enemy.isFinalBoss ? businesses.frank : null;
     const shop = scene === 'business' && Object.hasOwn(businesses, business) ? businesses[business] : null;
-    const event = ['intro', 'npc', 'empty'].includes(scene) && Object.hasOwn(encounters, encounter) ? encounters[encounter] : null;
+    const event = ['intro', 'npc', 'empty', 'dispatch'].includes(scene) && Object.hasOwn(encounters, encounter) ? encounters[encounter] : null;
     const data = finale || shop || event || streets[street.id] || streets.ontario;
     setImage(document.getElementById('streetArt'), data[0], data[1]);
     const loc = document.getElementById('sceneLocation');
