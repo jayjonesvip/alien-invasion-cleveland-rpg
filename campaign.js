@@ -46,7 +46,7 @@ const STREET_VOICES = [
   null,
   'City Hall is on Lakeside. Whatever happened there changed the police radios.',
   'Pop the flare if the bay door bangs twice.',
-  null,
+  'The river caught fire once. Tonight it’s the sky’s turn.',
   'The side door of the church still opens.',
   null,
   'The commander is using Captain Frank\'s as a nest. The pier will stay blockaded until the other streets are safe.'
@@ -301,6 +301,11 @@ function showDispatch(arrival='') {
   if(arrival)appendStory(arrival,'news');
   appendStory(Game.cabMet?'The cab radio crackles with a fresh dispatch report.':'A cab rolls beside the cleared square. The driver saw the fight and offers to carry you wherever dispatch needs help.','special');
   Game.cabMet=true;
+  Game.streetSeen=Game.streetSeen||{};
+  if(!Game.streetSeen.cabPothole){
+    appendStory('The cabby eyes a crater in the road. “Dispatch calls that alien damage. Around here, we call it a pothole.”','system');
+    Game.streetSeen.cabPothole=true;
+  }
   const worldLine=Game.mayorState==='controlled'
     ?'CITY HALL SIGNAL COMPROMISED / Police crews are repeating alien orders.'
     :Game.mayorState==='saved'

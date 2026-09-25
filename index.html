@@ -671,7 +671,7 @@
 
       survivorDialogue: ["Every street you clear gives somebody room to breathe.", "The cab radio knows which blocks are still occupied.", "Those little bastards are still hunting in the rain.", "If a street is marked SAFE, your work there held."],
       policeDialogue: ["Keep moving and watch the rooftops.", "Dispatch is counting contacts street by street.", "Use the cab. Do not cross an occupied block alone.", "If our radios repeat themselves, do not obey them."],
-      bartenderTips: ["I heard you get super powers if you defeat enough aliens", "Keep eating or die fighting", "There is nothing wrong with fleeing a fight you can't win.", "How about them Browns?!"],
+      bartenderTips: ["First The Drive. Then The Fumble. Now aliens. Denver better not be behind this.", "We survived The Shot. We can survive this.", "There is nothing wrong with fleeing a fight you can't win.", "How about them Browns?!"],
       tvNews: ["Aliens are coming from every direction", "There are 4 different aliens species in Cleveland", "Mothership spotted above Lake Erie", "The aliens can harm you with mind control, photon zaps and energy beams."],
       newspaperHeadlines: ["Bush Deploys Troops to Cleveland", "Aliens Invade Earth", "Mayor Voinovich Is Missing"],
 
@@ -1917,6 +1917,11 @@ if ((Game.turnsThisFight|0) === 1 && Game.buffs?.enemyFirstTurnMissBonus) {
 }
 
 await appendStoryAsync(`The ${enemyLabel()} uses ${mv.name.toUpperCase()}...`, 'system');
+if(Game.enemy.color==='grey'&&!Game.enemy.clevelandVisionShown){
+  Game.enemy.clevelandVisionShown=true;
+  await appendStoryAsync('A horrible vision enters your mind: the Browns leaving Cleveland.','miss');
+  await appendStoryAsync('Impossible. Even aliens wouldn’t go that far.','system');
+}
 await playEnemyAttackFX(Game.enemy.color);
 
 if (Math.random() < enemyHit) {
@@ -2234,6 +2239,15 @@ decayBuffsEndOfRound();
       if (it.special) {
         const tip = CONFIG.bartenderTips[rand(0, CONFIG.bartenderTips.length - 1)];
         appendStory('Bartender says: "' + tip + '"', 'system');
+      }
+
+      if(id==='chinese'){
+        Game.streetSeen=Game.streetSeen||{};
+        if(!Game.streetSeen.fortuneCookie){
+          appendStory('FORTUNE COOKIE / YOUR BASEBALL TEAM WILL ONE DAY GUARD THE CITY.','special');
+          appendStory('You decide the fortune cookie was damaged in the invasion.','system');
+          Game.streetSeen.fortuneCookie=true;
+        }
       }
 
       // Temporary weapon: three swings, carried between fights.
