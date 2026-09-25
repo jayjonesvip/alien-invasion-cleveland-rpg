@@ -1512,7 +1512,7 @@
 
     function updateStats() {
       updateSceneArt();
-      $('#statLevel').textContent = Game.level;
+      $('#statLevel').textContent = Math.max(0,Game.level-1);
       let hpNow = Math.max(0, Math.floor(Game.hp));
       $('#statHP').textContent = hpNow;
       $('#statHP').style.color = hpNow < 10 ? '#ff4444' : '';
@@ -1535,8 +1535,8 @@
 
 
     function getNextStreetName() {
-      const idx = streetNumber(); // next street in the route
-      if (idx < STREETS.length) return STREETS[idx].name;
+      const next=activeStreet();
+      if(next&&next!==streetNumber())return getStreet(next).name;
       return 'across the city';
     }
 
@@ -1552,6 +1552,18 @@
         `Evacuations underway on ${s}.`
       ];
       return lines[rand(0, lines.length - 1)];
+    }
+    function televisionReport() {
+      if(Game.mayorState==='saved')return 'LIVE FROM CITY HALL: The mayor confirms the civic center is secure. Police remain on the human frequency.';
+      if(Game.mayorState==='controlled')return 'The mayor smiles without blinking: “Armed civilians must report to the nearest police checkpoint.”';
+      if(Game.mayorState==='rescued')return 'CITY HALL LIBERATED: The mayor says, “Ignore every order my voice gave before the signal cleared.”';
+      return nextStreetNewsLine();
+    }
+    function newspaperReport() {
+      if(Game.mayorState==='saved')return 'CITY HALL HOLDS — MAYOR CALLS FOR NEIGHBORHOOD DEFENSE';
+      if(Game.mayorState==='controlled')return 'POLICE CHECKPOINTS EXPAND — WITNESSES SAY OFFICERS MOVE IN UNISON';
+      if(Game.mayorState==='rescued')return 'CITY HALL FREED — EXTENT OF ALIEN CONTROL STILL UNKNOWN';
+      return STREET_PAPERS[streetNumber()-1]||CONFIG.newspaperHeadlines[rand(0,CONFIG.newspaperHeadlines.length-1)];
     }
 
 
@@ -1620,16 +1632,11 @@
       window.trackGameEvent?.('new_game');
       $('#story').innerHTML = '';
 
-      // 1) Show the game blurb as the first line the player sees
-      appendStory(CONFIG.description, 'system');   // or use a custom class like 'intro'
-
       $('#overlay').style.display = 'none';
       showGameUI();
       updateHealthMeters();
-      appendStory('TVs in window displays show breaking news: ALIEN INVASION IN CLEVELAND, 1989.', 'system');
-      divider();
-      clearButtons();
-      showDepartures();
+      Game.scene='explore';
+      showDirectory('PUBLIC SQUARE / LEVEL 0 · Alien lights gather over Terminal Tower. Clear the square and survive the night.');
       updateStats();saveGame();
     };
 
@@ -1969,13 +1976,15 @@ decayBuffsEndOfRound();
       // Build the post-fight screen before queuing expiration copy. Starting that
       // typewriter line first makes showDirectory() reject the transition as busy,
       // leaving the player with an empty action area after a win.
-      showDirectory('BOUNTY COLLECTED / $'+reward+(levelUp?' · LEVEL '+levelUp.level+' · MAX HP +'+levelUp.hpGain+' · FULLY HEALED':''));
+      const rewardLine='BOUNTY COLLECTED / $'+reward+(levelUp?' · LEVEL '+Math.max(0,levelUp.level-1)+' · MAX HP +'+levelUp.hpGain+' · FULLY HEALED':'');
+      if(levelUp)showDispatch(rewardLine);else showDirectory(rewardLine);
       decayBuffsEndOfFight();saveGame();
     }
     function checkLevelUp() {
       if(Game.aliensThisLevel<Game.requiredThisLevel||Game.level>=10)return null;
       Game.aliensThisLevel=0;Game.level++;Game.highestDistrict=Game.level;Game.requiredThisLevel=winsRequiredForStreet(Game.level);
-      Game.newlyUnlockedStreet=activeStreet();
+      if(streetNumber()===5&&Game.mayorState==='controlled')Game.mayorState='rescued';
+      Game.newlyUnlockedStreet=null;
       Game.maxHP+=CONFIG.hpGainPerLevel;Game.hp=Game.maxHP;Game.streetJustChanged=true;
       window.trackGameEvent?.('level_up', {level:Game.level});
       return {level:Game.level,hpGain:CONFIG.hpGainPerLevel};
@@ -1983,9 +1992,14 @@ decayBuffsEndOfRound();
     function checkVictory() { if(Game.finalBossDefeated)gameVictory(); }
     function gameVictory() {
       Game.scene='victory';SceneArt.ending('victory');
-      appendStory(Game.ally==='raid'?'VICTORY! The East 9th cop holds the pier. Cleveland stands.':Game.ally==='kitchen'?'VICTORY! The commander falls in the dining room. The pier outside is still occupied.':'VICTORY! The Mothership Commander falls. Cleveland stands.','special');
+      const ending=Game.mayorState==='saved'
+        ?'VICTORY! City Hall stayed human through the night. Police and residents reclaim the harbor together.'
+        :Game.mayorState==='rescued'
+          ?'VICTORY! The commander falls. Police crews wake beside silent radios, and Cleveland begins rebuilding its trust.'
+          :'VICTORY! The Mothership Commander falls. Cleveland stands.';
+      appendStory(ending,'special');
       clearButtons();$('#gameOverTitle').textContent='VICTORY!';
-      $('#ovLevel').textContent=Game.level;$('#ovDefeated').textContent=Game.aliensDefeated;$('#ovMoney').textContent=Game.money;
+      $('#ovLevel').textContent=Math.max(0,Game.level-1);$('#ovDefeated').textContent=Game.aliensDefeated;$('#ovMoney').textContent=Game.money;
       $('#recoverBtn').hidden=true;$('#overlay').style.display='flex';saveGame();
     }
 
@@ -2238,10 +2252,10 @@ decayBuffsEndOfRound();
       4: [{id:'ninth-drop', cash:8, text:'The night-drop at the bank spits a forgotten deposit. $8.'}, {id:'ninth-coin', cash:3, text:'A teller window holds a roll of coins. $3.'}],
       5: [{id:'lakeside-megaphone', cash:4, text:'The plaza megaphone case has $4 and fresh batteries.'}, {id:'lakeside-bench', cash:2, text:'Someone wedged $2 under a plaza bench slat.'}],
       6: [{id:'sixth-flare', cash:5, text:'The dock flare box has $5 under the flares.'}, {id:'sixth-manifest', cash:3, text:'A loading manifest wraps $3.'}],
-      7: [{id:'river-toll', cash:4, text:'The bridge tender left the toll cup. $4.'}, {id:'river-glove', cash:2, text:'A work glove on the rail holds $2.'}],
+      7: [{id:'franks-key', cash:0, text:"A brass key tagged CAPTAIN FRANK'S hangs in the bridge tender's cabinet. You take it."}, {id:'river-toll', cash:4, text:'The bridge tender left the toll cup. $4.'}],
       8: [{id:'prospect-poorbox', cash:5, text:'The church poor box was pried, then abandoned. $5 left.'}, {id:'prospect-candle', cash:2, text:'A candle stand hides $2 in the wax cup.'}],
       9: [{id:'huron-chalk', cash:4, text:'Under the viaduct chalk, a coffee can. $4.'}, {id:'huron-spike', cash:3, text:'A rail spike tin holds $3.'}],
-      10: [{id:'franks-key', cash:0, text:"A brass key tagged CAPTAIN FRANK'S hangs inside the harbormaster shack. You take it."}, {id:'erie-radio', cash:6, text:'The harbormaster shack radio sits on $6.'}, {id:'erie-net', cash:3, text:'A dry net bag holds $3 in damp bills.'}]
+      10: [{id:'erie-radio', cash:6, text:'The harbormaster shack radio sits on $6.'}, {id:'erie-net', cash:3, text:'A dry net bag holds $3 in damp bills.'}]
     };
     function takeHiddenFind() {
       Game.secretsFound = Game.secretsFound || [];
@@ -2345,7 +2359,7 @@ decayBuffsEndOfRound();
       Game.artEncounter = 'tv';
       Game.scene = 'npc'; appendStory('[TV] You see a television in a shop window.', 'system'); clearButtons();
       addButton('Watch', () => {
-        const newsLine = nextStreetNewsLine(); // <-- use NEXT street teaser
+        const newsLine = televisionReport();
         appendStory('BREAKING NEWS: ' + newsLine, 'news'); clearButtons();
         addButton('Keep Exploring', () => encounter());
       });
@@ -2356,7 +2370,7 @@ decayBuffsEndOfRound();
       Game.artEncounter = 'newspaper';
       Game.scene = 'npc'; appendStory('[NEWS STAND] You see today\'s paper.', 'system'); clearButtons();
       addButton('Read', () => {
-        const headline = STREET_PAPERS[streetNumber() - 1] || CONFIG.newspaperHeadlines[rand(0, CONFIG.newspaperHeadlines.length - 1)];
+        const headline = newspaperReport();
         const healAmount = rand(1, 5);
         appendStory('[CLEVELAND PRESS]: ' + headline, 'news');
         heal(healAmount, 'Reading the news helps you relax and recover.');
@@ -2386,7 +2400,15 @@ decayBuffsEndOfRound();
 
     function startPolice() {
       Game.artEncounter = 'police';
-      Game.scene = 'npc'; appendStory('[POLICE OFFICER] A cop watches the streets cautiously.', 'system'); clearButtons();
+      Game.scene = 'npc';
+      if(Game.mayorState==='controlled'&&!streetCleared()){
+        appendStory('[CONTROLLED PATROL] A police cruiser blocks the street. Every radio inside repeats the mayor’s surrender order. An alien handler steps from behind it.','miss');
+        clearButtons();
+        addButton('Break the signal',()=>startCombat());
+        addButton('Keep Exploring',()=>encounter());
+        return;
+      }
+      appendStory(Game.mayorState==='saved'?'[POLICE OFFICER] City Hall sent a patrol to help clear the street.':'[POLICE OFFICER] A cop watches the streets cautiously.', 'system'); clearButtons();
       addButton('Talk', () => {
         const dialogue = CONFIG.policeDialogue[rand(0, CONFIG.policeDialogue.length - 1)];
         appendStory('Officer says: "' + dialogue + '"', 'system'); clearButtons();
@@ -2408,7 +2430,7 @@ decayBuffsEndOfRound();
       Game.scene = 'gameover';
       SceneArt.ending('defeat');
       appendStory(soldOut?'The red commander lifts off the pier. The key is gone, and so is the harbor.':'You fall as Cleveland fades...', 'system'); clearButtons();
-      $('#gameOverTitle').textContent = soldOut?'THE PIER IS LOST':'GAME OVER'; $('#ovLevel').textContent = Game.level;
+      $('#gameOverTitle').textContent = soldOut?'THE PIER IS LOST':'GAME OVER'; $('#ovLevel').textContent = Math.max(0,Game.level-1);
       $('#ovDefeated').textContent = Game.aliensDefeated; $('#ovMoney').textContent = Game.money;
       $('#recoverBtn').hidden=soldOut;
       $('#overlay').style.display = 'flex';saveGame();
@@ -2538,7 +2560,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=4.9"></script>
+<script src="campaign.js?v=5.0"></script>
 </body>
 
 </html>

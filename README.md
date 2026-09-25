@@ -19,7 +19,7 @@ Or download the repository ZIP, extract it, and open `index.html` in a modern we
 - Turn-based combat with purchasable martial-arts VHS moves, guarding, and counterattacks
 - A local directory for each street, with landmarks, local shops, and visible item effects
 - Food that heals now and grants a permanent first-taste upgrade for the current run
-- A 30-victory campaign with ten district bosses and a playable lakefront finale
+- A cab-dispatch campaign with a Public Square prologue, eight freely ordered districts, and a blockaded lakefront finale
 - Automatic local checkpoints, Continue, and shelter recovery after defeat
 - Business loyalty card system
 - Armor and equipment mechanics
@@ -38,9 +38,10 @@ You're an ordinary person caught in an alien invasion of Cleveland. Fight your w
 
 - **Fight:** Hunt an Alien is available from level 1, with a 2.5-second search meter before combat. You can also find aliens while exploring. Use punch, kick, tackle, and purchased moves. Read each alien's combat hint; guard halves incoming damage, and Counterattack training lets you hit back.
 - **Shop:** Open STREET DIRECTORY between fights. Visit the Ontario Record Store for basic training; find advanced moves at later local shops. Try new foods for lasting stat upgrades, and collect business loyalty rewards.
-- **Grow:** Streets 1–3 require two regular victories before the boss; streets 4–9 require three. The final street has two guards and the Mothership Commander. Level-ups increase your health and heal you fully.
-- **Travel:** Clear a street to open the next road, then choose the adjacent destination marked Active. Move one street at a time; cleared streets are safe and your campaign progress stays intact.
-- **Equip:** Buy armor and three-swing weapons. Walk back through cleared streets to revisit earlier shops.
+- **Grow:** Clear Public Square at Level 0, then take assignments that grow tougher as Cleveland becomes safe. Level-ups increase your health and heal you fully.
+- **Travel:** A cab driver relays dispatch reports and takes you to any occupied district. Cleared streets are marked Safe and remain available for return trips; Erieside opens last.
+- **Choose:** Reach Lakeside first to save the mayor and keep police friendly, or fight through altered broadcasts and controlled patrols until City Hall is liberated.
+- **Equip:** Buy armor and three-swing weapons. Take the cab back to safe streets to revisit earlier shops.
 - **Continue:** Progress saves after completed actions. Defeat lets you recover at a shelter with full health and intact upgrades, losing 25% of your cash, rounded up.
 
 ## Technical Details

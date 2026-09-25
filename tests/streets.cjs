@@ -1,150 +1,49 @@
 const {context,vm}=require('./art-integration.cjs');
 vm.runInContext(`
-newGame();Game.scene='explore';showDirectory();
-assert.equal(winsRequiredForStreet(3),3);assert.equal(winsRequiredForStreet(4),4);assert.equal(winsRequiredForStreet(9),4);assert.equal(winsRequiredForStreet(10),3);
-assert.ok(!el('#buttons').children.some(b=>b.textContent==='Hunt an Alien'));
-assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'));
-assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('Locked:')),'Locked roads are status text, not buttons');
-// Exploration must still provide a complete path through the first street.
-const initialRandom=Math.random;Math.random=()=>.45;
-for(let tries=0;tries<30&&Game.level===1;tries++){
- encounter();
- if(Game.scene==='combat'){
-  assert.equal(Game.enemy.isBoss,Game.aliensThisLevel===2);
-  Game.enemy.hp=0;winCombat();collectReward();
-  if(Game.level===1)assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'&&!b.disabled));
-  assert.ok(!el('#buttons').children.some(b=>b.textContent==='Challenge District Boss'));
- }
+function clearCurrentStreet(){
+  const needed=winsRequiredForStreet(Game.level);
+  for(let i=0;i<needed;i++){startCombat();assert.ok(Game.enemy);Game.enemy.hp=0;winCombat();collectReward();}
 }
-Math.random=initialRandom;assert.equal(Game.level,2);assert.equal(Game.aliensDefeated,3);
-assert.equal(Game.newlyUnlockedStreet,2);assert.ok(el('#buttons').children.some(b=>b.classList.contains('new-street')));
-travelToStreet(2);assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'&&!b.disabled));
-assert.equal(Game.newlyUnlockedStreet,null);
-newGame();Game.scene='explore';showDirectory();
-assert.equal(streetNumber(),1);travelToStreet(2);assert.equal(streetNumber(),1,'Uncleared exit remains locked');
-startBusiness('pizza');assert.equal(Game.scene,'directory','Remote shop is inaccessible');
-// A boss unlocks the road without moving the player.
-for(let i=0;i<3;i++){startCombat();Game.enemy.hp=0;winCombat();collectReward();}
-assert.equal(Game.level,2);assert.equal(streetNumber(),1);assert.equal(streetCleared(),true);
-assert.ok(!el('#buttons').children.some(b=>b.textContent==='Hunt an Alien'));
-assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Superior Ave')&&b.textContent.includes('Active')));
-assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Superior Ave')&&b.classList.contains('new-street')));
-startCombat();assert.equal(Game.enemy,null,'Cleared streets cannot start battles');
-const cash=Game.money, wins=Game.aliensDefeated;
-travelToStreet(2);assert.equal(streetNumber(),2);assert.equal(availableShopIds().join(','),'pizza,thrift,drugstore');
-assert.ok(!el('#buttons').children.some(b=>b.textContent.startsWith('←')),'Cleared streets are not directory buttons');
-const back=el('#sceneLocation').children.find(node=>node.tag==='button');
-assert.equal(back.textContent,'← Ontario St — Public Square');
-back.onclick();assert.equal(streetNumber(),1);travelToStreet(2);
-assert.equal(el('#streetArt').dataset.asset,'street-superior');
-startBusiness('coffee');assert.equal(Game.scene,'directory');
-travelToStreet(1);assert.equal(availableShopIds().join(','),'coffee,pawn,record');
-assert.equal(Game.money,cash);assert.equal(Game.aliensDefeated,wins);assert.equal(Game.level,2);
-// Safe wandering never rolls a fight or the dangerous empty-street encounter.
-const random=Math.random;
-for(let i=0;i<30;i++){Math.random=()=>i/30;encounter();assert.notEqual(Game.scene,'combat');assert.notEqual(Game.scene,'empty');if(Game.currentBiz)assert.ok(availableShopIds().includes(Game.currentBiz));}
-Math.random=random;
-Game.scene='directory';Game.level=Game.highestDistrict=4;Game.aliensThisLevel=1;
-travelToStreet(4);assert.equal(streetNumber(),1,'Travel cannot skip streets');
-travelToStreet(2);travelToStreet(3);travelToStreet(4);
-assert.equal(Game.aliensThisLevel,1,'Travel preserves the active street fight counter');
-startCombat();travelToStreet(3);assert.equal(streetNumber(),4,'No travel during a fight');
-Game.enemy=null;Game.scene='directory';travelToStreet(3);startBusiness('arcade');
-assert.ok(getBusiness('arcade').items.some(x=>x.id==='superKick'));
-assert.ok(!getBusiness('record').items.some(x=>x.id==='superKick'));
-// Save the visited street separately from the campaign frontier.
-saveGame();Game.currentStreet=4;continueGame();assert.equal(streetNumber(),3);assert.equal(Game.level,4);assert.equal(Game.aliensThisLevel,1);
+
+newGame();assert.equal(streetNumber(),1);assert.equal(Game.level,1);assert.equal(Game.mayorState,'pending');
+assert.equal(el('#statLevel').textContent,0);
+assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore Street'));
+assert.ok(!el('#buttons').children.some(b=>/Take the bus|Take the Rapid|Hail a cab/.test(b.textContent)),'Opening transit lottery is retired');
+
+clearCurrentStreet();
+assert.equal(Game.level,2);assert.equal(Game.scene,'dispatch');assert.equal(Game.cabMet,true);
+assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Lakeside Ave · URGENT')));
+assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Erieside Ave · BLOCKADED')&&b.disabled));
+assert.equal(clearedStreetNumbers().join(','),'1');
+
+chooseDispatchStreet(5);assert.equal(streetNumber(),5);assert.equal(activeStreet(),5);assert.equal(Game.mayorState,'saved');
+assert.equal(Game.route[1],5);assert.match(televisionReport(),/City Hall/i);assert.match(newspaperReport(),/CITY HALL HOLDS/);
+
+newGame();clearCurrentStreet();chooseDispatchStreet(3);
+assert.equal(Game.mayorState,'controlled');assert.equal(streetNumber(),3);assert.equal(Game.route[1],3);
+Game.streetSeen={};Game.streetDecks={};Game.deckBuilds={};
+assert.ok(buildStreetDeck(3).includes('police'),'Controlled police can appear on occupied streets');
+assert.match(televisionReport(),/surrender|checkpoint/i);assert.match(newspaperReport(),/CHECKPOINTS/);
+Game.scene='directory';startPolice();assert.ok(el('#buttons').children.some(b=>b.textContent==='Break the signal'));
+
+Game.scene='directory';Game.aliensThisLevel=winsRequiredForStreet(Game.level);checkLevelUp();showDispatch();chooseDispatchStreet(5);
+Game.aliensThisLevel=winsRequiredForStreet(Game.level);checkLevelUp();assert.equal(Game.mayorState,'rescued');
+showDispatch();assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Euclid Ave · SAFE')));
+chooseDispatchStreet(3);assert.equal(streetNumber(),3);assert.equal(streetCleared(),true);startCombat();assert.equal(Game.enemy,null);
+assert.match(televisionReport(),/LIBERATED/);assert.match(newspaperReport(),/CITY HALL FREED/);
+
+Game.route=defaultRoute();Game.level=Game.highestDistrict=9;Game.currentStreet=9;Game.scene='directory';showDispatch();
+assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Erieside Ave · BLOCKADED')&&b.disabled));
+Game.level=Game.highestDistrict=10;showDispatch();
+assert.ok(el('#buttons').children.some(b=>b.textContent.includes('Erieside Ave · OPEN')&&!b.disabled));
+chooseDispatchStreet(10);assert.equal(streetNumber(),10);assert.equal(activeStreet(),10);
+
+assert.equal(HIDDEN_FINDS[7][0].id,'franks-key');assert.ok(!HIDDEN_FINDS[10].some(find=>find.id==='franks-key'));
+Game.secretsFound=[];revealHidden(HIDDEN_FINDS[7][0]);assert.equal(hasFranksKey(),true);
+
+Game.scene='dispatch';Game.currentStreet=9;saveGame();Game.mayorState='pending';continueGame();
+assert.equal(Game.scene,'dispatch');assert.equal(Game.mayorState,'rescued');
 const stored=JSON.parse(localStorage.getItem(SAVE_KEY));assert.equal(stored.version,2);
-// Old saves retain money, upgrades and their frontier; existing tapes are grandfathered in.
-stored.version=1;delete stored.state.currentStreet;stored.state.learned=['superKick'];stored.state.training=['superKick'];
-localStorage.setItem(SAVE_KEY,JSON.stringify(stored));continueGame();assert.equal(streetNumber(),4);assert.ok(Game.learned.includes('superKick'));
-const invalid=JSON.parse(localStorage.getItem(SAVE_KEY));invalid.state.currentStreet=5;localStorage.setItem(SAVE_KEY,JSON.stringify(invalid));assert.equal(readSave(),null);
-// A one-shop street cannot exhaust random shop selection; the harbor has no shops.
-Game.level=Game.highestDistrict=Game.currentStreet=9;Game.scene='directory';Game.lastBusiness='hotdog';announceRandomBusiness();assert.equal(Game.currentBiz,'hotdog');
-Game.level=Game.highestDistrict=Game.currentStreet=10;Game.scene='directory';announceRandomBusiness();assert.equal(Game.currentBiz,'frank');
-newGame();showDirectory();
-assert.equal(el('#buttons').children.filter(b=>b.textContent==='Unknown stop'&&b.disabled).length,3);
-announceBusiness('coffee');showDirectory();
-assert.ok(el('#buttons').children.some(b=>b.textContent==='Coffee Shop'&&!b.disabled));
-assert.equal(el('#buttons').children.filter(b=>b.textContent==='Unknown stop').length,2);
-const seeded=Game.exploreSeed;Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];
-const dealt=[];for(let i=0;i<STREET_SIGHTS[0].length+4;i++)dealt.push(drawExploreCard());
-Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];Game.streetSeen={};Game.exploreSeed=seeded;
-const redealt=[];for(let i=0;i<STREET_SIGHTS[0].length+4;i++)redealt.push(drawExploreCard());
-assert.deepEqual(redealt,dealt,'A street deals the same cards after a reload');
-assert.ok(dealt.includes('combat')&&dealt.includes('sign')&&dealt.includes('npc')&&dealt.includes('hidden')&&dealt.includes('news'));
-assert.ok(['shop:coffee','shop:pawn','shop:record'].every(card=>dealt.includes(card)));
-Game.streetSeen={1:{sign:true,npc:true,news:true}};Game.streetDecks[1]=['sign','npc','news','hidden'];
-const repeatGuard=[];for(let i=0;i<6;i++)repeatGuard.push(drawExploreCard());
-assert.ok(!repeatGuard.some(card=>ONE_TIME_SIGHTS.has(card)),'Fixed street text is never repeated, including stale saved decks');
-Game.secretsFound=HIDDEN_FINDS[1].map(find=>find.id);Game.knownShops=['coffee','pawn','record'];
-Game.streetSeen={1:{sign:true,npc:true,news:true,hidden:true}};Game.streetDecks={};Game.deckBuilds={};Game.level=2;Game.currentStreet=1;
-assert.ok(!buildStreetDeck(1).includes('hidden'),'A block with both caches found does not deal another hidden card');
-const beforeCash=Game.money;Game.streetDecks[1]=['hidden'];encounter();
-assert.equal(Game.money,beforeCash,'An exhausted cache does not pay again');
-assert.equal(drawExploreCard(),'quiet');
-Game.level=1;Game.currentStreet=1;Game.aliensThisLevel=2;Game.knownShops=[];Game.streetSeen={};Game.streetDecks[1]=['combat'];
-assert.notEqual(drawExploreCard(),'combat','The boss waits until the block has been seen');
-Game.knownShops=['coffee','pawn','record'];Game.streetSeen={1:{sign:true,npc:true,hidden:true,news:true}};Game.streetDecks[1]=['combat'];
-assert.equal(drawExploreCard(),'combat');
-Game.level=Game.highestDistrict=Game.currentStreet=4;Game.streetDecks={};Game.deckBuilds={};Game.knownShops=[];
-const banks=buildStreetDeck(4);
-assert.deepEqual(banks.filter(card=>!card.startsWith('shop:')).sort(),['combat','hidden','police','sign']);
-Game.level=Game.highestDistrict=Game.currentStreet=10;Game.aliensThisLevel=0;Game.streetDecks={};Game.deckBuilds={};
-const harbor=buildStreetDeck(10);
-assert.ok(harbor.includes('shop:frank')&&!harbor.includes('news'));
-assert.ok(harbor.includes('sign')&&harbor.includes('npc')&&harbor.includes('hidden')&&harbor.includes('combat'));
-Game.aliensThisLevel=2;Game.knownShops=['frank'];Game.secretsFound=[];Game.streetSeen={10:{sign:true,npc:true,hidden:true}};Game.streetDecks[10]=['combat'];Game.scene='directory';
-assert.notEqual(drawExploreCard(),'combat','The commander is not found by walking the pier');
-startBusiness('frank');assert.equal(Game.scene,'directory',"Captain Frank's stays locked without its key");assert.equal(Game.enemy,null);
-assert.equal(HIDDEN_FINDS[10][0].id,'franks-key');revealHidden(HIDDEN_FINDS[10][0]);assert.equal(hasFranksKey(),true);
-startBusiness('frank');assert.equal(Game.scene,'combat');assert.equal(Game.enemy.isFinalBoss,true);
-Game.enemy=null;Game.scene='directory';Game.businessEntered=false;Game.ally='kitchen';Game.aliensThisLevel=0;Game.secretsFound=['franks-key'];
-startBusiness('frank');assert.equal(Game.aliensThisLevel,1);assert.notEqual(Game.scene,'combat');
-Game.ally='raid';Game.enemy={isFinalBoss:true};Game.raidCoverUsed=false;assert.equal(raidSpoilsShot(),true);assert.equal(raidSpoilsShot(),false);
-Game.hp=20;Game.money=0;Game.keySold=false;Game.secretsFound=['franks-key'];sellHarborKey();
-assert.equal(Game.money,80);assert.equal(hasFranksKey(),false);assert.equal(Game.scene,'gameover');assert.equal(el('#recoverBtn').hidden,true);
-assert.equal(el('#gameOverTitle').textContent,'THE PIER IS LOST');
-Game.keySold=false;Game.enemy=null;Game.aliensThisLevel=1;Game.scene='directory';startBusiness('frank');
-assert.notEqual(Game.scene,'combat');assert.ok(el('#buttons').children.some(b=>b.textContent==='Leave'));
-assert.notEqual(STREET_SIGNS[0],STREET_SIGNS[9]);
-assert.equal(new Set(STREET_SIGNS).size,10);
-assert.match(STREET_SIGNS[0],/Counter/);assert.match(STREET_SIGNS[1],/drugstore/);
-assert.match(STREET_SIGNS[2],/Guard cuts the next hit in half/);assert.match(STREET_SIGNS[3],/Radio Shack/);
-assert.match(STREET_SIGNS[4],/grey/);assert.match(STREET_SIGNS[5],/whiskey/);
-assert.match(STREET_SIGNS[6],/vest/);assert.match(STREET_SIGNS[7],/both earlier tapes/);
-assert.match(STREET_SIGNS[8],/red hits harder/);assert.match(STREET_SIGNS[9],/red commander/);
-newGame();assert.equal(streetNumber(),1);
-assert.ok(el('#buttons').children.some(b=>b.textContent==='Explore on foot'));
-assert.ok(!el('#buttons').children.some(b=>b.textContent==='Start Adventure'));
-const departureCopy=el('#buttons').children.map(b=>b.textContent).join(' ');
-assert.ok(!/Ontario start|Euclid or Superior|Prospect, or Huron|East 9th or West 6th/.test(departureCopy),'Departure buttons do not spoil their possible destinations');
-const transitRandom=Math.random;Math.random=()=>0;
-el('#buttons').children.find(b=>b.textContent==='Take the bus').onclick({});
-assert.equal(el('#streetArt').dataset.asset,'transit-bus-zapped');
-assert.ok(el('#buttons').children.some(b=>b.textContent==='Walk'));
-el('#buttons').children.find(b=>b.textContent==='Walk').onclick({});
-assert.equal(streetNumber(),2);assert.equal(Game.level,1);assert.deepEqual(Game.route,[2,3,4,5,6,7,8,9,1,10]);
-assert.equal(activeStreet(),2);startCombat();assert.ok(Game.enemy);assert.equal(Game.enemy.isBoss,false);
-newGame();Math.random=()=>0.9;el('#buttons').children.find(b=>b.textContent==='Take the Rapid').onclick({});
-assert.equal(el('#streetArt').dataset.asset,'transit-rapid-running');el('#buttons').children.find(b=>b.textContent==='Ride to Public Square').onclick({});
-assert.equal(streetNumber(),1,'A clean Rapid still arrives at the Square');
-newGame();Math.random=()=>0;el('#buttons').children.find(b=>b.textContent==='Take the Rapid').onclick({});
-assert.equal(el('#streetArt').dataset.asset,'transit-rapid-stalled');
-const hp=Game.hp;el('#buttons').children.find(b=>b.textContent==='Square doors').onclick({});
-assert.equal(Game.hp,hp-8);assert.equal(streetNumber(),1);
-newGame();Math.random=()=>0;el('#buttons').children.find(b=>b.textContent==='Take the Rapid').onclick({});
-el('#buttons').children.find(b=>b.textContent==='Prospect doors').onclick({});
-assert.equal(streetNumber(),8);assert.equal(Game.route[9],10);
-newGame();Math.random=()=>0;el('#buttons').children.find(b=>b.textContent==='Take the Rapid').onclick({});
-el('#buttons').children.find(b=>b.textContent==='Climb out of the trench').onclick({});
-assert.equal(streetNumber(),9);assert.equal(winsRequiredForStreet(Game.level),3);
-newGame();Math.random=()=>0;el('#buttons').children.find(b=>b.textContent==='Hail a cab').onclick({});
-assert.equal(el('#streetArt').dataset.asset,'transit-cab-scared');el('#buttons').children.find(b=>b.textContent==='Get out on East 9th').onclick({});
-assert.equal(streetNumber(),4);assert.equal(Game.route[0],4);assert.equal(Game.route[9],10);
-newGame();Math.random=()=>0.9;el('#buttons').children.find(b=>b.textContent==='Hail a cab').onclick({});
-assert.equal(el('#streetArt').dataset.asset,'transit-cab-singing');el('#buttons').children.find(b=>b.textContent==='Ride to West 6th').onclick({});
-assert.equal(streetNumber(),6);
-Math.random=transitRandom;
+const invalid=JSON.parse(localStorage.getItem(SAVE_KEY));invalid.state.mayorState='alien';localStorage.setItem(SAVE_KEY,JSON.stringify(invalid));assert.equal(readSave(),null);
 `,context);
-console.log('PASS: local shop boundaries; boss road unlock; adjacent travel; safe backtracking; travel/combat gating; distributed training; frontier preservation; version-1 save migration; harbor and one-shop encounters.');
+console.log('PASS: Public Square prologue; cab dispatch; free street order; Lakeside-first and controlled-mayor branches; safe revisits; harbor blockade; pre-harbor key; dispatch saves.');

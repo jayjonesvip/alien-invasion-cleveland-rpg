@@ -84,7 +84,7 @@ function activeStreet() { return (Game.route||defaultRoute())[Game.level-1]; }
 function routeIndex(street) { return (Game.route||defaultRoute()).indexOf(street); }
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,mayorState:'pending',cabMet:false,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
@@ -106,6 +106,7 @@ function buildStreetDeck(street=streetNumber()) {
     if(card==='hidden'&&!hiddenCachesLeft(street)) return false;
     return true;
   });
+  if(Game.mayorState==='controlled'&&!streetCleared()&&!seen.police&&!cards.includes('police')) cards.push('police');
   if(!streetCleared()&&!harborBossWaiting(street)) cards.push('combat');
   for(const id of (DISTRICT_SHOPS[street-1]||[])) if(!(Game.knownShops||[]).includes(id)) cards.push('shop:'+id);
   const random=exploreRandom((Game.exploreSeed||1)^(street*997)^(built*131));
@@ -172,19 +173,68 @@ function drawExploreCard() {
     if(++skipped>30){card='quiet';break;}
   }
   if(!card) card='quiet';
-  if(card==='sign'||card==='npc'||card==='hidden'||card==='news'){ Game.streetSeen[street]=Game.streetSeen[street]||{}; Game.streetSeen[street][card]=true; }
+  if(card==='sign'||card==='npc'||card==='hidden'||card==='news'||card==='police'){ Game.streetSeen[street]=Game.streetSeen[street]||{}; Game.streetSeen[street][card]=true; }
   return card;
 }
 function travelToStreet(destination) {
-  const fromIndex=routeIndex(streetNumber()), toIndex=routeIndex(destination);
-  if(!Number.isInteger(destination)||toIndex<0||Math.abs(toIndex-fromIndex)!==1||toIndex>Game.level-1) return;
+  const toIndex=routeIndex(destination);
+  if(!Number.isInteger(destination)||toIndex<0||toIndex>Game.level-1) return;
   if(['start','combat','victory','gameover','intro'].includes(Game.scene)||StoryType.holdLock||StoryType.typing) return;
   const from=getStreet(streetNumber());
   window.trackGameEvent?.('street_travel', {from_street:streetNumber(),to_street:destination});
   Game.currentStreet=destination;Game.scene='explore';Game.currentBiz=null;Game.businessEntered=false;Game.artEncounter=null;
   if(Game.newlyUnlockedStreet===destination)Game.newlyUnlockedStreet=null;
   Game.lastEncounters=[];Game.lastBusiness=null;Game.streetJustChanged=false;
-  showDirectory('You walk from '+from.name+' to '+getStreet(destination).name+'. '+(toIndex<Game.level-1?getStreet(destination).cleared:getStreet(destination).enter));
+  showDirectory('The cab carries you from '+from.name+' to '+getStreet(destination).name+'. '+(toIndex<Game.level-1?getStreet(destination).cleared:getStreet(destination).enter));
+}
+
+function clearedStreetNumbers() { return (Game.route||defaultRoute()).slice(0,Math.max(0,Game.level-1)); }
+function dispatchStatus(street) {
+  if(clearedStreetNumbers().includes(street)) return 'SAFE';
+  if(street===10&&Game.level<10) return 'BLOCKADED';
+  return street===5&&Game.mayorState==='pending'?'URGENT':'OCCUPIED';
+}
+function chooseDispatchStreet(street) {
+  if(Game.scene!=='dispatch'||StoryType.holdLock||StoryType.typing||!Number.isInteger(street)||street<2||street>10) return;
+  if(street===10&&Game.level<10) return;
+  const cleared=clearedStreetNumbers();
+  if(cleared.includes(street)){ travelToStreet(street); return; }
+  if(Game.level>=10&&street!==10)return;
+  if(Game.level<10&&street===10)return;
+  if(Game.level===2&&Game.mayorState==='pending') Game.mayorState=street===5?'saved':'controlled';
+  const targetIndex=Game.level-1, found=routeIndex(street), swap=Game.route[targetIndex];
+  Game.route[targetIndex]=street;Game.route[found]=swap;
+  Game.currentStreet=street;Game.scene='explore';Game.currentBiz=null;Game.businessEntered=false;Game.artEncounter=null;
+  Game.lastEncounters=[];Game.lastBusiness=null;Game.streetJustChanged=true;Game.newlyUnlockedStreet=null;
+  window.trackGameEvent?.('street_travel',{from_street:'dispatch',to_street:street});
+  const context=street===5&&Game.mayorState==='saved'
+    ?'You chose City Hall first. The cab cuts through the empty civic plaza before the signal can take hold.'
+    :'Dispatch sends the cab to '+getStreet(street).name+'. '+getStreet(street).enter;
+  showDirectory(context);
+}
+function showDispatch(arrival='') {
+  if(Game.scene==='combat'||Game.scene==='victory'||Game.scene==='gameover'||StoryType.holdLock||StoryType.typing)return;
+  Game.scene='dispatch';Game.enemy=null;Game.businessEntered=false;Game.artEncounter=null;
+  $('#story').innerHTML='';updateStats();updateHealthMeters();clearButtons();
+  if(arrival)appendStory(arrival,'news');
+  appendStory(Game.cabMet?'The cab radio crackles with a fresh dispatch report.':'A cab rolls beside the cleared square. The driver saw the fight and offers to carry you wherever dispatch needs help.','special');
+  Game.cabMet=true;
+  const worldLine=Game.mayorState==='controlled'
+    ?'CITY HALL SIGNAL COMPROMISED / Police crews are repeating alien orders.'
+    :Game.mayorState==='saved'
+      ?'CITY HALL SECURE / The mayor is keeping police crews on the human frequency.'
+      :Game.mayorState==='rescued'
+        ?'CITY HALL LIBERATED / Ignore every order broadcast before the signal cleared.'
+        :'URGENT / City Hall is transmitting a repeating emergency signal from Lakeside.';
+  appendStory(worldLine,Game.mayorState==='controlled'?'miss':'system');
+  for(let street=2;street<=9;street++){
+    const status=dispatchStatus(street), button=addButton(getStreet(street).name+' · '+status,()=>chooseDispatchStreet(street));
+    describeActionButton(button,status==='SAFE'?'No alien signals. Shops and missed discoveries remain available.':street===5&&status==='URGENT'?'Repeating emergency signal from City Hall.':winsRequiredForStreet(Game.level)+' alien contacts estimated by dispatch.');
+  }
+  const harborOpen=Game.level>=10;
+  const harbor=addButton('Erieside Ave · '+(harborOpen?'OPEN':'BLOCKADED'),()=>chooseDispatchStreet(10),!harborOpen);
+  describeActionButton(harbor,harborOpen?'Harbor signal collapsing. Captain Frank\'s is reachable.':(9-clearedStreetNumbers().length)+' more streets must be made safe.');
+  saveGame();
 }
 function streetOfferings(number) {
   const shops=DISTRICT_SHOPS[number-1];
@@ -238,7 +288,7 @@ function showDirectory(arrival='') {
   appendStory('You are on '+getStreet(here).name+'.','special');
   appendStory(STREET_LANDMARKS[here-1]+'.','system');
   const required=winsRequiredForStreet(Game.level), regularRequired=required-1;
-  appendStory(cleared?'This street is clear. The fight is on '+getStreet(activeStreet()).name+'.':Game.aliensThisLevel+' of '+required+' fights won. '+(Game.aliensThisLevel===regularRequired?(here===10?'The commander is waiting inside Captain Frank\'s.':'The boss is hiding here.'):(regularRequired-Game.aliensThisLevel)+' more before the boss.'),'system');
+  appendStory(cleared?'This street is clear. Dispatch marks it SAFE.':Game.aliensThisLevel+' of '+required+' fights won. '+(Game.aliensThisLevel===regularRequired?(here===10?'The commander is waiting inside Captain Frank\'s.':'The boss is hiding here.'):(regularRequired-Game.aliensThisLevel)+' more before the boss.'),'system');
   if(here===10&&!cleared){
     let line=Game.aliensThisLevel===regularRequired
       ?(Game.ally==='kitchen'?'The pier guard is down. The kitchen door leads to the commander.':'The pier guards are down. Step into Captain Frank\'s.')
@@ -253,15 +303,9 @@ function showDirectory(arrival='') {
     if((Game.knownShops||[]).includes(id)) addButton(getBusiness(id).name,()=>startBusiness(id));
     else addButton('Unknown stop',()=>{},true);
   }
-  const index=routeIndex(here);
-  if(index>=0&&index<9){
-    const next=Game.route[index+1], unlocked=routeIndex(next)<=Game.level-1;
-    if(unlocked){
-      const travelButton=addButton(getStreet(next).name+' · '+(routeIndex(next)<Game.level-1?'Cleared':'Active')+' →',()=>travelToStreet(next));
-      travelButton.classList.add('travel-button');
-      if(Game.newlyUnlockedStreet===next){travelButton.classList.add('new-street');travelButton.setAttribute('aria-label','New street unlocked: '+getStreet(next).name);}
-    }
-    else appendStory(getStreet(next).name+' is locked until you beat the boss.','system');
+  if(cleared){
+    const dispatchButton=addButton('Call the Cab · City Dispatch',()=>showDispatch());
+    describeActionButton(dispatchButton,'Choose the next occupied street or revisit anywhere marked SAFE.');
   }
   saveGame();
 }
@@ -361,6 +405,8 @@ function readSave() {
     if(!['loyalty','visitPaidCounts','visitFreeDollarUsed','purchasedThisVisit','abilitiesUsed'].every(k=>object(s[k])))return null;
     if(!Array.isArray(s.lastEncounters)||!Number.isInteger(s.aliensDefeated)||s.aliensDefeated<0||!Number.isInteger(s.turnsThisFight)||s.turnsThisFight<0||!Number.isInteger(s.weaponUses)||s.weaponUses<0||s.weaponUses>3)return null;
     if(s.ally!=null&&s.ally!=='raid'&&s.ally!=='kitchen')return null;
+    if(s.mayorState!=null&&!['pending','saved','controlled','rescued'].includes(s.mayorState))return null;
+    if(s.cabMet!=null&&typeof s.cabMet!=='boolean')return null;
     if(s.keySold!=null&&typeof s.keySold!=='boolean')return null;
     if(s.raidCoverUsed!=null&&typeof s.raidCoverUsed!=='boolean')return null;
     if(s.secretsFound!=null&&(!Array.isArray(s.secretsFound)||s.secretsFound.some(id=>typeof id!=='string')))return null;
@@ -372,7 +418,7 @@ function readSave() {
     if(s.tempWeapon!==null&&!Object.hasOwn(TEMP_WEAPONS,s.tempWeapon))return null;
     if(s.armor!==null&&(!object(s.armor)||typeof s.armor.name!=='string'||!Number.isFinite(s.armor.dr)||!Number.isFinite(s.armor.durabilityHits)))return null;
     if(s.buffs!==null&&!object(s.buffs))return null;
-    if(!['intro','explore','directory','business','npc','empty','combat','victory','gameover'].includes(s.scene))return null;
+    if(!['intro','dispatch','explore','directory','business','npc','empty','combat','victory','gameover'].includes(s.scene))return null;
     if(s.scene==='combat'&&(!s.enemy||!CONFIG.enemyTypes.includes(s.enemy.color)||!Number.isFinite(s.enemy.hp)||s.enemy.hp<0||!Number.isFinite(s.enemy.maxHP)||s.enemy.maxHP<=0||s.enemy.hp>s.enemy.maxHP||!Number.isFinite(s.pendingReward)||s.pendingReward<0))return null;
     return s;
   } catch { return null; }
@@ -383,6 +429,7 @@ function continueGame() {
   Game.purchasedThisVisit={};for(const [id,value]of Object.entries(state.purchasedThisVisit||{}))if(getBusiness(id))Game.purchasedThisVisit[id]=new Set(Array.isArray(value?.setValues)?value.setValues:[]);
   window.trackGameEvent?.('game_resume', {saved_scene:Game.scene});
   Game.guarding=false;Game.secretsFound=Array.isArray(Game.secretsFound)?Game.secretsFound:[];Game.knownShops=Array.isArray(Game.knownShops)?Game.knownShops:[];
+  if(!['pending','saved','controlled','rescued'].includes(Game.mayorState))Game.mayorState='pending';Game.cabMet=!!Game.cabMet;
   if(Game.ally!=='raid'&&Game.ally!=='kitchen')Game.ally=null;Game.keySold=!!Game.keySold;Game.raidCoverUsed=!!Game.raidCoverUsed;
   if(!Number.isInteger(Game.exploreSeed))Game.exploreSeed=1;Game.streetDecks=Game.streetDecks||{};Game.deckBuilds=Game.deckBuilds||{};Game.streetSeen=Game.streetSeen||{};showGameUI();$('#story').innerHTML='';updateStats();updateHealthMeters();
   if(Game.scene==='victory'){gameVictory();return;}
@@ -390,7 +437,7 @@ function continueGame() {
   if(Game.scene==='combat') {
     if(Game.enemy.hp<=0)collectReward();
     else {appendStory('Resumed your encounter with '+enemyLabel()+'.','system');updateCombatButtons();}
-  } else if(Game.scene==='intro') showDepartures();
+  } else if(Game.scene==='dispatch') showDispatch();
   else { Game.scene='explore';showDirectory(); }
 }
 function openBuild() {

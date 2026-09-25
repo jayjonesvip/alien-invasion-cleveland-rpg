@@ -1,12 +1,14 @@
-# Fight, shop, grow
+# Fight, shop, clear the city
 
-The campaign uses the existing 1989 Cleveland setting and artwork. Start with 50 HP and $8. Each street has its own directory with a landmark, local businesses, and adjacent travel options. Campaign level tracks the active district; currentStreet tracks the street being visited. Cleared streets never offer battles.
+The campaign uses the existing 1989 Cleveland setting and artwork. Start with 50 HP and $8 in Public Square, shown as Level 0. After clearing the square, a cab driver who witnessed the fight offers rides for the rest of the campaign. His dispatcher reports alien activity, and the player chooses the next occupied street. Campaign level tracks cleared districts; currentStreet tracks the street being visited. Cleared streets are marked SAFE and never offer battles.
 
 ## Progression and money
 
 Hunt an Alien is available from level 1. Every street offers two regular fights, followed by a direct district boss challenge. Exploration can also lead to these encounters. Hunt an Alien fills a search meter over 2.5 seconds, locking other actions until the encounter starts. Boss challenges start directly. Reloading during a hunt resumes the last completed checkpoint.
 
-Each of ten districts requires two regular victories and one boss victory. Reaching district ten begins the final chapter; the player must find Captain Frank's Key on the harbor, defeat two pier guards, and enter the restaurant for the Mothership Commander fight. That victory ends the thirty-win campaign. Fleeing and losing do not advance the counter. Advancing a district grants +10 maximum HP and a full heal.
+Each of ten districts requires two regular victories and one boss victory. Public Square is always first. Streets two through nine may be cleared in any order through dispatch. Erieside remains blockaded until every other street is safe. The player must find Captain Frank's Key on Old River Road, defeat two pier guards, and enter the restaurant for the Mothership Commander fight. That victory ends the thirty-win campaign. Fleeing and losing do not advance the counter. Advancing a district grants +10 maximum HP and a full heal.
+
+Lakeside is the urgent strategic choice. Choosing it first after Public Square saves the mayor and keeps police crews friendly. Choosing any other street first allows the aliens to control the mayor; police encounters become hostile and television, newspaper, radio, and dispatch reports become bleaker. Clearing Lakeside later rescues the mayor, but does not erase the earlier consequences.
 
 Regular bounties are $4 plus district number; bosses add $6. Rewards are independent of combat duration and are collected once. Existing encounter cash and loyalty rewards remain available.
 
@@ -44,16 +46,16 @@ Invalid or unsupported saves are ignored. Storage failures leave the game runnin
 
 `node tests/campaign.cjs` executes the game in a lightweight DOM harness. It includes artwork integration checks and covers training prerequisites, first-taste bonuses, weapon charges, fixed rewards, duplicate collection, save/resume, pending loot, shelter recovery, atomic turn saves, guard/counter, alien behaviors, all thirty victories, final-boss gating, reset, and malformed/unavailable storage.
 
-`node tests/streets.cjs` covers local shop restrictions, adjacent travel, road unlocks without teleporting, safe backtracking, active progress preservation, redistributed training, save migration, and streets with one or zero shops.
+`node tests/streets.cjs` covers the Public Square prologue, cab dispatch, free street order, the Lakeside choice and media variants, safe revisits, Erieside's blockade, local shop restrictions, active progress preservation, redistributed training, save migration, and streets with one or zero shops.
 
 `node tests/balance.cjs` simulates fifty seeded campaigns using actual combat functions and a simple automated shopper that walks between streets and visits the nearest affordable healing shop. Completion is required for every seed. This checks for progression dead ends; its purchasing strategy and knowledge of expected damage are not representative of every human player.
 
 Browser checks cover buying and using a move, food upgrades, reload/Continue during combat, the final victory and shelter flows, and desktop, phone portrait, and short landscape layouts. Final encounter and recovery checks use local-only scenario fixtures. A full human campaign playthrough remains the next balance check.
 
 
-## Street route
+## Cab dispatch
 
-Defeating a boss unlocks the next street but leaves the player in place. Walking costs no money and grants no healing; it shows a short arrival scene and the local directory. Only adjacent unlocked streets can be reached. No travel or shopping is available during combat. Cleared-street exploration excludes combat and dangerous empty-street events. The route is a fictional campaign path, not a geographically exact walking map.
+Defeating the Public Square boss introduces the driver and opens dispatch. After each later boss, dispatch returns with updated alien counts. The cab is free and grants no healing. The player may choose any occupied street, revisit any SAFE street for its businesses, or return to the current directory. No travel or shopping is available during combat. Cleared-street exploration excludes combat and dangerous empty-street events. The street network is a fictional campaign structure, not a geographically exact map.
 
 | Street | Local businesses | Landmark |
 | --- | --- | --- |
@@ -66,7 +68,7 @@ Defeating a boss unlocks the next street but leaves the player in place. Walking
 | Old River | Army Surplus | Lift bridge |
 | Prospect | St. Stanislaus | Neighborhood sanctuary |
 | Huron | Hot Dog Cart | Railway viaduct |
-| Erieside | Captain Frank's is the ambush, not a store. Stock up before arrival | East 9th Street Pier |
+| Erieside | Captain Frank's is the ambush, not a store. Blockaded until the other nine streets are safe | East 9th Street Pier |
 
 
 ## Combat and difficulty ramp
