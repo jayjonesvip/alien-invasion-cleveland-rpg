@@ -167,6 +167,17 @@ input { accent-color: var(--cyan); }
   .title-description { font-size: 13px; }
   .title-art { object-position: 57% center; }
 }
+@media (max-width: 640px) {
+  /* Quiet and directory actions stay compact on a wide row. Once the row wraps, grow them so a short button does not sit in an empty gap. */
+  #buttons button[data-tone="quiet"],
+  #buttons .keep-exploring,
+  #buttons .directory-return {
+    flex: 1 1 calc(50% - 7px);
+    margin-left: 0;
+    max-width: 100%;
+  }
+  #buttons .directory-return { font-size: 12px; font-weight: 700; padding-inline: 12px; }
+}
 @media (max-width: 440px) {
   .signal { font-size: 0; }
   .signal i { width: 5px; height: 5px; }
