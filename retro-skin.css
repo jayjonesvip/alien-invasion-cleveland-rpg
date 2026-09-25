@@ -130,6 +130,7 @@ button:disabled { opacity: .7; }
 #buttons button.dispatch-target:not(:disabled), #buttons button.dispatch-blocked:not(:disabled) { background:rgba(181,64,82,.14); color:#d58a96; border-color:#8d4652; }
 #buttons button:hover:not(:disabled) { background: var(--surface); border-color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); }
 #buttons button[data-tone="quiet"] { flex-grow: 0; }
+#buttons button.keep-exploring { flex:1 1 0; }
 #buttons.locked { opacity: .75; }
 input { accent-color: var(--cyan); }
 #overlay { backdrop-filter: blur(8px); }

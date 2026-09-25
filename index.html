@@ -634,7 +634,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
-  <link rel="stylesheet" href="retro-skin.css?v=4.8" />
+  <link rel="stylesheet" href="retro-skin.css?v=4.9" />
 <script src="scene-art.js?v=2.9"></script>
 </head>
 
@@ -1692,9 +1692,11 @@
 
     // Combat system
     function makeEnemy(isBoss = false) {
-      let L = Game.level, hp = rand(15 + L * 4, 20 + L * 4);
+      const L = Game.level;
+      // Regular aliens gain exactly 6 HP per player level: 19–24 at level 1,
+      // 73–78 at level 10. Bosses use the same curve before their multiplier.
+      let hp = rand(13, 18) + L * 6;
       if (isBoss) hp = Math.floor(hp * 1.6);
-      hp=scaleEnemyHealth(hp);
       let enemyType = CONFIG.enemyTypes[rand(0, CONFIG.enemyTypes.length - 1)];
       return {
         name: isBoss ? ('BOSS ' + enemyType.toUpperCase()) : enemyType,
