@@ -31,6 +31,7 @@ chooseDispatchStreet(5);assert.equal(Game.dispatchSelection,5);assert.equal(stre
 assert.ok(el('#buttons').children.some(b=>b.textContent==='Go to Lakeside Ave'));
 goToDispatchStreet(5);assert.equal(streetNumber(),5);assert.equal(activeStreet(),5);assert.equal(Game.mayorState,'saved');
 assert.equal(el('#streetArt').dataset.asset,'street-lakeside');
+assert.equal(el('#hailCabBtn').hidden,false);el('#hailCabBtn').onclick();chooseDispatchStreet(6);assert.ok(!el('#buttons').children.some(b=>b.textContent==='Go to West 6th'));showDispatch();chooseDispatchStreet(5);goToDispatchStreet(5);
 assert.equal(Game.route[1],5);assert.match(televisionReport(),/City Hall/i);assert.match(newspaperReport(),/CITY HALL HOLDS/);
 
 newGame();Game.onboardingStep='complete';clearCurrentStreet();showDispatch();chooseDispatchStreet(3);goToDispatchStreet(3);
@@ -42,8 +43,8 @@ Game.scene='directory';startPolice();assert.ok(el('#buttons').children.some(b=>b
 
 Game.scene='directory';Game.aliensThisLevel=winsRequiredForStreet(Game.level);checkLevelUp();showDispatch();chooseDispatchStreet(5);goToDispatchStreet(5);
 Game.aliensThisLevel=winsRequiredForStreet(Game.level);checkLevelUp();assert.equal(Game.mayorState,'rescued');
-showDispatch();const safeButton=el('#buttons').children.find(b=>b.textContent==='Euclid Ave'),targetButton=el('#buttons').children.find(b=>b.textContent==='West 6th'),blockedButton=el('#buttons').children.find(b=>b.textContent==='Erieside Ave');assert.ok(safeButton);assert.equal(safeButton.classList.contains('dispatch-safe'),true);assert.equal(targetButton.classList.contains('dispatch-target'),true);assert.equal(blockedButton.classList.contains('dispatch-blocked'),true);assert.equal(el('#directoryBtn').hidden,true);
-chooseDispatchStreet(3);assert.equal(dispatchStatus(3),'SAFE');goToDispatchStreet(3);assert.equal(streetNumber(),3);assert.equal(streetCleared(),true);assert.equal(el('#sceneLocation').children.length,1);assert.equal(el('#directoryLabel').textContent,'HAIL CAB');assert.equal(el('#directoryBtn').hidden,false);el('#directoryBtn').onclick();assert.equal(Game.scene,'dispatch');chooseDispatchStreet(3);goToDispatchStreet(3);startCombat();assert.equal(Game.enemy,null);
+showDispatch();const safeButton=el('#buttons').children.find(b=>b.textContent==='Euclid Ave'),targetButton=el('#buttons').children.find(b=>b.textContent==='West 6th'),blockedButton=el('#buttons').children.find(b=>b.textContent==='Erieside Ave');assert.ok(safeButton);assert.equal(safeButton.classList.contains('dispatch-safe'),true);assert.equal(targetButton.classList.contains('dispatch-target'),true);assert.equal(blockedButton.classList.contains('dispatch-blocked'),true);assert.equal(el('#hailCabBtn').hidden,true);
+chooseDispatchStreet(3);assert.equal(dispatchStatus(3),'SAFE');goToDispatchStreet(3);assert.equal(streetNumber(),3);assert.equal(streetCleared(),true);assert.equal(el('#sceneLocation').children.length,1);assert.equal(el('#hailCabBtn').hidden,false);el('#hailCabBtn').onclick();assert.equal(Game.scene,'dispatch');chooseDispatchStreet(3);goToDispatchStreet(3);startCombat();assert.equal(Game.enemy,null);
 assert.match(televisionReport(),/LIBERATED/);assert.match(newspaperReport(),/CITY HALL FREED/);
 
 Game.route=defaultRoute();Game.level=Game.highestDistrict=9;Game.currentStreet=9;Game.scene='directory';showDispatch();

@@ -272,13 +272,15 @@ function showDispatchStreet(street) {
   if(Game.scene!=='dispatch'||!Number.isInteger(street)||street<2||street>10)return;
   $('#story').innerHTML='';clearButtons();updateStats();
   const status=dispatchStatus(street), target=getStreet(street), cleared=status==='SAFE';
+  const assignmentOpen=!streetCleared()&&streetNumber()===activeStreet()&&street!==streetNumber()&&!cleared;
   appendStory(target.name+' / '+status,status==='BLOCKADED'?'miss':'special');
   appendStory(STREET_LANDMARKS[street-1]+'.','system');
   if(cleared) appendStory('Dispatch reports no alien signals. The street is safe; its shops and any missed discoveries remain available.','system');
   else if(status==='BLOCKADED') appendStory('Police barricades seal the harbor approach. Clear '+(9-clearedStreetNumbers().length)+' more streets before the cab can get through.','miss');
   else if(status==='URGENT') appendStory('A repeating emergency signal is coming from City Hall. Dispatch urges you to reach Lakeside now.','news');
   else appendStory('Dispatch estimates '+winsRequiredForStreet(Game.level)+' alien contacts around '+target.name+'.','news');
-  if(status!=='BLOCKADED')addButton(cleared?'Go to '+target.name:'Go to '+target.name,()=>goToDispatchStreet(street));
+  if(assignmentOpen)appendStory('Finish the current occupied street before taking a new assignment. SAFE streets remain available for supply runs.','system');
+  if(status!=='BLOCKADED'&&!assignmentOpen)addButton('Go to '+target.name,()=>goToDispatchStreet(street));
   addButton('Back to Cab Menu',()=>showDispatch());
   saveGame();
 }
@@ -407,15 +409,13 @@ function addDirectoryReturn() {
   }
 }
 function updateCampaignHUD() {
-  const directory=$('#directoryBtn');
+  const cab=$('#hailCabBtn');
   const onboarding=Game.onboardingStep&&Game.onboardingStep!=='complete';
-  const inCab=['dispatch','cab-pickup'].includes(Game.scene), canHail=!inCab&&!onboarding&&streetCleared()&&!['combat','victory','gameover','start'].includes(Game.scene);
-  directory.hidden=inCab;
-  directory.onclick=canHail?()=>showDispatch():()=>showDirectory();
-  directory.setAttribute('aria-label',canHail?'Hail Cab':'Street Directory');
-  $('#directoryLabel').textContent=canHail?'HAIL CAB':'DIRECTORY';
-  directory.disabled=onboarding||['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
-  directory.title=canHail?'Call the cab and choose a street.':onboarding?'Finish the Public Square opening first.':Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight for an automatic bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
+  const inCab=['dispatch','cab-pickup'].includes(Game.scene), available=!!Game.cabMet&&!onboarding&&!inCab;
+  cab.hidden=!available;
+  cab.onclick=()=>showDispatch();
+  cab.disabled=!available||['combat','victory','gameover','start','hunting'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
+  cab.title=Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight or flee before hailing the cab.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Settings.':'Call the cab and choose a street.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
   $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/'+winsRequiredForStreet(Game.level)+' WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';

@@ -15,10 +15,10 @@ for(const [start,action] of [[startMisc,'Watch'],[startNews,'Read'],[startNPC,'T
  el('#buttons').children.find(b=>b.textContent==='Back to Directory').onclick({});
  assert.equal(Game.scene,'directory');assert.equal(Game.enemy,null);
 }
-startCombat();assert.ok(!el('#buttons').children.some(b=>b.textContent==='Back to Directory'));assert.equal(el('#directoryBtn').disabled,true);
+startCombat();assert.ok(!el('#buttons').children.some(b=>b.textContent==='Back to Directory'));assert.equal(el('#hailCabBtn').disabled,true);
 el('#buttons').children.find(b=>b.textContent==='Flee').onclick({});
 el('#buttons').children.find(b=>b.textContent==='Back to Directory').onclick({});assert.equal(Game.scene,'directory');
-StoryType.typing=true;updateCampaignHUD();assert.equal(el('#directoryBtn').disabled,true);StoryType.typing=false;updateCampaignHUD();assert.equal(el('#directoryBtn').disabled,false);
+Game.cabMet=true;StoryType.typing=true;updateCampaignHUD();assert.equal(el('#hailCabBtn').disabled,true);StoryType.typing=false;updateCampaignHUD();assert.equal(el('#hailCabBtn').disabled,false);
 newGame();Game.onboardingStep='complete';
 assert.equal(availableShopIds().join(','),'coffee,pawn,record');
 Game.money=200;Game.currentStreet=Game.level=Game.highestDistrict=3;startBusiness('arcade');

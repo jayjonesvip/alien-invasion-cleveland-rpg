@@ -222,15 +222,9 @@ input { accent-color: var(--cyan); }
 .header-settings span { font-size:19px; line-height:1; }
 .header-icon { flex:0 0 40px; width:40px; padding-inline:6px; justify-content:center; }
 #gameUI .scene-location { left:24px; right:110px; bottom:16px; }
-.scene-map { position:absolute; z-index:4; bottom:12px; right:18px; left:auto; display:flex; flex-direction:column; align-items:center; gap:2px; width:74px; min-height:52px; padding:5px 6px; background:transparent; color:#e8edcf; border:0; box-shadow:none; text-shadow:0 2px 5px #000; }
-.scene-map:hover:not(:disabled) { background:transparent; border-color:transparent; box-shadow:none; color:#fff; }
-.scene-map svg { width:40px; height:27px; }
-.scene-map span { font-size:8px; letter-spacing:.15em; }
-.map-paper { fill:#e1d7af; stroke:#f9f1d6; stroke-width:1.2; }
-.map-fold { fill:none; stroke:#a29269; stroke-width:1; }
-.map-route { fill:none; stroke:#447a6a; stroke-width:2; stroke-dasharray:3 2; }
-.map-pin { fill:#b54052; }
-.scene-map:disabled { opacity:.5; }
+.scene-cab { position:absolute; z-index:4; right:18px; bottom:18px; min-width:92px; min-height:38px; padding:8px 12px; background:rgba(5,20,24,.86); color:var(--amber); border:1px solid var(--amber); box-shadow:0 3px 12px rgba(0,0,0,.45); font-family:inherit; font-size:10px; letter-spacing:.12em; text-shadow:0 2px 5px #000; }
+.scene-cab:hover:not(:disabled) { background:var(--amber); color:#07171b; border-color:var(--amber); box-shadow:0 0 0 1px var(--amber),0 3px 12px rgba(0,0,0,.45); text-shadow:none; }
+.scene-cab:disabled { opacity:.5; }
 #settingsPanel, #buildPanel { position:fixed; inset:0; margin:auto; width:min(440px,calc(100% - 32px)); max-height:calc(100dvh - 32px); padding:24px; overflow-y:auto; background:var(--surface); color:var(--fg); border:1px solid var(--cyan); border-radius:5px; box-shadow:0 20px 80px #0008; }
 #settingsPanel::backdrop, #buildPanel::backdrop { background:#02080ed9; backdrop-filter:blur(5px); }
 .settings-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
@@ -253,7 +247,7 @@ input { accent-color: var(--cyan); }
 @media(max-width:760px) {
   .transmission-header { flex-basis:50px; padding:5px 12px; gap:10px; }
   .header-settings { min-height:40px; padding:6px 8px; font-size:9px; }
-  .scene-map { right:12px; left:auto; bottom:12px; width:72px; }
+  .scene-cab { right:12px; bottom:12px; min-width:84px; }
   #gameUI .scene-location { left:16px; right:98px; bottom:15px; font-size:22px; }
 }
 @media(max-width:360px) { .transmission-city { display:none; } #settingsPanel { padding:18px; } }

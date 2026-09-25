@@ -634,7 +634,7 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
-  <link rel="stylesheet" href="retro-skin.css?v=4.5" />
+  <link rel="stylesheet" href="retro-skin.css?v=4.6" />
 <script src="scene-art.js?v=2.8"></script>
 </head>
 
@@ -2495,10 +2495,7 @@ decayBuffsEndOfRound();
           <img id="enemyArt" class="enemy-art" alt="" decoding="async" hidden />
         </div>
         <div id="sceneLocation" class="scene-location"></div>
-        <button id="directoryBtn" class="scene-map" onclick="showDirectory()" aria-label="Street Directory" title="Open the street directory">
-          <svg viewBox="0 0 48 32" aria-hidden="true" focusable="false"><path class="map-paper" d="M2 6 16 2 32 6 46 2v24l-14 4-16-4-14 4Z"/><path class="map-fold" d="M16 2v24M32 6v24"/><path class="map-route" d="m8 20 5-7 11 5 13-7"/><circle class="map-pin" cx="37" cy="11" r="3"/></svg>
-          <span id="directoryLabel">DIRECTORY</span>
-        </button>
+        <button id="hailCabBtn" class="scene-cab" onclick="showDispatch()" aria-label="Hail Cab" title="Call the cab and choose a street" hidden>HAIL CAB</button>
       </section>
       <div class="campaign-strip"><span id="campaignProgress"></span><span id="saveStatus">AUTOSAVE READY</span></div>
       <section id="huntMeter" class="hunt-meter" aria-label="Alien search" hidden><label id="huntStatus" for="huntProgress" aria-live="polite">Searching the street...</label><progress id="huntProgress" max="100" value="0">Searching</progress></section>
@@ -2574,7 +2571,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=5.6"></script>
+<script src="campaign.js?v=5.7"></script>
 </body>
 
 </html>

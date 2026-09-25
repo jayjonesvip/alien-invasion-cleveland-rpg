@@ -7,7 +7,7 @@ const checkpoint=localStorage.getItem(SAVE_KEY), waits=[], realSleep=sleep;
 sleep=async ms=>{waits.push(ms);};
 const hunting=huntAlien();
 assert.equal(Game.scene,'hunting');assert.equal(Game.enemy,null);assert.equal(el('#huntMeter').hidden,false);
-assert.equal(el('#huntProgress').value,0);assert.equal(el('#directoryBtn').disabled,true);
+assert.equal(el('#huntProgress').value,0);assert.equal(el('#hailCabBtn').disabled,true);
 Game.highestDistrict=2;travelToStreet(2);assert.equal(Game.currentStreet,1,'Travel is blocked while hunting');Game.highestDistrict=1;
 saveGame();assert.equal(localStorage.getItem(SAVE_KEY),checkpoint,'No partial search checkpoint');
 await huntAlien();await hunting;
