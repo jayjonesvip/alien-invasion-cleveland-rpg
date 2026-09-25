@@ -290,7 +290,10 @@ function showDispatch(arrival='') {
         ?'CITY HALL LIBERATED / Ignore every order broadcast before the signal cleared.'
         :'URGENT / City Hall is transmitting a repeating emergency signal from Lakeside.';
   appendStory(worldLine,Game.mayorState==='controlled'?'miss':'system');
-  for(let street=2;street<=10;street++)addButton(getStreet(street).name,()=>chooseDispatchStreet(street));
+  for(let street=2;street<=10;street++){
+    const button=addButton(getStreet(street).name,()=>chooseDispatchStreet(street));
+    if(dispatchStatus(street)==='SAFE')button.classList.add('dispatch-safe');
+  }
   saveGame();
 }
 function showCabPickup(arrival='') {
@@ -398,8 +401,13 @@ function addDirectoryReturn() {
 function updateCampaignHUD() {
   const directory=$('#directoryBtn');
   const onboarding=Game.onboardingStep&&Game.onboardingStep!=='complete';
+  const inCab=['dispatch','cab-pickup'].includes(Game.scene), canHail=!inCab&&!onboarding&&streetCleared()&&!['combat','victory','gameover','start'].includes(Game.scene);
+  directory.hidden=inCab;
+  directory.onclick=canHail?()=>showDispatch():()=>showDirectory();
+  directory.setAttribute('aria-label',canHail?'Hail Cab':'Street Directory');
+  $('#directoryLabel').textContent=canHail?'HAIL CAB':'DIRECTORY';
   directory.disabled=onboarding||['combat','victory','gameover','start'].includes(Game.scene)||StoryType.holdLock||StoryType.typing;
-  directory.title=onboarding?'Finish the Public Square opening first.':Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight for an automatic bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
+  directory.title=canHail?'Call the cab and choose a street.':onboarding?'Finish the Public Square opening first.':Game.scene==='hunting'?'Searching for an alien. Wait for the search meter to fill.':Game.scene==='combat'?'Finish the fight for an automatic bounty, or flee, to visit shops.':StoryType.holdLock||StoryType.typing?'Wait for the text to finish. You can enable Instant text in Text Settings.':'Return to shops, training, and your district progress.';
   $('#recoverBtn').disabled=StoryType.holdLock||StoryType.typing;
   $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/'+winsRequiredForStreet(Game.level)+' WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';

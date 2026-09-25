@@ -80,17 +80,6 @@ window.SceneArt = (() => {
     setImage(document.getElementById('streetArt'), data[0], data[1]);
     const loc = document.getElementById('sceneLocation');
     loc.innerHTML = '';
-    const index = !fighting && !shop && !event && typeof routeIndex === 'function' ? routeIndex(Game.currentStreet) : -1;
-    if (index > 0 && routeIndex(Game.route[index - 1]) < Game.level - 1) {
-      const previous = getStreet(Game.route[index - 1]);
-      const back = document.createElement('button');
-      back.type = 'button';
-      back.className = 'scene-back';
-      back.textContent = '← ' + previous.name;
-      back.setAttribute('aria-label', 'Return to ' + previous.name);
-      back.onclick = () => travelToStreet(previous.level);
-      loc.appendChild(back);
-    }
     const label = data[2] || street.name;
     const current = document.createElement('span');
     current.textContent = label;

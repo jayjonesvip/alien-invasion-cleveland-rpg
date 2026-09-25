@@ -634,8 +634,8 @@
     })();
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
-  <link rel="stylesheet" href="retro-skin.css?v=4.3" />
-<script src="scene-art.js?v=2.7"></script>
+  <link rel="stylesheet" href="retro-skin.css?v=4.4" />
+<script src="scene-art.js?v=2.8"></script>
 </head>
 
 <body>
@@ -2491,7 +2491,7 @@ decayBuffsEndOfRound();
         <div id="sceneLocation" class="scene-location"></div>
         <button id="directoryBtn" class="scene-map" onclick="showDirectory()" aria-label="Street Directory" title="Open the street directory">
           <svg viewBox="0 0 48 32" aria-hidden="true" focusable="false"><path class="map-paper" d="M2 6 16 2 32 6 46 2v24l-14 4-16-4-14 4Z"/><path class="map-fold" d="M16 2v24M32 6v24"/><path class="map-route" d="m8 20 5-7 11 5 13-7"/><circle class="map-pin" cx="37" cy="11" r="3"/></svg>
-          <span>DIRECTORY</span>
+          <span id="directoryLabel">DIRECTORY</span>
         </button>
       </section>
       <div class="campaign-strip"><span id="campaignProgress"></span><span id="saveStatus">AUTOSAVE READY</span></div>
@@ -2568,7 +2568,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=5.2"></script>
+<script src="campaign.js?v=5.3"></script>
 </body>
 
 </html>
