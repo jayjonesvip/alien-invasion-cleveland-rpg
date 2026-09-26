@@ -61,7 +61,7 @@ for(const business of businesses){
   Game.currentStreet=DISTRICT_SHOPS.findIndex(ids=>ids.includes(business.id))+1;Game.level=Game.highestDistrict=Game.currentStreet;
   if(business.id==='frank')Game.secretsFound.push('franks-key');
   announceBusiness(business.id);
-  assert.equal(el('#streetArt').dataset.asset,SceneArt.streets[getStreet(streetNumber()).id][0],'Approaching retains the street');
+  assert.equal(el('#streetArt').dataset.asset,(SceneArt.storefronts[business.id]||SceneArt.streets[getStreet(streetNumber()).id])[0],'Approaching shows its storefront when available');
   startBusiness(business.id);
   assert.equal(el('#streetArt').dataset.asset,SceneArt.businesses[business.id][0]);
   assert.equal(el('#sceneLocation').children.find(node=>node.tag==='span').textContent,business.name);
@@ -100,9 +100,9 @@ for(const element of elements.values()){
   if(element.srcset) for(const src of element.srcset.split(',')) paths.add(src.trim().split(' ')[0]);
 }
 const assets=fs.readdirSync(path.join(root,'images/art'));
-assert.equal(assets.filter(x=>!x.includes('-small')).length,59);
-assert.equal(assets.filter(x=>x.includes('-small')).length,51);
-const catalog=vm.runInContext('({...SceneArt.streets,...SceneArt.businesses,...SceneArt.encounters})',context);
+assert.equal(assets.filter(x=>!x.includes('-small')).length,69);
+assert.equal(assets.filter(x=>x.includes('-small')).length,61);
+const catalog=vm.runInContext('({...SceneArt.streets,...SceneArt.businesses,...SceneArt.storefronts,...SceneArt.encounters})',context);
 for(const key of ['bus-zapped','rapid-running','rapid-stalled','cab-scared','cab-secure','cab-singing','onboarding-zap','mayor-controlled','franks-key','survivor-ontario','survivor-superior','survivor-lakeside','survivor-west-6th','survivor-old-river','survivor-prospect','survivor-erieside'])assert.ok(vm.runInContext(`Object.hasOwn(SceneArt.encounters,'${key}')`,context),key);
 for(const [asset] of Object.values(catalog)){
   paths.add('images/art/'+asset+'.webp');paths.add('images/art/'+asset+'-small.webp');
@@ -111,5 +111,5 @@ for(const color of ['blue','green','grey','red'])for(const type of ['alien','bos
 vm.runInContext("Game.scene='combat';Game.currentStreet=Game.level=10;Game.enemy={name:'MOTHERSHIP COMMANDER',color:'red',hp:147,maxHP:147,isBoss:true,isFinalBoss:true};updateSceneArt();",context);
 assert.equal(el('#streetArt').dataset.asset,'shop-captain-franks');assert.equal(el('#enemyArt').dataset.asset,'boss-red');
 for(const src of paths)assert.ok(fs.existsSync(path.join(root,src)),src);
-console.log('PASS: 10 streets; 4 aliens; 4 bosses; 18 business entry/purchase/exit flows; 21 encounter types; both care-package rewards; state-aware cab/news/onboarding/key art; final restaurant; flee cleanup; level-up; endings; restart; 110 optimized assets.');
+console.log('PASS: 10 streets; 4 aliens; 4 bosses; 18 business entry/purchase/exit flows; 21 encounter types; both care-package rewards; state-aware cab/news/onboarding/key art; final restaurant; flee cleanup; level-up; endings; restart; 130 optimized assets.');
 module.exports={context,el,storage,vm,assert};

@@ -28,7 +28,7 @@ Or download the repository ZIP, extract it, and open `index.html` in a modern we
 - Cinematic title screen, survival dashboard, segmented health meters, and keyboard-accessible theme control
 - Mobile-friendly responsive design
 - Typewriter text effects with customizable settings
-- 59 illustrations: ten streets, eighteen businesses, four aliens, four distinct bosses, twenty-one encounters, and two endings
+- 69 illustrations: ten streets, ten storefronts, eighteen business interiors, four aliens, four distinct bosses, twenty-one encounters, and two endings
 - Responsive scene artwork that follows shopping, conversations, supply discoveries, and combat
 - A separate interactive art gallery for previewing every scene and enemy
 

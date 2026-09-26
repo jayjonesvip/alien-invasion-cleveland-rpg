@@ -435,7 +435,7 @@ function showDirectory(arrival='') {
   const exploreButton=addButton(cleared?'Explore Safely':'Explore Street',()=>encounter());
   describeActionButton(exploreButton,cleared?'Shops, rumors, and anything still hidden. No aliens.':here===10&&bossReady?'The commander is inside Captain Frank\'s, not out on the pier.':bossReady?'The district boss is hiding on this street.':'Aliens, rumors, and hidden caches.');
   for(const id of availableShopIds()){
-    if((Game.knownShops||[]).includes(id)) addButton(getBusiness(id).name,()=>startBusiness(id));
+    if((Game.knownShops||[]).includes(id)) addButton(getBusiness(id).name,()=>announceBusiness(id));
     else addButton('Unknown stop',()=>{},true);
   }
   if(cleared){

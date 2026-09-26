@@ -635,7 +635,7 @@
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
   <link rel="stylesheet" href="retro-skin.css?v=4.9" />
-<script src="scene-art.js?v=3.0"></script>
+<script src="scene-art.js?v=3.1"></script>
 </head>
 
 <body>
@@ -1507,7 +1507,9 @@
 
     function updateSceneArt() {
       SceneArt.render({street: getStreet(streetNumber()), level: streetNumber(), enemy: Game.enemy, scene: Game.scene,
-        business: Game.businessEntered ? Game.currentBiz : null, encounter: Game.artEncounter});
+        business: Game.businessEntered ? Game.currentBiz : null,
+        storefront: Game.scene === 'business' && !Game.businessEntered ? Game.currentBiz : null,
+        encounter: Game.artEncounter});
       if(streetCleared()&&!Game.businessEntered&&!Game.artEncounter)$('#sceneStatus').textContent='STREET CLEARED / SAFE';
     }
 
@@ -2119,7 +2121,7 @@ decayBuffsEndOfRound();
       Game.artEncounter = null;
       noteShop(id);
       appendStory('[' + b.name.toUpperCase() + '] ' + b.intro, 'system'); clearButtons();
-      addButton('Visit ' + b.name, () => startBusiness(id));
+      addButton('Enter ' + b.name, () => startBusiness(id));
       addButton('Keep Exploring', () => { $('#story').innerHTML = ''; encounter(); });
     }
 

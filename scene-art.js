@@ -44,6 +44,18 @@ window.SceneArt = (() => {
     church: ['shop-st-stanislaus', 'A priest offers shelter in a candlelit sanctuary.', 'St. Stanislaus'],
     frank: ['shop-captain-franks', 'Fishing nets and empty lobster tanks fill a dark pier restaurant under the mothership.', "Captain Frank's"]
   };
+  const storefronts = {
+    record: ['storefront-record', 'A neon planet glows above records and cassettes in a rain-streaked Ontario Street window.', 'Record Store'],
+    pawn: ['storefront-pawn', 'Barred windows display old televisions, radios, cameras, and tools near Public Square.', 'Pawn Shop'],
+    pizza: ['storefront-pizza', 'A striped awning and hot oven glow mark a neighborhood pizza shop on Superior.', 'Pizza Shop'],
+    drugstore: ['storefront-drugstore', 'Medicine displays and fluorescent light fill a weathered Superior Avenue storefront.', 'Drugstore'],
+    arcade: ['storefront-arcade', 'Blue and magenta arcade cabinets shine beside the Euclid theater marquees.', 'Arcade'],
+    rac: ['storefront-radio-shack', 'Portable radios and televisions glow behind the windows of an East 9th electronics shop.', 'Radio Shack'],
+    surplus: ['storefront-surplus', 'Field jackets, steel helmets, and footlockers line barred windows beside the Cuyahoga.', 'Army Surplus'],
+    church: ['storefront-st-stanislaus', 'Open church doors cast warm candlelight onto rain-soaked Prospect Avenue.', 'St. Stanislaus'],
+    hotdog: ['storefront-hotdog', 'Steam rises from a red-and-yellow hot dog cart beneath the Huron viaduct.', 'Hot Dog Cart'],
+    frank: ['storefront-captain-franks', 'Captain Frank\'s sits chained and storm-battered beneath the mothership on the Erieside pier.', "Captain Frank's"]
+  };
   const encounters = {
     tv: ['encounter-tv', 'An old shop-window television carries emergency invasion coverage.', 'Emergency Broadcast', 'LIVE COVERAGE'],
     newspaper: ['encounter-newspaper', 'Rain beads on a newspaper box holding an invasion front page.', 'News Stand', 'LATEST EDITION'],
@@ -80,14 +92,15 @@ window.SceneArt = (() => {
     img.sizes = '(max-width: 640px) 100vw, 860px';
     img.src = `images/art/${asset}.webp`;
   }
-  function render({street, level, enemy = null, scene = 'explore', business = null, encounter = null}) {
+  function render({street, level, enemy = null, scene = 'explore', business = null, storefront = null, encounter = null}) {
     const stage = document.getElementById('sceneArt');
     if (!stage) return;
     const fighting = scene === 'combat' && !!enemy;
     const finale = fighting && !!enemy.isFinalBoss ? businesses.frank : null;
     const shop = scene === 'business' && Object.hasOwn(businesses, business) ? businesses[business] : null;
+    const exterior = scene === 'business' && Object.hasOwn(storefronts, storefront) ? storefronts[storefront] : null;
     const event = ['intro', 'npc', 'empty', 'dispatch', 'onboarding'].includes(scene) && Object.hasOwn(encounters, encounter) ? encounters[encounter] : null;
-    const data = finale || shop || event || streets[street.id] || streets.ontario;
+    const data = finale || shop || exterior || event || streets[street.id] || streets.ontario;
     setImage(document.getElementById('streetArt'), data[0], data[1]);
     const loc = document.getElementById('sceneLocation');
     loc.innerHTML = '';
@@ -110,12 +123,12 @@ window.SceneArt = (() => {
     const badge = document.getElementById('sceneStatus');
     badge.textContent = fighting
       ? (enemy.hp <= 0 ? 'THREAT NEUTRALIZED' : `${enemy.isBoss ? 'BOSS · ' : ''}${color.toUpperCase()} ALIEN`)
-      : (shop ? 'SHELTER & SUPPLIES' : event ? event[3] : 'CLEVELAND UNDER SIEGE');
+      : (shop ? 'SHELTER & SUPPLIES' : exterior ? 'STOREFRONT / ENTER OR MOVE ON' : event ? event[3] : 'CLEVELAND UNDER SIEGE');
   }
   function ending(kind) {
     setImage(document.getElementById('endingArt'), `ending-${kind}`,
       kind === 'victory' ? 'Neighbors emerge at dawn as the mothership retreats over the lake.'
         : 'A discarded bat and leather jacket lie beneath alien searchlights.');
   }
-  return {render, ending, streets, enemies, bosses, businesses, encounters};
+  return {render, ending, streets, enemies, bosses, businesses, storefronts, encounters};
 })();
