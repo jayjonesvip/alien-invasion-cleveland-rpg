@@ -97,7 +97,7 @@ function activeStreet() { return (Game.route||defaultRoute())[Game.level-1]; }
 function routeIndex(street) { return (Game.route||defaultRoute()).indexOf(street); }
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:1,streetDecks:{},deckBuilds:{},streetScriptVersion:STREET_SCRIPT_VERSION,finalBossDefeated:false,mayorState:'pending',cabMet:false,dispatchSelection:null,onboardingStep:'start',onboardingFight:false,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],emergencyDogsUsed:[],streetSeen:{},exploreSeed:1,streetDecks:{},deckBuilds:{},streetScriptVersion:STREET_SCRIPT_VERSION,finalBossDefeated:false,mayorState:'pending',cabMet:false,dispatchSelection:null,onboardingStep:'start',onboardingFight:false,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
@@ -296,6 +296,7 @@ function showDispatchStreet(street) {
   else if(status==='BLOCKADED') appendStory('Police barricades seal the harbor approach. Clear '+(9-clearedStreetNumbers().length)+' more streets before the cab can get through.','miss');
   else if(status==='URGENT') appendStory('A repeating emergency signal is coming from City Hall. Dispatch urges you to reach Lakeside now.','news');
   else appendStory('Dispatch estimates '+winsRequiredForStreet(Game.level)+' alien contacts around '+target.name+'.','news');
+  if(street===10&&status!=='SAFE'&&status!=='BLOCKADED')appendStory('The cabby looks toward the blockade. “No food past this point. Buy what you need before we cross.”','special');
   if(assignmentOpen)appendStory('Finish the current occupied street before taking a new assignment. SAFE streets remain available for supply runs.','system');
   if(status!=='BLOCKADED'&&!assignmentOpen)addButton('Go to '+target.name,()=>goToDispatchStreet(street));
   addButton('Back to Cab Menu',()=>showDispatch());
@@ -346,6 +347,32 @@ function streetOfferings(number) {
   return (shops.length?shops.map(id=>getBusiness(id).name).join(', '):'No shops. Prepare on Huron before the final assault.')+(training.length?' / Training: '+training.join(', '):'');
 }
 function foodBonus(item) { return item.healing>0 && !item.armor && !['lotto','bandages'].includes(item.id) ? (FOOD_POWER[item.id] || 'maxHP') : null; }
+function hasAffordableHealing() {
+  const accessible=new Set([...clearedStreetNumbers(),streetNumber()]);
+  return (Game.knownShops||[]).some(id=>{
+    const street=DISTRICT_SHOPS.findIndex(ids=>ids.includes(id))+1;
+    const business=getBusiness(id);
+    return street>0&&accessible.has(street)&&business?.items.some(item=>item.healing>0&&item.price<=Game.money);
+  });
+}
+function offerFleeRecovery() {
+  clearButtons();
+  const street=streetNumber(), used=(Game.emergencyDogsUsed||[]).includes(street);
+  const eligible=Game.hp<Game.maxHP*.3&&!used&&!hasAffordableHealing();
+  if(!eligible){
+    appendStory('You are clear of the fight. Return to the directory to find supplies, revisit a SAFE street, or hail the cab.','system');
+    saveGame();return;
+  }
+  appendStory('The cabby opens the glove box. The hot-dog guy packed one for you.','special');
+  appendStory('“Said you’d try something stupid.”','system');
+  addButton('Eat Emergency Hot Dog',()=>{
+    Game.emergencyDogsUsed=Game.emergencyDogsUsed||[];Game.emergencyDogsUsed.push(street);
+    const floor=Math.ceil(Game.maxHP*.4), restored=Math.max(0,floor-Game.hp);Game.hp=Math.max(Game.hp,floor);
+    appendStory('You eat the emergency dog and recover '+restored+' HP.','hit');
+    updateStats();updateHealthMeters();clearButtons();saveGame();
+  });
+  saveGame();
+}
 function itemOwned(item) { return !!((item.skill||item.defense) && Game.training.includes(item.id)); }
 function gearOwned(item) {
   if(itemOwned(item)) return true;
@@ -524,6 +551,8 @@ function readSave() {
     if(s.raidCoverUsed!=null&&typeof s.raidCoverUsed!=='boolean')return null;
     if(s.secretsFound!=null&&(!Array.isArray(s.secretsFound)||s.secretsFound.some(id=>typeof id!=='string')))return null;
     if(s.knownShops!=null&&(!Array.isArray(s.knownShops)||s.knownShops.some(id=>typeof id!=='string')))return null;
+    if(s.emergencyDogsUsed==null)s.emergencyDogsUsed=[];
+    if(!Array.isArray(s.emergencyDogsUsed)||s.emergencyDogsUsed.some(street=>!Number.isInteger(street)||street<1||street>10))return null;
     if(s.exploreSeed!=null&&(!Number.isInteger(s.exploreSeed)||s.exploreSeed<1))return null;
     if(s.streetDecks!=null&&(typeof s.streetDecks!=='object'||Array.isArray(s.streetDecks)))return null;
     if(s.deckBuilds!=null&&(typeof s.deckBuilds!=='object'||Array.isArray(s.deckBuilds)))return null;
@@ -542,7 +571,7 @@ function continueGame() {
   for(const key of SAVE_FIELDS)if(Object.hasOwn(state,key))Game[key]=state[key];
   Game.purchasedThisVisit={};for(const [id,value]of Object.entries(state.purchasedThisVisit||{}))if(getBusiness(id))Game.purchasedThisVisit[id]=new Set(Array.isArray(value?.setValues)?value.setValues:[]);
   window.trackGameEvent?.('game_resume', {saved_scene:Game.scene});
-  Game.guarding=false;Game.secretsFound=Array.isArray(Game.secretsFound)?Game.secretsFound:[];Game.knownShops=Array.isArray(Game.knownShops)?Game.knownShops:[];
+  Game.guarding=false;Game.secretsFound=Array.isArray(Game.secretsFound)?Game.secretsFound:[];Game.knownShops=Array.isArray(Game.knownShops)?Game.knownShops:[];Game.emergencyDogsUsed=Array.isArray(Game.emergencyDogsUsed)?Game.emergencyDogsUsed:[];
   if(!['pending','saved','controlled','rescued'].includes(Game.mayorState))Game.mayorState='pending';Game.cabMet=!!Game.cabMet;
   if(!Number.isInteger(Game.dispatchSelection)||Game.dispatchSelection<2||Game.dispatchSelection>10)Game.dispatchSelection=null;
   if(!Game.onboardingStep)Game.onboardingStep='complete';Game.onboardingFight=!!Game.onboardingFight;

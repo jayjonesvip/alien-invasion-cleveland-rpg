@@ -1785,8 +1785,8 @@
         updateHealthMeters();
         clearButtons();
         decayBuffsEndOfFight();
-        if(wasBroke)addButton('Take $'+tip,()=>{Game.money+=tip;updateStats();clearButtons();addButton('Keep Exploring',()=>encounter());saveGame();});
-        else addButton('Keep Exploring', () => encounter());
+        if(wasBroke)addButton('Take $'+tip,()=>{Game.money+=tip;updateStats();offerFleeRecovery();saveGame();});
+        else offerFleeRecovery();
       });
     }
 
@@ -2602,7 +2602,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=5.9"></script>
+<script src="campaign.js?v=5.10"></script>
 </body>
 
 </html>
