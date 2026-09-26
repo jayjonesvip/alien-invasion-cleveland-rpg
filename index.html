@@ -635,7 +635,7 @@
   </script>
   <link rel="stylesheet" href="scene-art.css?v=2.4" />
   <link rel="stylesheet" href="retro-skin.css?v=4.9" />
-<script src="scene-art.js?v=2.9"></script>
+<script src="scene-art.js?v=3.0"></script>
 </head>
 
 <body>
@@ -2425,7 +2425,7 @@ decayBuffsEndOfRound();
     }
 
     function startNPC() {
-      Game.artEncounter = 'survivor';
+      Game.artEncounter = STREET_SURVIVOR_ART[streetNumber()] || 'survivor';
       Game.scene = 'npc'; appendStory('[SURVIVOR] a local bystander hiding in the shadows.', 'system'); clearButtons();
       addButton('Talk', () => {
         const dialogue = survivorReport();
@@ -2602,7 +2602,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=5.10"></script>
+<script src="campaign.js?v=5.11"></script>
 </body>
 
 </html>

@@ -64,6 +64,10 @@ const STREET_VOICES = [
   null,
   'The commander is using Captain Frank\'s as a nest. The pier will stay blockaded until the other streets are safe.'
 ];
+const STREET_SURVIVOR_ART = {
+  1:'survivor-ontario', 2:'survivor-superior', 5:'survivor-lakeside', 6:'survivor-west-6th',
+  7:'survivor-old-river', 8:'survivor-prospect', 10:'survivor-erieside'
+};
 const STREET_PAPERS = [
   'PUBLIC SQUARE ATTACKED — WITNESSES REPORT LIGHTS ABOVE TERMINAL TOWER',
   null,

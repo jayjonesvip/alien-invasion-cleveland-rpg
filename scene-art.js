@@ -51,6 +51,13 @@ window.SceneArt = (() => {
     'mayor-controlled': ['encounter-mayor-controlled', 'A shop-window television carries the mayor\'s alien-controlled emergency address.', 'Emergency Broadcast', 'SIGNAL COMPROMISED'],
     'franks-key': ['encounter-franks-key', 'A brass seafood-house key rests inside the bridge tender\'s cabinet.', 'Hidden Cache', 'HARBOR KEY FOUND'],
     survivor: ['encounter-survivor', 'A frightened local shelters in a shadowy doorway.', 'Survivor', 'YOU ARE NOT ALONE'],
+    'survivor-ontario': ['encounter-bystander-ontario', 'A battered local gestures urgently beneath the lights of Public Square.', 'Public Square Survivor', 'STREET WITNESS'],
+    'survivor-superior': ['encounter-bystander-superior', 'A stranded bus driver guards frightened passengers beside an alien-scorched tire.', 'Bus Driver', 'TRANSIT STRANDED'],
+    'survivor-lakeside': ['encounter-bystander-lakeside', 'A City Hall employee clutches a radio and files on the storm-lashed civic plaza.', 'City Hall Staffer', 'CIVIC SIGNAL'],
+    'survivor-west-6th': ['encounter-bystander-west-6th', 'A dockworker raises an emergency flare between the warehouse loading bays.', 'Dockworker', 'FLARE SIGNAL'],
+    'survivor-old-river': ['encounter-bystander-old-river', 'The bridge tender works the lift controls while the invasion burns above the river.', 'Bridge Tender', 'RIVER WATCH'],
+    'survivor-prospect': ['encounter-bystander-prospect', 'A shelter volunteer offers blankets outside a church on rain-soaked Prospect.', 'Shelter Volunteer', 'DOOR STILL OPEN'],
+    'survivor-erieside': ['encounter-bystander-erieside', 'A harbormaster radios a warning beneath the mothership at the Lake Erie docks.', 'Harbormaster', 'HARBOR BLOCKADE'],
     police: ['encounter-police', 'A weary officer stands beside a patrol car and barricade.', 'Police Officer', 'EMERGENCY RESPONSE'],
     'care-package': ['encounter-care-package', 'An open military supply crate rests beneath a weathered tarp.', 'Care Package', 'SUPPLIES FOUND'],
     'bus-zapped': ['transit-bus-zapped', 'An alien energy blast blows a city bus tire as frightened passengers brace inside.', 'City Bus', 'TIRE DESTROYED'],
@@ -95,7 +102,7 @@ window.SceneArt = (() => {
     actor.hidden = !hasSprite;
     stage.classList.toggle('is-combat', fighting);
     stage.classList.toggle('is-interior', !!shop || !!finale);
-    stage.classList.toggle('is-conversation', !!event && (encounter === 'survivor' || encounter === 'police'));
+    stage.classList.toggle('is-conversation', !!event && (encounter?.startsWith('survivor') || encounter === 'police'));
     stage.classList.toggle('is-boss', hasSprite && !!enemy.isBoss);
     stage.classList.toggle('is-defeated', hasSprite && enemy.hp <= 0);
     if (hasSprite) setImage(document.getElementById('enemyArt'), `${enemy.isBoss ? 'boss' : 'alien'}-${color}`,
