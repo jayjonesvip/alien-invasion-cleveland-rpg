@@ -21,6 +21,19 @@ const STREET_SIGHTS = [
   ['sign','npc','news','hidden'], ['sign','npc','hidden'], ['sign','news','hidden'], ['sign','police','hidden'], ['sign','npc','news'],
   ['sign','npc','hidden'], ['sign','hidden'], ['sign','npc','news'], ['sign','hidden'], ['sign','npc','hidden']
 ];
+const STREET_SCRIPT_VERSION = 1;
+const STREET_SCRIPTS = [
+  ['news','shop:coffee','combat','hidden','shop:pawn','npc','shop:record','combat'],
+  ['npc','shop:pizza','combat','sign','shop:drugstore','combat','hidden','shop:thrift','combat'],
+  ['news','shop:diner','combat','sign','shop:arcade','combat','hidden','combat'],
+  ['police','shop:camera','combat','sign','shop:rac','combat','hidden','combat','combat'],
+  ['news','shop:chinese','combat','npc','shop:deli','combat','sign','combat','combat'],
+  ['npc','shop:convenience','combat','sign','shop:bar','combat','hidden','combat','combat'],
+  ['npc','shop:surplus','combat','sign','combat','hidden','combat','combat'],
+  ['npc','shop:church','combat','news','sign','combat','hidden','combat','combat'],
+  ['sign','shop:hotdog','combat','hidden','combat','hidden','combat','combat'],
+  ['npc','shop:frank','combat','sign','hidden','combat','hidden']
+];
 const ONE_TIME_SIGHTS = new Set(['sign','npc','news','police']);
 function hiddenCachesLeft(street=streetNumber()) {
   const finds=(typeof HIDDEN_FINDS==='undefined'?[]:HIDDEN_FINDS[street])||[];
@@ -40,7 +53,7 @@ const STREET_SIGNS = [
   'The binocular card says two guards on the pier, then the red commander inside Captain Frank\'s.'
 ];
 const STREET_VOICES = [
-  'The Tower lights make the little ones keep their distance.',
+  'The Record Store owner has fight tapes behind the counter—if you can reach him.',
   'That bus tire did not blow. Something in the sky zapped it.',
   null,
   null,
@@ -84,7 +97,7 @@ function activeStreet() { return (Game.route||defaultRoute())[Game.level-1]; }
 function routeIndex(street) { return (Game.route||defaultRoute()).indexOf(street); }
 function initCampaign() {
   Object.assign(Game,{learned:[],training:[],tasted:[],permanent:{punch:0,kick:0,defense:0,accuracy:0},
-    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:Math.floor(Math.random()*1e9)+1,streetDecks:{},deckBuilds:{},finalBossDefeated:false,mayorState:'pending',cabMet:false,dispatchSelection:null,onboardingStep:'start',onboardingFight:false,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
+    highestDistrict:1,currentStreet:1,route:defaultRoute(),newlyUnlockedStreet:null,secretsFound:[],knownShops:[],streetSeen:{},exploreSeed:1,streetDecks:{},deckBuilds:{},streetScriptVersion:STREET_SCRIPT_VERSION,finalBossDefeated:false,mayorState:'pending',cabMet:false,dispatchSelection:null,onboardingStep:'start',onboardingFight:false,ally:null,keySold:false,raidCoverUsed:false,guarding:false,blockedHit:false,tempWeapon:null,weaponUses:0,tempWeaponUsed:false,
     currentBiz:null,businessEntered:false,artEncounter:null});
 }
 initCampaign();
@@ -154,24 +167,18 @@ function startOnboardingFight(){
   updateCombatButtons();saveGame();
 }
 function noteShop(id) { Game.knownShops=Game.knownShops||[]; if(id&&!Game.knownShops.includes(id)) Game.knownShops.push(id); }
-function exploreRandom(seed) {
-  let value=seed>>>0;
-  return ()=>{ value=Math.imul(value^(value>>>15),value|1); value^=value+Math.imul(value^(value>>>7),value|61); return ((value^(value>>>14))>>>0)/4294967296; };
-}
 function buildStreetDeck(street=streetNumber()) {
   Game.deckBuilds=Game.deckBuilds||{};
-  const built=(Game.deckBuilds[street]||0)+1; Game.deckBuilds[street]=built;
+  Game.deckBuilds[street]=(Game.deckBuilds[street]||0)+1;
   const seen=Game.streetSeen?.[street]||{};
-  const cards=[...(STREET_SIGHTS[street-1]||[])].filter(card=>{
+  const cards=[...(STREET_SCRIPTS[street-1]||[])].filter(card=>{
     if(ONE_TIME_SIGHTS.has(card)&&seen[card]) return false;
     if(card==='hidden'&&!hiddenCachesLeft(street)) return false;
+    if(card.startsWith('shop:')&&(Game.knownShops||[]).includes(card.slice(5))) return false;
+    if(card==='combat'&&streetCleared()) return false;
     return true;
   });
-  if(Game.mayorState==='controlled'&&!streetCleared()&&!seen.police&&!cards.includes('police')) cards.push('police');
-  if(!streetCleared()&&!harborBossWaiting(street)) cards.push('combat');
-  for(const id of (DISTRICT_SHOPS[street-1]||[])) if(!(Game.knownShops||[]).includes(id)) cards.push('shop:'+id);
-  const random=exploreRandom((Game.exploreSeed||1)^(street*997)^(built*131));
-  for(let i=cards.length-1;i>0;i--){ const j=Math.floor(random()*(i+1)); const swap=cards[i]; cards[i]=cards[j]; cards[j]=swap; }
+  if(Game.mayorState==='controlled'&&!streetCleared()&&!seen.police&&!cards.includes('police')) cards.splice(Math.min(1,cards.length),0,'police');
   return cards;
 }
 function harborBossWaiting(street=streetNumber()) {
@@ -521,6 +528,7 @@ function readSave() {
     if(s.streetDecks!=null&&(typeof s.streetDecks!=='object'||Array.isArray(s.streetDecks)))return null;
     if(s.deckBuilds!=null&&(typeof s.deckBuilds!=='object'||Array.isArray(s.deckBuilds)))return null;
     if(s.streetSeen!=null&&(typeof s.streetSeen!=='object'||Array.isArray(s.streetSeen)))return null;
+    if(s.streetScriptVersion!==STREET_SCRIPT_VERSION){s.streetDecks={};s.deckBuilds={};s.streetScriptVersion=STREET_SCRIPT_VERSION;}
     if(s.tempWeapon!==null&&!Object.hasOwn(TEMP_WEAPONS,s.tempWeapon))return null;
     if(s.armor!==null&&(!object(s.armor)||typeof s.armor.name!=='string'||!Number.isFinite(s.armor.dr)||!Number.isFinite(s.armor.durabilityHits)))return null;
     if(s.buffs!==null&&!object(s.buffs))return null;
@@ -539,7 +547,7 @@ function continueGame() {
   if(!Number.isInteger(Game.dispatchSelection)||Game.dispatchSelection<2||Game.dispatchSelection>10)Game.dispatchSelection=null;
   if(!Game.onboardingStep)Game.onboardingStep='complete';Game.onboardingFight=!!Game.onboardingFight;
   if(Game.ally!=='raid'&&Game.ally!=='kitchen')Game.ally=null;Game.keySold=!!Game.keySold;Game.raidCoverUsed=!!Game.raidCoverUsed;
-  if(!Number.isInteger(Game.exploreSeed))Game.exploreSeed=1;Game.streetDecks=Game.streetDecks||{};Game.deckBuilds=Game.deckBuilds||{};Game.streetSeen=Game.streetSeen||{};showGameUI();$('#story').innerHTML='';updateStats();updateHealthMeters();
+  if(!Number.isInteger(Game.exploreSeed))Game.exploreSeed=1;Game.streetDecks=Game.streetDecks||{};Game.deckBuilds=Game.deckBuilds||{};Game.streetScriptVersion=STREET_SCRIPT_VERSION;Game.streetSeen=Game.streetSeen||{};showGameUI();$('#story').innerHTML='';updateStats();updateHealthMeters();
   if(Game.scene==='victory'){gameVictory();return;}
   if(Game.hp<=0||Game.scene==='gameover'){gameOver(false);return;}
   if(Game.onboardingStep!=='complete'&&Game.scene!=='combat'){showOnboardingStep();return;}

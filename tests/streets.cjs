@@ -6,6 +6,9 @@ function clearCurrentStreet(){
 }
 
 newGame();assert.equal(streetNumber(),1);assert.equal(Game.level,1);assert.equal(Game.mayorState,'pending');
+assert.equal(buildStreetDeck(1).join('|'),'news|shop:coffee|combat|hidden|shop:pawn|npc|shop:record|combat','Ontario follows the authored sequence');
+for(const script of STREET_SCRIPTS)for(let i=1;i<script.length;i++)assert.ok(!(script[i-1].startsWith('shop:')&&script[i].startsWith('shop:')),'Shop discoveries are separated by a story or fight beat');
+assert.equal(buildStreetDeck(1).join('|'),buildStreetDeck(1).join('|'),'Authored street decks do not reshuffle');
 assert.equal(el('#statLevel').textContent,0);
 assert.equal(Game.onboardingStep,'start');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Explore');
 advanceOnboarding('stranger');assert.equal(el('#buttons').children.map(b=>b.textContent).join('|'),'Talk to Him');
@@ -59,8 +62,10 @@ Game.secretsFound=[];offerHidden(HIDDEN_FINDS[7][0]);assert.equal(hasFranksKey()
 Game.scene='dispatch';Game.currentStreet=9;saveGame();Game.mayorState='pending';continueGame();
 assert.equal(Game.scene,'dispatch');assert.equal(Game.mayorState,'rescued');
 const stored=JSON.parse(localStorage.getItem(SAVE_KEY));assert.equal(stored.version,2);
+delete stored.state.streetScriptVersion;stored.state.streetDecks={1:['shop:record','news']};localStorage.setItem(SAVE_KEY,JSON.stringify(stored));
+const migratedScript=readSave();assert.equal(Object.keys(migratedScript.streetDecks).length,0,'Old shuffled decks are discarded');assert.equal(migratedScript.streetScriptVersion,STREET_SCRIPT_VERSION);
 newGame();advanceOnboarding('zapped');saveGame();Game.onboardingStep='complete';continueGame();assert.equal(Game.onboardingStep,'zapped');assert.equal(Game.scene,'onboarding');
 Game.currentStreet='';Game.level=1;Game.route=defaultRoute();assert.equal(streetNumber(),1);updateCampaignHUD();assert.ok(el('#campaignProgress').textContent.includes('STREET 1/10'));
 const invalid=JSON.parse(localStorage.getItem(SAVE_KEY));invalid.state.mayorState='alien';localStorage.setItem(SAVE_KEY,JSON.stringify(invalid));assert.equal(readSave(),null);
 `,context);
-console.log('PASS: Public Square prologue; cab dispatch; free street order; Lakeside-first and controlled-mayor branches; safe revisits; harbor blockade; pre-harbor key; dispatch saves.');
+console.log('PASS: Public Square prologue; authored street scripts; shuffled-save migration; cab dispatch; free street order; Lakeside-first and controlled-mayor branches; safe revisits; harbor blockade; pre-harbor key; dispatch saves.');

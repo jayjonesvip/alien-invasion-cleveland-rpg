@@ -2430,7 +2430,7 @@ decayBuffsEndOfRound();
       addButton('Talk', () => {
         const dialogue = survivorReport();
         appendStory('They say: "' + dialogue + '"', 'system'); clearButtons();
-        if(!Game.ally&&!Game.keySold&&!hasFranksKey()&&!Game.finalBossDefeated) addButton('Ask about the kitchen door', () => {
+        if(streetNumber()===7&&!Game.ally&&!Game.keySold&&!hasFranksKey()&&!Game.finalBossDefeated) addButton('Ask about the kitchen door', () => {
           pledgeAlly('kitchen');
           appendStory('They tell you the kitchen door at Captain Frank\'s. One pier guard never watches it.','special');
           clearButtons();
@@ -2602,7 +2602,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=5.8"></script>
+<script src="campaign.js?v=5.9"></script>
 </body>
 
 </html>
