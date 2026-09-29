@@ -647,7 +647,7 @@
     const CONFIG = {
       title: "LAKE EFFECT INVASION",
       description: "1989. In Cleveland, small alien creatures land and chaos spreads block by block. You're just a regular person trying to survive: fight aliens, chat with survivors, duck into shops and bars, and catch TVs in window displays blasting invasion news and commercials.",
-      startingHP: 50, startingMoney: 8, aliensRequiredFirstLevel: 3, maxLevel: 10, hpGainPerLevel: 10,
+      startingHP: 50, startingMoney: 8, aliensRequiredFirstLevel: 3, maxLevel: 10, hpGainPerLevel: 8,
       enemyName: "alien",   // <— change to "zombie" etc.
 
 
@@ -1695,10 +1695,10 @@
     // Combat system
     function makeEnemy(isBoss = false) {
       const L = Game.level;
-      // Regular aliens gain exactly 6 HP per player level: 19–24 at level 1,
-      // 73–78 at level 10. Bosses use the same curve before their multiplier.
-      let hp = rand(13, 18) + L * 6;
-      if (isBoss) hp = Math.floor(hp * 1.6);
+      // The opening street stays approachable, then enemy endurance pulls ahead
+      // of the player's health curve. Bosses add another meaningful round.
+      let hp = rand(14, 19) + L * 7;
+      if (isBoss) hp = Math.floor(hp * 1.65);
       let enemyType = CONFIG.enemyTypes[rand(0, CONFIG.enemyTypes.length - 1)];
       return {
         name: isBoss ? ('BOSS ' + enemyType.toUpperCase()) : enemyType,
@@ -2604,7 +2604,7 @@ decayBuffsEndOfRound();
     </div>
   </div>
 
-<script src="campaign.js?v=5.11"></script>
+<script src="campaign.js?v=5.12"></script>
 </body>
 
 </html>

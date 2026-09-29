@@ -477,7 +477,7 @@ function updateCampaignHUD() {
   $('#campaignProgress').textContent='STREET '+streetNumber()+'/10 · '+(streetCleared()?'CLEARED · SAFE':Game.aliensThisLevel+'/'+winsRequiredForStreet(Game.level)+' WINS');
   $('#combatIntent').textContent=Game.scene==='combat'&&Game.enemy?enemyIntent().hint:'';
 }
-function scaleEnemyHealth(hp,level=Game.level) { return Math.round(hp*(1+.025*(level-1))); }
+function scaleEnemyHealth(hp,level=Game.level) { return Math.round(hp*(1+.035*(level-1))); }
 function enemyIntent() {
   const L=Game.level, boss=Game.enemy?.isBoss?2:0;
   const profiles={
